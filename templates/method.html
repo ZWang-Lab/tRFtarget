@@ -1,0 +1,142 @@
+{# Jinja web template engine which will be redered by Flask #}
+{# Template Inheritance #}
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{# Adding a lang="en" attribute to the <html>-tag #}
+{% block html_attribs %}
+  lang="en"
+{% endblock %}
+
+{# Replace the title block in the head section in base template #}
+{% block title %}
+  tRF Target
+{% endblock %}
+
+{# Adding CSS file #}
+{# As bootstrap_find_resource in base html will only load Bootstrap 3, we will load Bootstrap 4 manually #}
+{% block styles %}
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.20/b-1.6.1/b-flash-1.6.1/b-html5-1.6.1/datatables.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='my.css') }}">
+{% endblock %}
+
+{# Custom Javascript #}
+{% block scripts %}
+  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.20/b-1.6.1/b-flash-1.6.1/b-html5-1.6.1/datatables.min.js"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='my.js') }}"></script>
+{% endblock %}
+
+
+{# Add a always expand navbar #}
+{% block navbar %}
+  <div class="container-fluid">
+    {# Add a title area before navbar #}
+    <div class="row text-white h-100" style="background-color: #4169e1">
+      <div class="col-md-5">
+        <h1>tRF Target</h1>
+        <p>Explore Binding <span id="strongtitle">Target</span>s of <span id="strongtitle">T</span>ransfer <span id="strongtitle">R</span>NA Related/Derived <span id="strongtitle">F</span>ragments</p>
+      </div>
+      <div class="col-md-3 my-auto">
+        <img src="{{ url_for('static', filename='CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
+      </div>
+      <div class="col-md-4 my-auto">
+        <img src="{{ url_for('static', filename='Yale_School_of_Public_Health.png') }}" class="logo-pic mx-auto d-block" alt="YSPH Logo"/>
+      </div>
+    </div>
+    
+    {# Navbar #}
+    <div class="row">
+      <nav class="navbar nav-fill w-100 justify-content-center navbar-dark bg-dark navbar-expand-sm">
+        <ul class="navbar-nav nav-fill w-100">
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('index') }}">HOME</a>
+          </li>
+          <li class="nav-item active">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='method') }}">METHOD<span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='statistics') }}">STATISTICS</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='manual') }}">MANUAL</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='team') }}">TEAM</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+{% endblock %}
+
+
+{# The .container class provides a responsive fixed width container
+The .container-fluid class provides a full width container, spanning the entire width of the viewport
+Bootstrap's grid system allows up to 12 columns across the page
+If you do not want to use all 12 columns individually, you can group the columns together to create wider columns
+md class (for small laptops - screens equal to or greater than 992px wide)
+#}
+
+{% block content %}
+  <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
+          <h3>Data Source</h3>
+          <ul>
+            <li><strong>tRFs</strong>:
+              <ul>
+                <li>Human <i>tRF-1s</i>, <i>tRF-3s</i> and <i>tRF-5s</i> are retrieved from <a href="http://genome.bioch.virginia.edu/trfdb/index.php" style="font-style:italic">tRFdb</a> (retrieving date November 15, 2019).</li>
+                <li>Human <i>tsRNAs</i> are download from a <a href="https://doi.org/10.1073/pnas.1706908114"><span style="font-style:italic">PNAS</span> study</a>.</li>
+              </ul>
+            </li>
+            <li><strong>Transcripts</strong>: Human protein-coding transcript sequences (version GRCh38.p13) are download from <a href="https://www.gencodegenes.org/human/" style="font-style:italic">GENCODE</a>.</li>
+            <li><strong>Transcript Names</strong>: Transcript names (version GRCh38.p13) corresponding to the <i>Ensemble IDs</i> are download from <a href="http://www.ensembl.org/biomart/martview/" style="font-style:italic">Ensembl BioMart</a>.</li>
+            <li><strong>Approved Gene Symbols</strong>: Approved human gene symbols are download from <a href="https://biomart.genenames.org/" style="font-style:italic">HGNC BioMart</a> (retrieving date November 14, 2019).</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
+          <h3>Prediction Tools Setting</h3>
+          <p>The computational predicted binding interactions between human tRFs and target transcripts are based on the state-of-the-art prediction tools <a href="https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid" style="font-style:italic">RNAhybrid</a> and <a href="http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp" style="font-style:italic">IntaRNA</a>.</p>
+          <h4>RNAhybrid</h4>
+          <p><a href="https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid" style="font-style:italic">RNAhybrid</a> is an old but still popular tool. It is a free energy-based tool, and utilizes the <i>Dynamic Programming</i> technique to efficiently calculate the optimal and more suboptimal interaction sites. The detailed setting of <i>RNAhybrid</i> are shown as below:</p>
+          <ul>
+            <li><strong>Version</strong>: 2.1.2</li>
+            <li><strong>-b = 5</strong>, reported number of interaction sites on each transcript.</li>
+            <li><strong>-e = -15</strong>, free energy threshold.</li>
+            <li><strong>-m = 50000</strong>, maximum length of transcript. The default value is 50,000, so all transcripts with a longer length than 50,000 bases will be ignored and therefore have no entries in the <i>tRF Target database</i>.</li>
+            <li>Other parameters are set as default.</li>
+            <li>Binding interactions with <strong>maximum complementary length less than 6</strong> are filtered out (The definition of <i>maximum complementary length</i> can refer <a href="{{ url_for('show', page='manual') }}">MANUAL</a>).</li>
+          </ul>
+          <h4>IntaRNA</h4>
+          <p><a href="http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp" style="font-style:italic">IntaRNA</a> is also a free energy-based tool, and the only difference with <i>RNAhybrid</i> is <i>IntaRNA</i> incorporates the “accessibility” feature. The detailed setting of <i>IntaRNA</i> are shown as below:</p>
+          <ul>
+            <li><strong>Version</strong>: 3.1.3</li>
+            <li><strong>--mode = M</strong>, running mode. <strong>Exact mode</strong> rather than Heuristic mode is used in order to get global minimum free energy interactions at the cost of consuming much more run time.</li>
+            <li><strong>--seedBP = 6</strong>, threshold of the number of base pairs within the seed sequences.</li>
+            <li><strong>-n = 5</strong>, number of (sub)optimal interactions to report.</li>
+            <li>Other parameters are set as default.</li>
+            <li><strong>Similar</strong> Binding interactions are recognized as duplications and are filtered out (The definition of <i>similarity</i> between interactions can refer <a href="{{ url_for('show', page='manual') }}">MANUAL</a>).</li>
+          </ul>
+        </div>
+      </div>
+  </div>
+  
+  {# Footer #}
+  <footer class="footer">
+    <div class="container-fluid">
+      <p>&copy tRF Target 2020 | All Rights Reserved</p>
+    </div>
+  </footer>
+{% endblock %}

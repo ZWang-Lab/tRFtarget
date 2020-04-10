@@ -1,0 +1,172 @@
+{# Jinja web template engine which will be redered by Flask #}
+{# Template Inheritance #}
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{# Adding a lang="en" attribute to the <html>-tag #}
+{% block html_attribs %}
+  lang="en"
+{% endblock %}
+
+{# Replace the title block in the head section in base template #}
+{% block title %}
+  tRF Target
+{% endblock %}
+
+{# Adding CSS file #}
+{# As bootstrap_find_resource in base html will only load Bootstrap 3, we will load Bootstrap 4 manually #}
+{% block styles %}
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.20/b-1.6.1/b-flash-1.6.1/b-html5-1.6.1/datatables.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='my.css') }}">
+{% endblock %}
+
+{# Custom Javascript #}
+{% block scripts %}
+  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.20/b-1.6.1/b-flash-1.6.1/b-html5-1.6.1/datatables.min.js"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='my.js') }}"></script>
+{% endblock %}
+
+
+{# Add a always expand navbar #}
+{% block navbar %}
+  <div class="container-fluid">
+    {# Add a title area before navbar #}
+    <div class="row text-white h-100" style="background-color: #4169e1">
+      <div class="col-md-5">
+        <h1>tRF Target</h1>
+        <p>Explore Binding <span id="strongtitle">Target</span>s of <span id="strongtitle">T</span>ransfer <span id="strongtitle">R</span>NA Related/Derived <span id="strongtitle">F</span>ragments</p>
+      </div>
+      <div class="col-md-3 my-auto">
+        <img src="{{ url_for('static', filename='CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
+      </div>
+      <div class="col-md-4 my-auto">
+        <img src="{{ url_for('static', filename='Yale_School_of_Public_Health.png') }}" class="logo-pic mx-auto d-block" alt="YSPH Logo"/>
+      </div>
+    </div>
+    
+    {# Navbar #}
+    <div class="row">
+      <nav class="navbar nav-fill w-100 justify-content-center navbar-dark bg-dark navbar-expand-sm">
+        <ul class="navbar-nav nav-fill w-100">
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('index') }}">HOME</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='method') }}">METHOD</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='statistics') }}">STATISTICS</a>
+          </li>
+          <li class="nav-item active">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='manual') }}">MANUAL<span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='team') }}">TEAM</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+{% endblock %}
+
+
+{# The .container class provides a responsive fixed width container
+The .container-fluid class provides a full width container, spanning the entire width of the viewport
+Bootstrap's grid system allows up to 12 columns across the page
+If you do not want to use all 12 columns individually, you can group the columns together to create wider columns
+md class (for small laptops - screens equal to or greater than 992px wide)
+#}
+
+{% block content %}
+  <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
+          <h3>Typical usage of tRF Target</h3>
+          <img src="{{ url_for('static', filename='HowToSearch.png') }}" class="img-fluid mx-auto d-block" alt="How To Search"/>
+        </div>
+      </div>
+  
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
+          <h3>Search ways of tRF Target</h3>
+          <p>The typical data retrieving of tRF Target includes 3 ways:</p>
+          <ul>
+            <li>Search by <strong>tRF ID</strong> to see the information of all potential transcripts which can interact with this specific tRF. tRF ID can be chosen from the drop-down selection box.</li>
+            <li>Search by <strong>transcript Ensembl ID</strong> or <strong>name</strong> to see the information of all potential tRFs which can interact with this specific transcript.</li>
+            <li>Search by <strong>gene Ensembl ID</strong> or <strong>approved symbol</strong> to see the information of all potential tRFs which can interact with any transcripts transcribed by this specific gene.</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
+          <h3>Additional filters</h3>
+          <p>For each data retrieving way of tRF Target, an additional filter of <strong>free energy</strong> and <strong>maximum complementary length</strong> can be used to filter out less likely interactions with higher free energy and shorter maximum complementary length.</p>
+          <ul>
+            <li>Default free energy threshold:
+              <ul>
+                <li><i>RNAhybrid</i> predictions: -25 kcal/mol</li>
+                <li><i>IntaRNA</i> predictions: -10 kcal/mol</li>
+              </ul>
+            </li>
+            <li>Default maximum complementary length threshold:
+              <ul>
+                <li><i>RNAhybrid</i> predictions: 8 bases</li>
+                <li><i>IntaRNA</i> predictions: 8 bases</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
+          <h3>Display tabular search result</h3>
+          <p>The retrieved data from tRF Target will be formatted into a <strong>tabular form</strong> for display, and the result table supports following operations:
+          <ul>
+            <li>Press the column name will sort all rows of the table in the ascending order by this column. Press that column name again will change the sorting to the descending order.</li>
+            <li>Search user inputted text in all columns in the table, and show only matched rows.</li>
+            <li>Download the current results into a CSV file. If sorting or text searching operations are performed, only the sorted or matched results will be save into the CSV file.</li>
+          </ul>
+          <img src="{{ url_for('static', filename='TableTools.png') }}" class="img-fluid mx-auto d-block" alt="Table Tools"/>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
+          <h3>Definition of maximum complementary length</h3>
+          <p>tRF Target will report the maximum complementary length (MCL) feature of a specific binding interaction site on a transcript. The MCL is defined as the length of the longest successively complementary sequences. For example, the figure below shows a binding interaction between tRF <i>tRF-5013b</i> and transcript <i>ARF-201</i> predicted by <i>RNAhybrid</i>. The interaction has 3 distinct parts of complementary sequences as covered by green lines. The lengths of complementary sequences of the 3 parts are 6, 5, and 7, respectively. Therefore, the MCL of this interaction is 7 bases.</p>
+          <img src="{{ url_for('static', filename='MCL_Demonstration.png') }}" class="img-fluid mx-auto d-block" alt="MCL Demonstration"/>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
+          <h3>Definition of duplicated entries in <i>IntaRNA</i> predictions</h3>
+          <p><i>IntaRNA</i> tool will return <strong>similar</strong> binding interactions between the same tRF and transcript, and among these similar entries only the one with the <strong>lowest free energy</strong> will be kept. For example, all the 5 binding interactions between tRF <i>tRF-3001a</i> and transcript <i>DCTPP1-201</i> predicted by <i>IntaRNA</i> are shown in the below figure. The 5 interactions have the similar interaction pattern, and are in the same area of the transcript. So only the toppest one entry with the lowest free energy (-20.36 kcal/mol) is kept and recoreded into tRF Target database, while the other 4 entries will be defined as duplicated entries and discarded.</p>
+          <img src="{{ url_for('static', filename='Duplicate_Demonstration.png') }}" class="img-fluid mx-auto d-block" alt="MCL Demonstration"/>
+          <br>
+        </div>
+      </div>
+  </div>
+  
+  {# Footer #}
+  <footer class="footer">
+    <div class="container-fluid">
+      <p>&copy tRF Target 2020 | All Rights Reserved</p>
+    </div>
+  </footer>
+{% endblock %}

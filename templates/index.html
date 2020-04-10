@@ -1,0 +1,135 @@
+{# Jinja web template engine which will be redered by Flask #}
+{# Template Inheritance #}
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{# Adding a lang="en" attribute to the <html>-tag #}
+{% block html_attribs %}
+  lang="en"
+{% endblock %}
+
+{# Replace the title block in the head section in base template #}
+{% block title %}
+  tRF Target
+{% endblock %}
+
+{# Adding CSS file #}
+{# As bootstrap_find_resource in base html will only load Bootstrap 3, we will load Bootstrap 4 manually #}
+{% block styles %}
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.20/b-1.6.1/b-flash-1.6.1/b-html5-1.6.1/datatables.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='my.css') }}">
+{% endblock %}
+
+{# Custom Javascript #}
+{% block scripts %}
+  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.20/b-1.6.1/b-flash-1.6.1/b-html5-1.6.1/datatables.min.js"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='my.js') }}"></script>
+{% endblock %}
+
+
+{# Add a always expand navbar #}
+{% block navbar %}
+  <div class="container-fluid">
+    {# Add a title area before navbar #}
+    <div class="row text-white h-100" style="background-color: #4169e1">
+      <div class="col-md-5">
+        <h1>tRF Target</h1>
+        <p>Explore Binding <span id="strongtitle">Target</span>s of <span id="strongtitle">T</span>ransfer <span id="strongtitle">R</span>NA Related/Derived <span id="strongtitle">F</span>ragments</p>
+      </div>
+      <div class="col-md-3 my-auto">
+        <img src="{{ url_for('static', filename='CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
+      </div>
+      <div class="col-md-4 my-auto">
+        <img src="{{ url_for('static', filename='Yale_School_of_Public_Health.png') }}" class="logo-pic mx-auto d-block" alt="YSPH Logo"/>
+      </div>
+    </div>
+    
+    {# Navbar #}
+    <div class="row">
+      <nav class="navbar nav-fill w-100 justify-content-center navbar-dark bg-dark navbar-expand-sm">
+        <ul class="navbar-nav nav-fill w-100">
+          <li class="nav-item active">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('index') }}">HOME<span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='method') }}">METHOD</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='statistics') }}">STATISTICS</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='manual') }}">MANUAL</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='team') }}">TEAM</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+{% endblock %}
+
+
+{# The .container class provides a responsive fixed width container
+The .container-fluid class provides a full width container, spanning the entire width of the viewport
+Bootstrap's grid system allows up to 12 columns across the page
+If you do not want to use all 12 columns individually, you can group the columns together to create wider columns
+md class (for small laptops - screens equal to or greater than 992px wide)
+#}
+
+{% block content %}
+  <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
+          <h3>About tRF</h3>
+          <p><strong>Transfer RNA-related or derived Fragments</strong> (<strong>tRFs</strong>) are first identified as a new class of small non-coding RNA in 2009. tRFs are in the length of nucleotides and are derived from non-random cleavage of the precursor or mature tRNA. tRFs are classified into 5 categories as shown in the figure below:</p>
+          <ul>
+            <li><strong>tRF-1</strong>: also termed as <strong>tsRNA</strong> [<i>tRNA-derived small RNA</i>], derived from the 3’ ends of precursor tRNAs.</li>
+            <li><strong>tRF-3</strong>: derived from the 3’ ends of mature tRNAs; has 2 subcategories (<i>tRF-3a</i> and <i>tRF-3b</i>) based on the length.</li>
+            <li><strong>tRF-5</strong>: derived from the 5’ ends of mature tRNAs; has 3 subcategories (<i>tRF-5a</i>, <i>tRF-5b</i> and <i>tRF-5c</i>) based on the length.</li>
+            <li><strong>tiR</strong>: <i>stress-induced tRNA</i>; has 2 subcategories (<i>5tiR</i> and <i>3tiR</i>).</li>
+            <li><strong>tRF-2</strong>: derived from the anticodon loop of mature tRNAs.</li>
+          </ul>
+          <img src="{{ url_for('static', filename='tRF_Category.png') }}" class="img-fluid mx-auto d-block" alt="tRF Categories"/>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
+          <h3>About tRF Target</h3>
+          <p><strong>tRF Target</strong> is a relational database respect to the computational predicted binding interactions between human tRFs and target transcripts based on the state-of-the-art prediction tools <a href="https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid" style="font-style:italic">RNAhybrid</a> and <a href="http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp" style="font-style:italic">IntaRNA</a>.</p>
+          <p>The database can provide detailed information about the binding interactions as well as an illustration of the interaction sequences. Furthermore, the database can be also searched by <i>tRF ID</i>, <i>gene</i> or <i>transcript</i> to get a comprehensive overview of tRF-transcript interactions.</p>
+          <p>Our database is expected to facilitate the research of tRFs on the below aspects:</p>
+          <ul>
+            <li>guide the validation experiments of one specific tRF and one transcript.</li>
+            <li>provide a clue of the biological functionality of tRF from the perspective of comprehensive tRF-transcript interactions.</li>
+            <li>help to construct the Motif of tRFs based on predicted binding interactions.</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
+          <h3>Contact Us</h3>
+          <p>If you want to send issues, feedbacks, suggestions or comments about tRF Target, please report a issue in our Github project <a href="https://github.com/ZWang-Lab/tRFTarget/issues">tRFTarget</a>.</p>
+        </div>
+      </div>
+  </div>
+  
+  {# Footer #}
+  <footer class="footer">
+    <div class="container-fluid">
+      <p>&copy tRF Target 2020 | All Rights Reserved</p>
+    </div>
+  </footer>
+{% endblock %}

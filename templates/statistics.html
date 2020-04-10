@@ -1,0 +1,192 @@
+{# Jinja web template engine which will be redered by Flask #}
+{# Template Inheritance #}
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{# Adding a lang="en" attribute to the <html>-tag #}
+{% block html_attribs %}
+  lang="en"
+{% endblock %}
+
+{# Replace the title block in the head section in base template #}
+{% block title %}
+  tRF Target
+{% endblock %}
+
+{# Adding CSS file #}
+{# As bootstrap_find_resource in base html will only load Bootstrap 3, we will load Bootstrap 4 manually #}
+{% block styles %}
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.20/b-1.6.1/b-flash-1.6.1/b-html5-1.6.1/datatables.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='my.css') }}">
+{% endblock %}
+
+{# Custom Javascript #}
+{% block scripts %}
+  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.20/b-1.6.1/b-flash-1.6.1/b-html5-1.6.1/datatables.min.js"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='my.js') }}"></script>
+{% endblock %}
+
+
+{# Add a always expand navbar #}
+{% block navbar %}
+  <div class="container-fluid">
+    {# Add a title area before navbar #}
+    <div class="row text-white h-100" style="background-color: #4169e1">
+      <div class="col-md-5">
+        <h1>tRF Target</h1>
+        <p>Explore Binding <span id="strongtitle">Target</span>s of <span id="strongtitle">T</span>ransfer <span id="strongtitle">R</span>NA Related/Derived <span id="strongtitle">F</span>ragments</p>
+      </div>
+      <div class="col-md-3 my-auto">
+        <img src="{{ url_for('static', filename='CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
+      </div>
+      <div class="col-md-4 my-auto">
+        <img src="{{ url_for('static', filename='Yale_School_of_Public_Health.png') }}" class="logo-pic mx-auto d-block" alt="YSPH Logo"/>
+      </div>
+    </div>
+    </div>
+    
+    {# Navbar #}
+    <div class="row">
+      <nav class="navbar nav-fill w-100 justify-content-center navbar-dark bg-dark navbar-expand-sm">
+        <ul class="navbar-nav nav-fill w-100">
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('index') }}">HOME</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='method') }}">METHOD</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE</a>
+          </li>
+          <li class="nav-item active">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='statistics') }}">STATISTICS<span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='manual') }}">MANUAL</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='team') }}">TEAM</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+{% endblock %}
+
+
+{# The .container class provides a responsive fixed width container
+The .container-fluid class provides a full width container, spanning the entire width of the viewport
+Bootstrap's grid system allows up to 12 columns across the page
+If you do not want to use all 12 columns individually, you can group the columns together to create wider columns
+md class (for small laptops - screens equal to or greater than 992px wide)
+#}
+
+{% block content %}
+  <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
+          <h3>Number of tRFs covered by tRF Target</h3>
+          <p>tRF Target totally covers <strong>270</strong> tRFs, including <strong>157</strong> tRFs from <a href="http://genome.bioch.virginia.edu/trfdb/index.php" style="font-style:italic">tRFdb</a> and <strong>113</strong> tsRNAs from the <a href="https://doi.org/10.1073/pnas.1706908114"><span style="font-style:italic">PNAS</span> study</a>. The detailed numbers of each tRF category are shown as below:</p>
+          <ul>
+            <li><strong>tRF-1</strong>: 32</li>
+            <li><strong>tRF-3</strong>: 62</li>
+              <ul>
+                <li><strong>tRF-3a</strong>: 32</li>
+                <li><strong>tRF-3b</strong>: 30</li>
+              </ul>
+            </li>
+            <li><strong>tRF-5</strong>: 63</li>
+              <ul>
+                <li><strong>tRF-5a</strong>: 22</li>
+                <li><strong>tRF-5b</strong>: 23</li>
+                <li><strong>tRF-5c</strong>: 18</li>
+              </ul>
+            </li>
+            <li><strong>tsRNA</strong>: 113</li>
+          </ul>
+          <p>The median sequence length of all tRFs is 20 bases, and the minimum sequence length is 13 bases, while the maximum sequence length is 48 bases. The boxplot of sequence length grouped by tRF categories can see the below figure:</p>
+          <img src="{{ url_for('static', filename='tRFLengthBoxplot.png') }}" class="img-fluid mx-auto d-block" alt="tRF Length Boxplot"/>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
+          <h3>Number of genes and transcripts covered by tRF Target</h3>
+          <p>tRF Target totally covers <strong>100,291</strong> human protein-coding transcripts. The median sequence length of all transcripts is 1,512 base, and the minimum sequence length is 8 base, while the maximum sequence length is 109,224 base. These transcripts are corresponding to only <strong>20,355</strong> genes, i.e., each gene has about 5 transcript isoforms.</p>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
+          <h3>Number of binding interactions included in tRF Target</h3>
+          <p>tRF Target totally includes <strong>153,284,308</strong> binding interactions between human tRFs and transcripts, including <strong>96,579,825</strong> interactions predicted by <a href="https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid" style="font-style:italic">RNAhybrid</a> and <strong>56,704,483</strong> interactions predicted by <a href="http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp" style="font-style:italic">IntaRNA</a>. The detailed numbers of interactions of each tRF category are shown in the barplot below:</p>
+          <img src="{{ url_for('static', filename='EntriesBarplot.png') }}" class="img-fluid mx-auto d-block" alt="Entries Barplot"/>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
+          <h3>Distribution of free energy of binding interactions</h3>
+          <ul>
+            <li><a href="https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid" style="font-style:italic">RNAhybrid</a>:
+              <ul>
+                <li>lowest free energy: -71.6 kcal/mol</li>
+                <li>median free energy: -24.1 kcal/mol</li>
+                <li>highest free energy: -15.0 kcal/mol (the set free energy threshold for <i>RNAhybrid</i>)</li>
+              </ul>
+            </li>
+            <li><a href="http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp" style="font-style:italic">IntaRNA</a>:
+              <ul>
+                <li>lowest free energy: -47.9 kcal/mol</li>
+                <li>median free energy: -9.2 kcal/mol</li>
+                <li>highest free energy: 0.0 kcal/mol</li>
+              </ul>
+            </li>
+          </ul>
+          <p>The detailed distribution of free energy of each tRF category are shown in the boxplot below. As shown in the boxplot, interactions predicted by <i>IntaRNA</i> tend to have a higher free energy than <i>RNAhybrid</i> because <i>IntaRNA</i> turns on the “accessibility” feature.</p>
+          <img src="{{ url_for('static', filename='MFEBoxplot.png') }}" class="img-fluid mx-auto d-block" alt="Free Energy Boxplot"/>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
+          <h3>Distribution of maximum complementary length of binding interactions</h3>
+          <ul>
+            <li><a href="https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid" style="font-style:italic">RNAhybrid</a>:
+              <ul>
+                <li>shortest maximum complementary length: 6 bases (the used maximum complementary length threshold to filter out <i>RNAhybrid</i> predictions)</li>
+                <li>median maximum complementary length: 7 bases</li>
+                <li>longest maximum complementary length: 31 bases</li>
+              </ul>
+            </li>
+            <li><a href="http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp" style="font-style:italic">IntaRNA</a>:
+              <ul>
+                <li>shortest maximum complementary length: 6 bases (the set seed length threshold for <i>IntaRNA</i>)</li>
+                <li>median maximum complementary length: 7 bases</li>
+                <li>longest maximum complementary length: 30 bases</li>
+              </ul>
+            </li>
+          </ul>
+          <p>The detailed distribution of maximum complementary length of each tRF category are shown in the boxplot below (The definition of maximum complementary length can refer <a href="{{ url_for('show', page='manual') }}">MANUAL</a>):</p>
+          <img src="{{ url_for('static', filename='LengthBoxplot.png') }}" class="img-fluid mx-auto d-block" alt="Length Boxplot"/>
+          <br>
+        </div>
+      </div>
+  </div>
+  
+  {# Footer #}
+  <footer class="footer">
+    <div class="container-fluid">
+      <p>&copy tRF Target 2020 | All Rights Reserved</p>
+    </div>
+  </footer>
+{% endblock %}
