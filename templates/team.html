@@ -17,7 +17,6 @@
 {# As bootstrap_find_resource in base html will only load Bootstrap 3, we will load Bootstrap 4 manually #}
 {% block styles %}
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.20/b-1.6.1/b-flash-1.6.1/b-html5-1.6.1/datatables.min.css"/>
   <link rel="stylesheet" href="{{ url_for('static', filename='my.css') }}">
 {% endblock %}
 
@@ -26,8 +25,6 @@
   <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.20/b-1.6.1/b-flash-1.6.1/b-html5-1.6.1/datatables.min.js"></script>
-  <script type="text/javascript" src="{{ url_for('static', filename='my.js') }}"></script>
 {% endblock %}
 
 
@@ -38,13 +35,13 @@
     <div class="row text-white h-100" style="background-color: #4169e1">
       <div class="col-md-5">
         <h1>tRF Target</h1>
-        <p>Explore Binding <span id="strongtitle">Target</span>s of <span id="strongtitle">T</span>ransfer <span id="strongtitle">R</span>NA Related/Derived <span id="strongtitle">F</span>ragments</p>
+        <p>Explore Binding <span id="strongtitle">Target</span>s of <span id="strongtitle">T</span>ransfer <span id="strongtitle">R</span>NA Derived <span id="strongtitle">F</span>ragments</p>
       </div>
       <div class="col-md-3 my-auto">
-        <img src="{{ url_for('static', filename='CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
+        <img src="{{ url_for('static', filename='pic_logo/CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
       </div>
       <div class="col-md-4 my-auto">
-        <img src="{{ url_for('static', filename='Yale_School_of_Public_Health.png') }}" class="logo-pic mx-auto d-block" alt="YSPH Logo"/>
+        <img src="{{ url_for('static', filename='pic_logo/Yale_School_of_Public_Health.png') }}" class="logo-pic mx-auto d-block" alt="YSPH Logo"/>
       </div>
     </div>
     
@@ -60,6 +57,9 @@
           </li>
           <li class="nav-item">
             <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCES</a>
           </li>
           <li class="nav-item">
             <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='statistics') }}">STATISTICS</a>
@@ -96,7 +96,7 @@ md class (for small laptops - screens equal to or greater than 992px wide)
       <div class="row">
         <div class="col-md-1 offset-md-2">
           <br>
-          <img src="{{ url_for('static', filename='Wang.jpg') }}" alt="Wang Photo" height="100"/>
+          <img src="{{ url_for('static', filename='pic_team/Wang.jpg') }}" alt="Wang Photo" height="100"/>
         </div>
         <div class="col-md-3">
           <br>
@@ -106,7 +106,7 @@ md class (for small laptops - screens equal to or greater than 992px wide)
        
         <div class="col-md-1">
           <br>
-          <img src="{{ url_for('static', filename='Lu.jpg') }}" alt="Lu Photo" height="100"/>
+          <img src="{{ url_for('static', filename='pic_team/Lu.jpg') }}" alt="Lu Photo" height="100"/>
         </div>
         <div class="col-md-5">
           <br>
@@ -118,7 +118,7 @@ md class (for small laptops - screens equal to or greater than 992px wide)
       <div class="row">
         <div class="col-md-1 offset-md-2">
           <br>
-          <img src="{{ url_for('static', filename='Li.jpg') }}" alt="Li Photo" height="100"/>
+          <img src="{{ url_for('static', filename='pic_team/Li.jpg') }}" alt="Li Photo" height="100"/>
         </div>
         <div class="col-md-5">
           <br>

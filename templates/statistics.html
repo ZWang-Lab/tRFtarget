@@ -17,7 +17,6 @@
 {# As bootstrap_find_resource in base html will only load Bootstrap 3, we will load Bootstrap 4 manually #}
 {% block styles %}
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.20/b-1.6.1/b-flash-1.6.1/b-html5-1.6.1/datatables.min.css"/>
   <link rel="stylesheet" href="{{ url_for('static', filename='my.css') }}">
 {% endblock %}
 
@@ -26,8 +25,6 @@
   <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.20/b-1.6.1/b-flash-1.6.1/b-html5-1.6.1/datatables.min.js"></script>
-  <script type="text/javascript" src="{{ url_for('static', filename='my.js') }}"></script>
 {% endblock %}
 
 
@@ -38,13 +35,13 @@
     <div class="row text-white h-100" style="background-color: #4169e1">
       <div class="col-md-5">
         <h1>tRF Target</h1>
-        <p>Explore Binding <span id="strongtitle">Target</span>s of <span id="strongtitle">T</span>ransfer <span id="strongtitle">R</span>NA Related/Derived <span id="strongtitle">F</span>ragments</p>
+        <p>Explore Binding <span id="strongtitle">Target</span>s of <span id="strongtitle">T</span>ransfer <span id="strongtitle">R</span>NA Derived <span id="strongtitle">F</span>ragments</p>
       </div>
       <div class="col-md-3 my-auto">
-        <img src="{{ url_for('static', filename='CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
+        <img src="{{ url_for('static', filename='pic_logo/CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
       </div>
       <div class="col-md-4 my-auto">
-        <img src="{{ url_for('static', filename='Yale_School_of_Public_Health.png') }}" class="logo-pic mx-auto d-block" alt="YSPH Logo"/>
+        <img src="{{ url_for('static', filename='pic_logo/Yale_School_of_Public_Health.png') }}" class="logo-pic mx-auto d-block" alt="YSPH Logo"/>
       </div>
     </div>
     </div>
@@ -61,6 +58,9 @@
           </li>
           <li class="nav-item">
             <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCES</a>
           </li>
           <li class="nav-item active">
             <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='statistics') }}">STATISTICS<span class="sr-only">(current)</span></a>
@@ -87,20 +87,27 @@ md class (for small laptops - screens equal to or greater than 992px wide)
 
 {% block content %}
   <div class="container-fluid">
+      {# tRF #}
       <div class="row">
         <div class="col-md-8 offset-md-2">
           <br>
           <h3>Number of tRFs covered by tRF Target</h3>
-          <p>tRF Target totally covers <strong>270</strong> tRFs, including <strong>157</strong> tRFs from <a href="http://genome.bioch.virginia.edu/trfdb/index.php" style="font-style:italic">tRFdb</a> and <strong>113</strong> tsRNAs from the <a href="https://doi.org/10.1073/pnas.1706908114"><span style="font-style:italic">PNAS</span> study</a>. The detailed numbers of each tRF category are shown as below:</p>
+        </div>
+      </div>
+      
+      {# first row #}
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>Human tRFs: 270 (13~48 nts)</h4>
           <ul>
             <li><strong>tRF-1</strong>: 32</li>
-            <li><strong>tRF-3</strong>: 62</li>
+            <li><strong>tRF-3</strong>: 62
               <ul>
                 <li><strong>tRF-3a</strong>: 32</li>
                 <li><strong>tRF-3b</strong>: 30</li>
               </ul>
             </li>
-            <li><strong>tRF-5</strong>: 63</li>
+            <li><strong>tRF-5</strong>: 63
               <ul>
                 <li><strong>tRF-5a</strong>: 22</li>
                 <li><strong>tRF-5b</strong>: 23</li>
@@ -109,78 +116,524 @@ md class (for small laptops - screens equal to or greater than 992px wide)
             </li>
             <li><strong>tsRNA</strong>: 113</li>
           </ul>
-          <p>The median sequence length of all tRFs is 20 bases, and the minimum sequence length is 13 bases, while the maximum sequence length is 48 bases. The boxplot of sequence length grouped by tRF categories can see the below figure:</p>
-          <img src="{{ url_for('static', filename='tRFLengthBoxplot.png') }}" class="img-fluid mx-auto d-block" alt="tRF Length Boxplot"/>
+          <img src="{{ url_for('static', filename='pic_statistics/tRFLengthBoxplot.png') }}" class="img-fluid mx-auto d-block" alt="tRF Length Boxplot"/>
+        </div>
+        
+        <div class="col-md-4 border-left border-success">
+          <h4>Mouse tRFs: 164 (14~34 nts)</h4>
+          <ul>
+            <li><strong>tRF-1</strong>: 30</li>
+            <li><strong>tRF-3</strong>: 92
+              <ul>
+                <li><strong>tRF-3a</strong>: 45</li>
+                <li><strong>tRF-3b</strong>: 47</li>
+              </ul>
+            </li>
+            <li><strong>tRF-5</strong>: 42
+              <ul>
+                <li><strong>tRF-5a</strong>: 22</li>
+                <li><strong>tRF-5b</strong>: 19</li>
+                <li><strong>tRF-5c</strong>: 1</li>
+              </ul>
+            </li>
+            <br>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/tRFLengthBoxplotMouse.png') }}" class="img-fluid mx-auto d-block" alt="Mouse tRF Length Boxplot"/>
         </div>
       </div>
       
+      {# second row #}
+      </br>
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>Drosophila tRFs: 86 (16~29 nts)</h4>
+          <ul>
+            <li><strong>tRF-1</strong>: 21</li>
+            <li><strong>tRF-3</strong>: 43</li>
+            <li><strong>tRF-5</strong>: 22</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/tRFLengthBoxplotDrosophila.png') }}" class="img-fluid mx-auto d-block" alt="Drosophila tRF Length Boxplot"/>
+        </div>
+        
+        <div class="col-md-4 border-left border-success">
+          <h4>C. elegans tRFs: 47 (17~26 nts)</h4>
+          <ul>
+            <li><strong>tRF-3</strong>: 30</li>
+            <li><strong>tRF-5</strong>: 17</li>
+            <br>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/tRFLengthBoxplotElegans.png') }}" class="img-fluid mx-auto d-block" alt="Elegans tRF Length Boxplot"/>
+        </div>
+      </div>
+      
+      {# third row #}
+      </br>
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>S. pombe tRFs: 104 (14~31 nts)</h4>
+          <ul>
+            <li><strong>tRF-1</strong>: 11</li>
+            <li><strong>tRF-3</strong>: 44</li>
+            <li><strong>tRF-5</strong>: 49</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/tRFLengthBoxplotPombe.png') }}" class="img-fluid mx-auto d-block" alt="Pombe tRF Length Boxplot"/>
+        </div>
+        
+        <div class="col-md-4 border-left border-success">
+          <h4>R. sphaeroides tRFs: 87 (13~32 nts)</h4>
+          <ul>
+            <li><strong>tRF-3</strong>: 40</li>
+            <li><strong>tRF-5</strong>: 47</li>
+            <br>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/tRFLengthBoxplotSphaeroides.png') }}" class="img-fluid mx-auto d-block" alt="Sphaeroides tRF Length Boxplot"/>
+        </div>
+      </div>
+      
+      {# fourth row #}
+      </br>
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>Xenopus tropicalis tRFs: 51 (13~36 nts)</h4>
+          <ul>
+            <li><strong>tRF-1</strong>: 18</li>
+            <li><strong>tRF-3</strong>: 13</li>
+            <li><strong>tRF-5</strong>: 20</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/tRFLengthBoxplotXenopus.png') }}" class="img-fluid mx-auto d-block" alt="Xenopus tRF Length Boxplot"/>
+        </div>
+        
+        <div class="col-md-4 border-left border-success">
+          <h4>Zebrafish tRFs: 127 (17~28 nts)</h4>
+          <ul>
+            <li><strong>tRF-1</strong>: 36</li>
+            <li><strong>tRF-3</strong>: 35</li>
+            <li><strong>tRF-5</strong>: 56</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/tRFLengthBoxplotZebrafish.png') }}" class="img-fluid mx-auto d-block" alt="Zebrafish tRF Length Boxplot"/>
+        </div>
+      </div>
+      
+      
+      {# Gene & Transcript #}
       <div class="row">
         <div class="col-md-8 offset-md-2">
           <br>
           <h3>Number of genes and transcripts covered by tRF Target</h3>
-          <p>tRF Target totally covers <strong>100,291</strong> human protein-coding transcripts. The median sequence length of all transcripts is 1,512 base, and the minimum sequence length is 8 base, while the maximum sequence length is 109,224 base. These transcripts are corresponding to only <strong>20,355</strong> genes, i.e., each gene has about 5 transcript isoforms.</p>
         </div>
       </div>
       
+      {# first row #}
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>Human</h4>
+          <ul>
+            <li><strong>protein-coding transcripts</strong>: 100,291 (8~109,224 nts)</li>
+            <li><strong>genes</strong>: 20,355</li>
+            <li>each gene has about <strong>5</strong> transcript isoforms on average</li>
+          </ul>
+        </div>
+        
+        <div class="col-md-4 border-left border-success">
+          <h4>Mouse</h4>
+          <ul>
+            <li><strong>protein-coding transcripts</strong>: 67,125 (9~123,179 nts)</li>
+            <li><strong>genes</strong>: 22,385</li>
+            <li>each gene has about <strong>3</strong> transcript isoforms on average</li>
+          </ul>
+        </div>
+      </div>
+      
+      {# second row #}
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>Drosophila</h4>
+          <ul>
+            <li><strong>protein-coding transcripts</strong>: 30,588 (152~71,382 nts)</li>
+            <li><strong>genes</strong>: 13,947</li>
+            <li>each gene has about <strong>2</strong> transcript isoforms on average</li>
+          </ul>
+        </div>
+        
+        <div class="col-md-4 border-left border-success">
+          <h4>C. elegans</h4>
+          <ul>
+            <li><strong>protein-coding transcripts</strong>: 33,552 (30~45,950 nts)</li>
+            <li><strong>genes</strong>: 20,191</li>
+            <li>each gene has about <strong>2</strong> transcript isoforms on average</li>
+          </ul>
+        </div>
+      </div>
+      
+      {# third row #}
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>S. pombe</h4>
+          <ul>
+            <li><strong>protein-coding transcripts</strong>: 5,146 (75~15,022 nts)</li>
+            <li><strong>genes</strong>: 5,145</li>
+            <li>each gene has about <strong>1</strong> transcript</li>
+          </ul>
+        </div>
+        
+        <div class="col-md-4 border-left border-success">
+          <h4>R. sphaeroides</h4>
+          <ul>
+            <li><strong>protein-coding transcripts</strong>: 3,111 (81~8,286 nts)</li>
+            <li><strong>genes</strong>: 3,111</li>
+            <li>each gene has about <strong>1</strong> transcript</li>
+          </ul>
+        </div>
+      </div>
+      
+      {# fourth row #}
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>Xenopus tropicalis</h4>
+          <ul>
+            <li><strong>protein-coding transcripts</strong>: 54,848 (18~26,729 nts)</li>
+            <li><strong>genes</strong>: 19,983</li>
+            <li>each gene has about <strong>3</strong> transcript isoforms on average</li>
+          </ul>
+        </div>
+        
+        <div class="col-md-4 border-left border-success">
+          <h4>Zebrafish</h4>
+          <ul>
+            <li><strong>protein-coding transcripts</strong>: 51,259 (10~88,553 nts)</li>
+            <li><strong>genes</strong>: 30,149</li>
+            <li>each gene has about <strong>2</strong> transcript isoforms on average</li>
+          </ul>
+        </div>
+      </div>
+      
+      
+      {# Binding #}
       <div class="row">
         <div class="col-md-8 offset-md-2">
           <br>
           <h3>Number of binding interactions included in tRF Target</h3>
-          <p>tRF Target totally includes <strong>153,284,308</strong> binding interactions between human tRFs and transcripts, including <strong>96,579,825</strong> interactions predicted by <a href="https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid" style="font-style:italic">RNAhybrid</a> and <strong>56,704,483</strong> interactions predicted by <a href="http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp" style="font-style:italic">IntaRNA</a>. The detailed numbers of interactions of each tRF category are shown in the barplot below:</p>
-          <img src="{{ url_for('static', filename='EntriesBarplot.png') }}" class="img-fluid mx-auto d-block" alt="Entries Barplot"/>
         </div>
       </div>
       
+      {# first row #}
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>Human</h4>
+          <ul>
+            <li><strong><i>RNAhybrid</i></strong> predictions: 96,579,825 (<strong>3.57</strong> interactions for 1 tRF and 1 transcript on average)</li>
+            <li><strong><i>IntaRNA</i></strong> predictions: 56,704,483 (<strong>2.09</strong> interactions for 1 tRF and 1 transcript on average)</li>
+            <li><strong>Consensus</strong> predictions (<strong>0.58</strong> interactions for 1 tRF and 1 transcript on average):
+              <ul>
+                <li>15,772,606 predictions from <i>RNAhybrid</i> (<strong>16.33%</strong>)</li>
+                <li>15,772,606 predictions from <i>IntaRNA</i> (<strong>27.82%</strong>)</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        
+        <div class="col-md-4 border-left border-success">
+          <h4>Mouse</h4>
+          <ul>
+            <li><strong><i>RNAhybrid</i></strong> predictions: 37,414,246 (<strong>3.40</strong> interactions for 1 tRF and 1 transcript on average)</li>
+            <li><strong><i>IntaRNA</i></strong> predictions: 22,660,525 (<strong>2.06</strong> interactions for 1 tRF and 1 transcript on average)</li>
+            <li><strong>Consensus</strong> predictions (<strong>0.57</strong> interactions for 1 tRF and 1 transcript on average):
+              <ul>
+                <li>6,247,913 predictions from <i>RNAhybrid</i> (<strong>16.70%</strong>)</li>
+                <li>6,247,913 predictions from <i>IntaRNA</i> (<strong>27.57%</strong>)</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      {# second row #}
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>Drosophila</h4>
+          <ul>
+            <li><strong><i>RNAhybrid</i></strong> predictions: 8,986,901 (<strong>3.42</strong> interactions for 1 tRF and 1 transcript on average)</li>
+            <li><strong><i>IntaRNA</i></strong> predictions: 5,835,485 (<strong>2.22</strong> interactions for 1 tRF and 1 transcript on average)</li>
+            <li><strong>Consensus</strong> predictions (<strong>0.58</strong> interactions for 1 tRF and 1 transcript on average):
+              <ul>
+                <li>1,535,375 predictions from <i>RNAhybrid</i> (<strong>17.08%</strong>)</li>
+                <li>1,535,375 predictions from <i>IntaRNA</i> (<strong>26.31%</strong>)</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        
+        <div class="col-md-4 border-left border-success">
+          <h4>C. elegans</h4>
+          <ul>
+            <li><strong><i>RNAhybrid</i></strong> predictions: 4,495,315 (<strong>2.85</strong> interactions for 1 tRF and 1 transcript on average)</li>
+            <li><strong><i>IntaRNA</i></strong> predictions: 3,190,362 (<strong>2.02</strong> interactions for 1 tRF and 1 transcript on average)</li>
+            <li><strong>Consensus</strong> predictions (<strong>0.67</strong> interactions for 1 tRF and 1 transcript on average):
+              <ul>
+                <li>1,062,987 predictions from <i>RNAhybrid</i> (<strong>23.65%</strong>)</li>
+                <li>1,062,987 predictions from <i>IntaRNA</i> (<strong>33.32%</strong>)</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      {# third row #}
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>S. pombe</h4>
+          <ul>
+            <li><strong><i>RNAhybrid</i></strong> predictions: 1,916,852 (<strong>3.58</strong> interactions for 1 tRF and 1 transcript on average)</li>
+            <li><strong><i>IntaRNA</i></strong> predictions: 1,188,223 (<strong>2.22</strong> interactions for 1 tRF and 1 transcript on average)</li>
+            <li><strong>Consensus</strong> predictions (<strong>0.56</strong> interactions for 1 tRF and 1 transcript on average):
+              <ul>
+                <li>301,556 predictions from <i>RNAhybrid</i> (<strong>15.73%</strong>)</li>
+                <li>301,556 predictions from <i>IntaRNA</i> (<strong>25.38%</strong>)</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        
+        <div class="col-md-4 border-left border-success">
+          <h4>R. sphaeroides</h4>
+          <ul>
+            <li><strong><i>RNAhybrid</i></strong> predictions: 869,821 (<strong>3.21</strong> interactions for 1 tRF and 1 transcript on average)</li>
+            <li><strong><i>IntaRNA</i></strong> predictions: 563,500 (<strong>2.08</strong> interactions for 1 tRF and 1 transcript on average)</li>
+            <li><strong>Consensus</strong> predictions (<strong>0.58</strong> interactions for 1 tRF and 1 transcript on average):
+              <ul>
+                <li>157,715 predictions from <i>RNAhybrid</i> (<strong>18.13%</strong>)</li>
+                <li>157,715 predictions from <i>IntaRNA</i> (<strong>27.99%</strong>)</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      {# fourth row #}
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>Xenopus tropicalis</h4>
+          <ul>
+            <li><strong><i>RNAhybrid</i></strong> predictions: 10,151,269 (<strong>3.63</strong> interactions for 1 tRF and 1 transcript on average)</li>
+            <li><strong><i>IntaRNA</i></strong> predictions: 6,298,323 (<strong>2.25</strong> interactions for 1 tRF and 1 transcript on average)</li>
+            <li><strong>Consensus</strong> predictions (<strong>0.87</strong> interactions for 1 tRF and 1 transcript on average):
+              <ul>
+                <li>2,445,761 predictions from <i>RNAhybrid</i> (<strong>24.09%</strong>)</li>
+                <li>2,445,761 predictions from <i>IntaRNA</i> (<strong>38.83%</strong>)</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        
+        <div class="col-md-4 border-left border-success">
+          <h4>Zebrafish</h4>
+          <ul>
+            <li><strong><i>RNAhybrid</i></strong> predictions: 23,688,750 (<strong>3.64</strong> interactions for 1 tRF and 1 transcript on average)</li>
+            <li><strong><i>IntaRNA</i></strong> predictions: 13,701,030 (<strong>2.10</strong> interactions for 1 tRF and 1 transcript on average)</li>
+            <li><strong>Consensus</strong> predictions (<strong>0.67</strong> interactions for 1 tRF and 1 transcript on average):
+              <ul>
+                <li>4,372,146 predictions from <i>RNAhybrid</i> (<strong>18.46%</strong>)</li>
+                <li>4,372,146 predictions from <i>IntaRNA</i> (<strong>31.91%</strong>)</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      
+      {# MFE #}
       <div class="row">
         <div class="col-md-8 offset-md-2">
           <br>
           <h3>Distribution of free energy of binding interactions</h3>
-          <ul>
-            <li><a href="https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid" style="font-style:italic">RNAhybrid</a>:
-              <ul>
-                <li>lowest free energy: -71.6 kcal/mol</li>
-                <li>median free energy: -24.1 kcal/mol</li>
-                <li>highest free energy: -15.0 kcal/mol (the set free energy threshold for <i>RNAhybrid</i>)</li>
-              </ul>
-            </li>
-            <li><a href="http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp" style="font-style:italic">IntaRNA</a>:
-              <ul>
-                <li>lowest free energy: -47.9 kcal/mol</li>
-                <li>median free energy: -9.2 kcal/mol</li>
-                <li>highest free energy: 0.0 kcal/mol</li>
-              </ul>
-            </li>
-          </ul>
-          <p>The detailed distribution of free energy of each tRF category are shown in the boxplot below. As shown in the boxplot, interactions predicted by <i>IntaRNA</i> tend to have a higher free energy than <i>RNAhybrid</i> because <i>IntaRNA</i> turns on the “accessibility” feature.</p>
-          <img src="{{ url_for('static', filename='MFEBoxplot.png') }}" class="img-fluid mx-auto d-block" alt="Free Energy Boxplot"/>
         </div>
       </div>
       
+      {# first row #}
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>Human</h4>
+          <ul>
+            <li><i>RNAhybrid</i>: -71.6~-15.0; median -24.1 kcal/mol</li>
+            <li><i>IntaRNA</i>: -47.9~0.0; median -9.2 kcal/mol</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/MFEBoxplot.png') }}" class="img-fluid mx-auto d-block" alt="Free Energy Boxplot"/>
+        </div>
+
+        <div class="col-md-4 border-left border-success">
+          <h4>Mouse</h4>
+          <ul>
+            <li><i>RNAhybrid</i>: -56.0~-15.0; median -25.0 kcal/mol</li>
+            <li><i>IntaRNA</i>: -37.8~0.0; median -9.8 kcal/mol</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/MFEBoxplotMouse.png') }}" class="img-fluid mx-auto d-block" alt="Mouse Free Energy Boxplot"/>
+        </div>
+      </div>
+      
+      </br>
+      {# second row #}
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>Drosophila</h4>
+          <ul>
+            <li><i>RNAhybrid</i>: -58.2~-15.0; median -24.6 kcal/mol</li>
+            <li><i>IntaRNA</i>: -40.9~0.0; median -9.2 kcal/mol</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/MFEBoxplotDrosophila.png') }}" class="img-fluid mx-auto d-block" alt="Drosophila Free Energy Boxplot"/>
+        </div>
+
+        <div class="col-md-4 border-left border-success">
+          <h4>C. elegans</h4>
+          <ul>
+            <li><i>RNAhybrid</i>: -43.5~-15.0; median -22.2 kcal/mol</li>
+            <li><i>IntaRNA</i>: -31.7~0.0; median -9.1 kcal/mol</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/MFEBoxplotElegans.png') }}" class="img-fluid mx-auto d-block" alt="Elegans Free Energy Boxplot"/>
+        </div>
+      </div>
+      
+      </br>
+      {# third row #}
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>S. pombe</h4>
+          <ul>
+            <li><i>RNAhybrid</i>: -55.6~-15.0; median -24.2 kcal/mol</li>
+            <li><i>IntaRNA</i>: -45.5~0.0; median -8.0 kcal/mol</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/MFEBoxplotPombe.png') }}" class="img-fluid mx-auto d-block" alt="Pombe Free Energy Boxplot"/>
+        </div>
+
+        <div class="col-md-4 border-left border-success">
+          <h4>R. sphaeroides</h4>
+          <ul>
+            <li><i>RNAhybrid</i>: -55.8~-15.0; median -25.5 kcal/mol</li>
+            <li><i>IntaRNA</i>: -40.2~0.0; median -9.9 kcal/mol</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/MFEBoxplotSphaeroides.png') }}" class="img-fluid mx-auto d-block" alt="Sphaeroides Free Energy Boxplot"/>
+        </div>
+      </div>
+      
+      </br>
+      {# fourth row #}
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>Xenopus tropicalis</h4>
+          <ul>
+            <li><i>RNAhybrid</i>: -58.8~-15.0; median -21.6 kcal/mol</li>
+            <li><i>IntaRNA</i>: -31.6~0.0; median -9.6 kcal/mol</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/MFEBoxplotXenopus.png') }}" class="img-fluid mx-auto d-block" alt="Xenopus Free Energy Boxplot"/>
+        </div>
+
+        <div class="col-md-4 border-left border-success">
+          <h4>Zebrafish</h4>
+          <ul>
+            <li><i>RNAhybrid</i>: -54.0~-15.0; median -23.6 kcal/mol</li>
+            <li><i>IntaRNA</i>: -37.1~0.0; median -9.8 kcal/mol</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/MFEBoxplotZebrafish.png') }}" class="img-fluid mx-auto d-block" alt="Zebrafish Free Energy Boxplot"/>
+        </div>
+      </div>
+      
+      
+      {# MCL #}
       <div class="row">
         <div class="col-md-8 offset-md-2">
           <br>
           <h3>Distribution of maximum complementary length of binding interactions</h3>
-          <ul>
-            <li><a href="https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid" style="font-style:italic">RNAhybrid</a>:
-              <ul>
-                <li>shortest maximum complementary length: 6 bases (the used maximum complementary length threshold to filter out <i>RNAhybrid</i> predictions)</li>
-                <li>median maximum complementary length: 7 bases</li>
-                <li>longest maximum complementary length: 31 bases</li>
-              </ul>
-            </li>
-            <li><a href="http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp" style="font-style:italic">IntaRNA</a>:
-              <ul>
-                <li>shortest maximum complementary length: 6 bases (the set seed length threshold for <i>IntaRNA</i>)</li>
-                <li>median maximum complementary length: 7 bases</li>
-                <li>longest maximum complementary length: 30 bases</li>
-              </ul>
-            </li>
-          </ul>
-          <p>The detailed distribution of maximum complementary length of each tRF category are shown in the boxplot below (The definition of maximum complementary length can refer <a href="{{ url_for('show', page='manual') }}">MANUAL</a>):</p>
-          <img src="{{ url_for('static', filename='LengthBoxplot.png') }}" class="img-fluid mx-auto d-block" alt="Length Boxplot"/>
-          <br>
         </div>
       </div>
+      
+      {# first row #}
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>Human</h4>
+          <ul>
+            <li><i>RNAhybrid</i>: 6~31; median 7 nts</li>
+            <li><i>IntaRNA</i>: 6~30; median 7 nts</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/LengthBoxplot.png') }}" class="img-fluid mx-auto d-block" alt="Length Boxplot"/>
+        </div>
+
+        <div class="col-md-4 border-left border-success">
+          <h4>Mouse</h4>
+          <ul>
+            <li><i>RNAhybrid</i>: 6~25; median 7 nts</li>
+            <li><i>IntaRNA</i>: 6~24; median 7 nts</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/LengthBoxplotMouse.png') }}" class="img-fluid mx-auto d-block" alt="Mouse Length Boxplot"/>
+        </div>
+      </div>
+      
+      </br>
+      {# second row #}
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>Drosophila</h4>
+          <ul>
+            <li><i>RNAhybrid</i>: 6~27; median 7 nts</li>
+            <li><i>IntaRNA</i>: 6~27; median 7 nts</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/LengthBoxplotDrosophila.png') }}" class="img-fluid mx-auto d-block" alt="Drosophila Length Boxplot"/>
+        </div>
+
+        <div class="col-md-4 border-left border-success">
+          <h4>C. elegans</h4>
+          <ul>
+            <li><i>RNAhybrid</i>: 6~20; median 7 nts</li>
+            <li><i>IntaRNA</i>: 6~22; median 7 nts</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/LengthBoxplotElegans.png') }}" class="img-fluid mx-auto d-block" alt="Elegans Length Boxplot"/>
+        </div>
+      </div>
+      
+      </br>
+      {# third row #}
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>S. pombe</h4>
+          <ul>
+            <li><i>RNAhybrid</i>: 6~30; median 7 nts</li>
+            <li><i>IntaRNA</i>: 6~30; median 7 nts</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/LengthBoxplotPombe.png') }}" class="img-fluid mx-auto d-block" alt="Pombe Length Boxplot"/>
+        </div>
+
+        <div class="col-md-4 border-left border-success">
+          <h4>R. sphaeroides</h4>
+          <ul>
+            <li><i>RNAhybrid</i>: 6~22; median 7 nts</li>
+            <li><i>IntaRNA</i>: 6~22; median 7 nts</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/LengthBoxplotSphaeroides.png') }}" class="img-fluid mx-auto d-block" alt="Sphaeroides Length Boxplot"/>
+        </div>
+      </div>
+      
+      </br>
+      {# fourth row #}
+      <div class="row">
+        <div class="col-md-4 offset-md-2 border-right border-success">
+          <h4>Xenopus tropicalis</h4>
+          <ul>
+            <li><i>RNAhybrid</i>: 6~22; median 7 nts</li>
+            <li><i>IntaRNA</i>: 6~22; median 7 nts</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/LengthBoxplotXenopus.png') }}" class="img-fluid mx-auto d-block" alt="Xenopus Length Boxplot"/>
+        </div>
+
+        <div class="col-md-4 border-left border-success">
+          <h4>Zebrafish</h4>
+          <ul>
+            <li><i>RNAhybrid</i>: 6~22; median 7 nts</li>
+            <li><i>IntaRNA</i>: 6~23; median 7 nts</li>
+          </ul>
+          <img src="{{ url_for('static', filename='pic_statistics/LengthBoxplotZebrafish.png') }}" class="img-fluid mx-auto d-block" alt="Zebrafish Length Boxplot"/>
+        </div>
+      </div>
+      
+      
+      <br>
   </div>
   
   {# Footer #}

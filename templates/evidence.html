@@ -60,11 +60,11 @@
           <li class="nav-item">
             <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='method') }}">METHOD</a>
           </li>
-          <li class="nav-item active">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE<span class="sr-only">(current)</span></a>
-          </li>
           <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCES</a>
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE</span></a>
+          </li>
+          <li class="nav-item active">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCES<span class="sr-only">(current)</a>
           </li>
           <li class="nav-item">
             <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='statistics') }}">STATISTICS</a>
@@ -94,141 +94,16 @@ md class (for small laptops - screens equal to or greater than 992px wide)
       <div class="row">
         <div class="col-md-8 offset-md-2">
           <br>
-          <h3>Search tRF Target</h3>
+          <h3>List of tRF-target exprimetnal evidences</h3>
         </div>
       </div>
-
-      {# query form #}
-      {# Submit action need to assigned to search route #}
-      <form class="form form-horizontal" method="POST" action="/search" role="form">
-        {{ form.hidden_tag() }}
-        
-        {# radio form to select prediction tool #}
-        <div class="row">
-          <div class="col-md-3 offset-md-3">
-            <h5>{{ form.search_table.label }}</h5>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-5 offset-md-3 form-field">
-              <div class="row">
-                {% for opt in form.search_table %}
-                  <div class="col">
-                    {{ opt }} {{opt.label}}
-                  </div>
-                {% endfor %}
-              </div>
-          </div>   
-        </div>
-        
-        {# select form to select search organism #}
-        <div class="row">
-          <div class="col-md-3 offset-md-3">
-            <h5>{{ form.search_organism.label }}</h5>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-2 offset-md-3 no-label organism-radio">
-            {{ wtf.form_field(form.search_organism) }}
-          </div>
-        </div>
-        
-        {# radio form to select search way #}
-        {% set opt1, opt2, opt3 = form.search_type %}
-        <div class="row">
-          <div class="col-md-3 offset-md-3">
-            <h5>{{ form.search_type.label }}</h5>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-2 offset-md-3">
-            {{ opt1 }} {{ opt1.label }}
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-2 offset-md-3 no-label trf-radio">
-            {{ wtf.form_field(form.trf) }}
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6 offset-md-3">
-            {{ opt2 }} {{ opt2.label }}
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-5 offset-md-3 no-label">
-            {{ wtf.form_field(form.gene, class="form-control autocomplete") }}
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6 offset-md-3">
-            {{ opt3 }} {{ opt3.label }}
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-5 offset-md-3 no-label">
-            {{ wtf.form_field(form.transcript, class="form-control autocomplete") }}
-          </div>
-        </div>
-        
-        {# filter part #}
-        <div class="row">
-          <div class="col-md-3 offset-md-3">
-            <h5>Additional Filter</h5>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6 offset-md-3 no-label intext-form">
-            <p>Free Energy &#8804 {{ form.mfe_threshold(class_="form-control") }} kcal/mol</p>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6 offset-md-3 no-label intext-form">
-            <p>Maximum Complementary Length &#8805 {{ form.len_threshold(class_="form-control") }} bases</p>
-          </div>
-        </div>
-        
-        {# submit button #}
-        <div class="row">
-          <div class="col-md-2 offset-md-7">
-            {{ wtf.form_field(form.submit, button_map={"submit": "primary"}) }}
-          </div>
-        </div>
-      </form>
-    </div>
+  </div>
   
   {# show data #}
   <div class="container-fluid">
-    {# first print some text #}
-    <div class="row">
-      <div class="col-md-6 offset-md-3">
-        {% if success %}
-          <br>
-          <pre><h4 class="text-success">{{ for_print }}</h4></pre>
-        {% else %}
-          <br>
-          <pre><h4 class="text-danger">{{ for_print }}</h4></pre>
-        {% endif %}
-      </div>
-    </div>
-    
-    {# show pathway button #}
-    {% if show_pathway %}
-      <div class="row">
-        <div class="col-md-7 offset-md-3 no-label intext-form">
-            <h4 class="d-inline-block align-middle text-success">Use top {{ form.mrna_num(class_="form-control") }} transcripts for Gene Enrichment Analysis</h4>
-            {# it is not a good idea to use onclick in HTML #}
-            <input class="btn btn-success ml-4" id="pathway" name="pathway" type="submit" value="Go">
-          </div>
-      </div>
-    {% endif %}
-    
-    <br>
-    
     {# data #}
-    {% if display_table %}
     <div class="row">
-      <table id="table_id" class="display" style="width:100%">
+      <table id="table_id2" class="display" style="width:100%">
         <thead>
           <tr>
             {% for th_item in th_list %}
@@ -239,18 +114,11 @@ md class (for small laptops - screens equal to or greater than 992px wide)
         {# decide ensembl website based on organisms #}
         {% set fungi = ['s.pombe'] %}
         {% set bacteria = ['r.sphaeroides'] %}
-        {% if form.search_organism.data in fungi %}
-          {% set ensembl_pre = 'fungi.' %}
-        {% elif form.search_organism.data in bacteria %}
-          {% set ensembl_pre = 'bacteria.' %}
-        {% else %}
-          {% set ensembl_pre = 'www.' %}
-        {% endif %}
         <tbody>
           {% for td_item in td_list %}
             <tr>
               {% for field in td_item %}
-                {% if loop.index == 1 %}
+                {% if loop.index == 2 %}
                   {# Creat hyperlink for tRF #}
                   {% if field.startswith('tRF') %}
                     {% set trf_name = field[4:9] %}
@@ -259,34 +127,55 @@ md class (for small laptops - screens equal to or greater than 992px wide)
                         {% set trf_name = trf_name[:-1] %}
                       {% endif %}
                     {% endif %}
-                    <td> <a href="http://genome.bioch.virginia.edu/trfdb/experiments_display.php?trf_id={{ trf_name }}&organism={{ form.search_organism.data }}" target="_blank" rel="noopener noreferrer">{{ field }}</a> </td>
+                    {% if td_item[0] == 'Human' %}
+                      {% set organism_name = 'human' %}
+                    {% elif td_item[0] == 'Mouse' %}
+                      {% set organism_name = 'mouse' %}
+                    {% elif td_item[0] == 'Drosophila' %}
+                      {% set organism_name = 'drosophila' %}
+                    {% elif td_item[0] == 'C. elegans' %}
+                      {% set organism_name = 'c.elegans' %}
+                    {% elif td_item[0] == 'S. pombe' %}
+                      {% set organism_name = 's.pombe' %}
+                    {% elif td_item[0] == 'R. sphaeroides' %}
+                      {% set organism_name = 'r.sphaeroides' %}
+                    {% elif td_item[0] == 'Xenopus tropicalis' %}
+                      {% set organism_name = 'Xenopus-tropicalis' %}
+                    {% elif td_item[0] == 'Zebrafish' %}
+                      {% set organism_name = 'Zebra_fish_Zv9' %}
+                    {% endif %}
+                    <td> <a href="http://genome.bioch.virginia.edu/trfdb/experiments_display.php?trf_id={{ trf_name }}&organism={{ organism_name }}" target="_blank" rel="noopener noreferrer">{{ field }}</a> </td>
                   {% else %}
                     <td>{{ field }}</td>
                   {% endif %}
-                {% elif loop.index == 2 %}
+                {% elif loop.index == 3 %}
                   {# Creat hyperlink for transcript #}
                   {# Replace nan with empty string #}
-                  {% if td_item[2] == 'nan' or td_item[2] is none %}
+                  {% if td_item[3] == 'nan' or td_item[2] is none %}
                     {% set tmp_enst = '' %}
                   {% else %}
-                    {% set tmp_enst = td_item[2] %}
+                    {% set tmp_enst = td_item[3] %}
+                  {% endif %}
+                  {% if organism_name in fungi %}
+                    {% set ensembl_pre = 'fungi.' %}
+                  {% elif organism_name in bacteria %}
+                    {% set ensembl_pre = 'bacteria.' %}
+                  {% else %}
+                    {% set ensembl_pre = 'www.' %}
                   {% endif %}
                     <td> <a href="https://{{ ensembl_pre }}ensembl.org/id/{{ field }}" target="_blank" rel="noopener noreferrer">{{ field }}<br/>({{ tmp_enst }})</a> </td>
-                {% elif loop.index == 4 %}
+                {% elif loop.index == 5 %}
                   {# Creat hyperlink for gene #}
                   {# Replace nan with empty string #}
-                  {% if td_item[4] == 'nan' or td_item[4] is none %}
+                  {% if td_item[5] == 'nan' or td_item[5] is none %}
                     {% set tmp_ensg = '' %}
                   {% else %}
-                    {% set tmp_ensg = td_item[4] %}
+                    {% set tmp_ensg = td_item[5] %}
                   {% endif %}
                     <td> <a href="https://{{ ensembl_pre }}ensembl.org/id/{{ field }}" target="_blank" rel="noopener noreferrer">{{ field }}<br/>({{ tmp_ensg }})</a> </td>
-                {% elif loop.index == 10 %}
-                  {# Display illustration #}
-                    <td> <pre>{{ field }}</pre> </td>
-                {% elif loop.index == 3 or loop.index == 5 %}
+                {% elif loop.index == 4 or loop.index == 6 %}
                   {# No action #}
-                {% elif loop.index == 11 or loop.index == 12 %}
+                {% elif loop.index == 7 or loop.index == 8 %}
                   {# Display evidence #}
                   {% if field is none or field == 'nan' %}
                   <td></td>
@@ -312,7 +201,6 @@ md class (for small laptops - screens equal to or greater than 992px wide)
       </table>
       <br>
     </div>
-    {% endif %}
   </div>
   
   {# Footer #}

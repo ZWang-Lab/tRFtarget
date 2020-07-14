@@ -17,7 +17,6 @@
 {# As bootstrap_find_resource in base html will only load Bootstrap 3, we will load Bootstrap 4 manually #}
 {% block styles %}
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.20/b-1.6.1/b-flash-1.6.1/b-html5-1.6.1/datatables.min.css"/>
   <link rel="stylesheet" href="{{ url_for('static', filename='my.css') }}">
 {% endblock %}
 
@@ -26,8 +25,6 @@
   <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.20/b-1.6.1/b-flash-1.6.1/b-html5-1.6.1/datatables.min.js"></script>
-  <script type="text/javascript" src="{{ url_for('static', filename='my.js') }}"></script>
 {% endblock %}
 
 
@@ -38,13 +35,13 @@
     <div class="row text-white h-100" style="background-color: #4169e1">
       <div class="col-md-5">
         <h1>tRF Target</h1>
-        <p>Explore Binding <span id="strongtitle">Target</span>s of <span id="strongtitle">T</span>ransfer <span id="strongtitle">R</span>NA Related/Derived <span id="strongtitle">F</span>ragments</p>
+        <p>Explore Binding <span id="strongtitle">Target</span>s of <span id="strongtitle">T</span>ransfer <span id="strongtitle">R</span>NA Derived <span id="strongtitle">F</span>ragments</p>
       </div>
       <div class="col-md-3 my-auto">
-        <img src="{{ url_for('static', filename='CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
+        <img src="{{ url_for('static', filename='pic_logo/CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
       </div>
       <div class="col-md-4 my-auto">
-        <img src="{{ url_for('static', filename='Yale_School_of_Public_Health.png') }}" class="logo-pic mx-auto d-block" alt="YSPH Logo"/>
+        <img src="{{ url_for('static', filename='pic_logo/Yale_School_of_Public_Health.png') }}" class="logo-pic mx-auto d-block" alt="YSPH Logo"/>
       </div>
     </div>
     
@@ -60,6 +57,9 @@
           </li>
           <li class="nav-item">
             <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCES</a>
           </li>
           <li class="nav-item">
             <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='statistics') }}">STATISTICS</a>
@@ -90,7 +90,7 @@ md class (for small laptops - screens equal to or greater than 992px wide)
         <div class="col-md-8 offset-md-2">
           <br>
           <h3>Typical usage of tRF Target</h3>
-          <img src="{{ url_for('static', filename='HowToSearch.png') }}" class="img-fluid mx-auto d-block" alt="How To Search"/>
+          <img src="{{ url_for('static', filename='pic_manual/HowToSearch.png') }}" class="img-fluid mx-auto d-block" alt="How To Search"/>
         </div>
       </div>
   
@@ -117,12 +117,14 @@ md class (for small laptops - screens equal to or greater than 992px wide)
               <ul>
                 <li><i>RNAhybrid</i> predictions: -25 kcal/mol</li>
                 <li><i>IntaRNA</i> predictions: -10 kcal/mol</li>
+                <li><i>Consensus</i> predictions: -10 kcal/mol</li>
               </ul>
             </li>
             <li>Default maximum complementary length threshold:
               <ul>
-                <li><i>RNAhybrid</i> predictions: 8 bases</li>
-                <li><i>IntaRNA</i> predictions: 8 bases</li>
+                <li><i>RNAhybrid</i> predictions: 10 bases</li>
+                <li><i>IntaRNA</i> predictions: 10 bases</li>
+                <li><i>Consensus</i> predictions: 10 bases</li>
               </ul>
             </li>
           </ul>
@@ -133,22 +135,34 @@ md class (for small laptops - screens equal to or greater than 992px wide)
         <div class="col-md-8 offset-md-2">
           <br>
           <h3>Display tabular search result</h3>
-          <p>The retrieved data from tRF Target will be formatted into a <strong>tabular form</strong> for display, and the result table supports following operations:
+          <p>The retrieved data from tRF Target will be formatted into a <strong>tabular form</strong> for display, and the result table supports following operations:</p>
           <ul>
             <li>Press the column name will sort all rows of the table in the ascending order by this column. Press that column name again will change the sorting to the descending order.</li>
             <li>Search user inputted text in all columns in the table, and show only matched rows.</li>
             <li>Download the current results into a CSV file. If sorting or text searching operations are performed, only the sorted or matched results will be save into the CSV file.</li>
           </ul>
-          <img src="{{ url_for('static', filename='TableTools.png') }}" class="img-fluid mx-auto d-block" alt="Table Tools"/>
+          <img src="{{ url_for('static', filename='pic_manual/TableTools.png') }}" class="img-fluid mx-auto d-block" alt="Table Tools"/>
         </div>
       </div>
       
       <div class="row">
         <div class="col-md-8 offset-md-2">
           <br>
+          <h3>Perform downstream gene enrichment analysis</h3>
+          <p>We provide a button to perform downstream gene enrichment analysis conveniently.</p>
+          <ul>
+            <li>All interactions between one tRF and all target transcripts are ranked by an ascending order of free energy, and interactions with the same free energy are further ranked by a descending order of maximum complementary length.</li>
+            <li>Top interactions will be selected, and corresponding genes are found. Then a list of gene Ensembl IDs will be generated and copied to clipboard automatically. The default number of included top interactions is 1000, and can be changed by users.</li>
+            <li>A new window will be opened, and automatically redirected to <a href="https://david.ncifcrf.gov/tools.jsp" target="_blank" rel="noopener noreferrer">DAVID® web server</a>. Then the gene list can be pasted into the input box for gene enriment analysis.</li>
+        </div>
+      </div>
+        
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
           <h3>Definition of maximum complementary length</h3>
           <p>tRF Target will report the maximum complementary length (MCL) feature of a specific binding interaction site on a transcript. The MCL is defined as the length of the longest successively complementary sequences. For example, the figure below shows a binding interaction between tRF <i>tRF-5013b</i> and transcript <i>ARF-201</i> predicted by <i>RNAhybrid</i>. The interaction has 3 distinct parts of complementary sequences as covered by green lines. The lengths of complementary sequences of the 3 parts are 6, 5, and 7, respectively. Therefore, the MCL of this interaction is 7 bases.</p>
-          <img src="{{ url_for('static', filename='MCL_Demonstration.png') }}" class="img-fluid mx-auto d-block" alt="MCL Demonstration"/>
+          <img src="{{ url_for('static', filename='pic_manual/MCL_Demonstration.png') }}" class="img-fluid mx-auto d-block" alt="MCL Demonstration"/>
         </div>
       </div>
       
@@ -157,7 +171,17 @@ md class (for small laptops - screens equal to or greater than 992px wide)
           <br>
           <h3>Definition of duplicated entries in <i>IntaRNA</i> predictions</h3>
           <p><i>IntaRNA</i> tool will return <strong>similar</strong> binding interactions between the same tRF and transcript, and among these similar entries only the one with the <strong>lowest free energy</strong> will be kept. For example, all the 5 binding interactions between tRF <i>tRF-3001a</i> and transcript <i>DCTPP1-201</i> predicted by <i>IntaRNA</i> are shown in the below figure. The 5 interactions have the similar interaction pattern, and are in the same area of the transcript. So only the toppest one entry with the lowest free energy (-20.36 kcal/mol) is kept and recoreded into tRF Target database, while the other 4 entries will be defined as duplicated entries and discarded.</p>
-          <img src="{{ url_for('static', filename='Duplicate_Demonstration.png') }}" class="img-fluid mx-auto d-block" alt="MCL Demonstration"/>
+          <img src="{{ url_for('static', filename='pic_manual/Duplicate_Demonstration.png') }}" class="img-fluid mx-auto d-block" alt="MCL Demonstration"/>
+          <br>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
+          <h3>Definition of consensus entries in <i>RNAhybrid</i> and <i>IntaRNA</i> predictions</h3>
+          <p>1 <i>RNAhybrid</i> prediction and 1 <i>IntaRNA</i> predction will be defined as consensus if them have a similar interaction pattern. The interaction need to be on the same area on the transcrpt, allowing a 2 bases offset on the beginning and ending site. For example, the <i>RNAhybrid</i> prediction and <i>IntaRNA</i> predction of tRF-1001 and trandcript ARF1-213 are defined as consensus (see figure below). The beginning site of both predictions are the same, while the ending site has a offset of 1 base (<i>RNAhybrid</i> prediction ends on the 1683rd base while <i>IntaRNA</i> predction ends on the 1682nd base).</p>
+          <img src="{{ url_for('static', filename='pic_manual/Consensus_Demonstration.png') }}" class="img-fluid mx-auto d-block" alt="Consensus Demonstration"/>
           <br>
         </div>
       </div>
