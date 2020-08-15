@@ -1,8 +1,8 @@
 # tRFtarget
-**tRFtarget** (http://trftarget.net/) is a relational database to explore binding targets of Transfer RNA derived Fragments (tRFs).
+**tRFtarget** (http://trftarget.net/) is a relational database to explore binding targets of transfer RNA-derived fragments (tRFs).
 
 ## About tRF
-**Transfer RNA derived fragments** (**tRFs**) are a new class of small non-coding RNA (ncRNA) in the length of 13-48 nucleotides. tRFs are derived from non-random cleavage of either the precursor or mature tRNA.
+**Transfer RNA-derived fragments** (**tRFs**) are a new class of small noncoding RNA (ncRNA) in the length of 13-48 nucleotides. tRFs are derived from non-random cleavage of either the precursor or mature tRNA.
 
 ## About tRFtarget
 **tRFtarget** is a relational database respect to the computational predicted binding interactions between between tRFs and target transcripts for multiple organisms based on the state-of-the-art prediction tools [*RNAhybrid*](https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid) and [*IntaRNA*](http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp).
