@@ -1,7 +1,7 @@
 # tRFtarget
 **tRFtarget** (http://trftarget.net/) is a relational database to explore binding targets of transfer RNA-derived fragments (tRFs).
 
-### Citation
+## Citation
 
 If you use tRFtarget, please cite:
 
@@ -18,4 +18,4 @@ The database can provide detailed information about the binding interactions as 
 The database also provides experimental evidence of the predicted tRF-mRNA interactions and functional studies on tRFs based on manually curated publications. The experimental evidence are classed into 2 categories: *gene level evidence* and *site level evidence*.
 
 ## Contact Us
-Users are welcome to send feedbacks, suggestions or comments on the tRFtarget database, and report tRF target experiments or tRF functional studies that are not included in the database through the [issue](https://github.com/ZWang-Lab/tRFtarget/issues).
+Users are welcome to send feedbacks, suggestions or comments on the tRFtarget database, and report tRF target experiments or tRF functional studies that are not included in the database through [Issues](https://github.com/ZWang-Lab/tRFtarget/issues).
