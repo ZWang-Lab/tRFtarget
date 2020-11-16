@@ -10,7 +10,7 @@
 
 {# Replace the title block in the head section in base template #}
 {% block title %}
-  tRF Target
+  tRFtarget
 {% endblock %}
 
 {# Adding CSS file #}
@@ -34,8 +34,8 @@
     {# Add a title area before navbar #}
     <div class="row text-white h-100" style="background-color: #4169e1">
       <div class="col-md-5">
-        <h1>tRF Target</h1>
-        <p>Explore Binding <span id="strongtitle">Target</span>s of <span id="strongtitle">T</span>ransfer <span id="strongtitle">R</span>NA Derived <span id="strongtitle">F</span>ragments</p>
+        <h1>tRFtarget</h1>
+        <p>Explore <span id="strongtitle">t</span>ransfer <span id="strongtitle">R</span>NA-derived <span id="strongtitle">F</span>ragment <span id="strongtitle">target</span>s</p>
       </div>
       <div class="col-md-3 my-auto">
         <img src="{{ url_for('static', filename='pic_logo/CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
@@ -59,7 +59,7 @@
             <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCES</a>
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCE</a>
           </li>
           <li class="nav-item">
             <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='statistics') }}">STATISTICS</a>
@@ -89,8 +89,17 @@ md class (for small laptops - screens equal to or greater than 992px wide)
       <div class="row">
         <div class="col-md-8 offset-md-2">
           <br>
+          <h3>Citation</h3>
+          <p>If you use tRFtarget, please cite:</p>
+          <p>Ningshan Li, Nayang Shan, Lingeng Lu, Zuoheng Wang. tRFtarget: a database for transfer RNA-derived fragment targets. <i>Nucleic Acids Research</i>, 2020, gkaa831. <a href="https://doi.org/10.1093/nar/gkaa831" target="_blank" rel="noopener noreferrer">https://doi.org/10.1093/nar/gkaa831</a>.</p>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <br>
           <h3>About tRF</h3>
-          <p><strong>Transfer RNA derived fragments</strong> (<strong>tRFs</strong>) are a new class of small non-coding RNA (ncRNA) in the length of 13-48 nucleotides. tRFs are derived from non-random cleavage of either the precursor or mature tRNA. According to the cleavage site of tRNA, tRFs are classified into 5 categories as shown in the figure below:</p>
+          <p><strong>Transfer RNA-derived fragments</strong> (<strong>tRFs</strong>) are a new class of small noncoding RNA (ncRNA) in the length of 13-48 nucleotides. tRFs are derived from non-random cleavage of either the precursor or mature tRNA. According to the cleavage site of tRNA, tRFs are classified into 5 categories as shown in the figure below:</p>
           <ul>
             <li><strong>tRF-1</strong>: also termed as <strong>tsRNA</strong> [<i>tRNA-derived small RNA</i>]; generated from the 3’ ends of precursor tRNAs.</li>
             <li><strong>tRF-3</strong>: generated from the 3’ ends of mature tRNAs; has 2 subcategories (<i>tRF-3a</i> and <i>tRF-3b</i>) with different lengths.</li>
@@ -105,16 +114,10 @@ md class (for small laptops - screens equal to or greater than 992px wide)
       <div class="row">
         <div class="col-md-8 offset-md-2">
           <br>
-          <h3>About tRF Target</h3>
-          <p><strong>tRF Target</strong> is a relational database respect to the computational predicted binding interactions between tRFs and target transcripts for multiple organisms based on the state-of-the-art prediction tools <a href="https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid" style="font-style:italic" target="_blank" rel="noopener noreferrer">RNAhybrid</a> and <a href="http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp" style="font-style:italic" target="_blank" rel="noopener noreferrer">IntaRNA</a>.</p>
+          <h3>About tRFtarget</h3>
+          <p><strong>tRFtarget</strong> is a relational database respect to the computational predicted binding interactions between tRFs and target transcripts for multiple organisms based on the state-of-the-art prediction tools <a href="https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid" style="font-style:italic" target="_blank" rel="noopener noreferrer">RNAhybrid</a> and <a href="http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp" style="font-style:italic" target="_blank" rel="noopener noreferrer">IntaRNA</a>.</p>
           <p>The database can provide detailed information about the binding interactions as well as an illustration of the interaction sequences. Furthermore, the database can be also searched by <i>tRF ID</i>, <i>gene</i> or <i>transcript</i> to get a comprehensive transcriptome-wide overview of tRF-target interactions.</p>
-          <p>The database also integrates manually curated experimental evidences for tRF-target interactions from publications. The experimental evidences are classed into 2 categories: <i>gene level evidences</i> and <i>site level evidences</i>, and will be updated periodically.</p>
-          <p>Our database is expected to facilitate the research of tRFs on the below aspects:</p>
-          <ul>
-            <li>guide the validation experiments for targets of tRFs.</li>
-            <li>provide a clue of the biological functionality of tRF by downstream gene enrichment analysis of the target genes.</li>
-            <li>help to construct the Motif of tRFs based on predicted binding interactions.</li>
-          </ul>
+          <p>The database also provides experimental evidence of the predicted tRF-mRNA interactions and functional studies on tRFs based on manually curated publications. The experimental evidence are classed into 2 categories: <i>gene level evidence</i> and <i>site level evidence</i>.</p>
         </div>
       </div>
       
@@ -122,15 +125,15 @@ md class (for small laptops - screens equal to or greater than 992px wide)
         <div class="col-md-8 offset-md-2">
           <br>
           <h3>Contact Us</h3>
-          <p>If you want to send issues, feedbacks, suggestions or comments about tRF Target, please report a issue in our Github project <a href="https://github.com/ZWang-Lab/tRFTarget/issues" target="_blank" rel="noopener noreferrer">tRFTarget</a>.</p>
+          <p>Users are welcome to send feedbacks, suggestions or comments on the tRFtarget database, and report tRF target experiments or tRF functional studies that are not included in the database through the GitHub repository <a href="https://github.com/ZWang-Lab/tRFtarget/issues" target="_blank" rel="noopener noreferrer">tRFtarget</a>.</p>
         </div>
-      </div>
+      </div>    
   </div>
   
   {# Footer #}
   <footer class="footer">
     <div class="container-fluid">
-      <p>&copy tRF Target 2020 | All Rights Reserved</p>
+      <p>&copy tRFtarget 2020 | All Rights Reserved</p>
     </div>
   </footer>
 {% endblock %}

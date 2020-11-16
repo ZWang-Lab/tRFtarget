@@ -10,7 +10,7 @@
 
 {# Replace the title block in the head section in base template #}
 {% block title %}
-  tRF Target
+  tRFtarget
 {% endblock %}
 
 {# Adding CSS file #}
@@ -39,8 +39,8 @@
     {# Add a title area before navbar #}
     <div class="row text-white h-100" style="background-color: #4169e1">
       <div class="col-md-5">
-        <h1>tRF Target</h1>
-        <p>Explore Binding <span id="strongtitle">Target</span>s of <span id="strongtitle">T</span>ransfer <span id="strongtitle">R</span>NA Derived <span id="strongtitle">F</span>ragments</p>
+        <h1>tRFtarget</h1>
+        <p>Explore <span id="strongtitle">t</span>ransfer <span id="strongtitle">R</span>NA-derived <span id="strongtitle">F</span>ragment <span id="strongtitle">target</span>s</p>
       </div>
       <div class="col-md-3 my-auto">
         <img src="{{ url_for('static', filename='pic_logo/CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
@@ -64,7 +64,7 @@
             <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE<span class="sr-only">(current)</span></a>
           </li>
           <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCES</a>
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCE</a>
           </li>
           <li class="nav-item">
             <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='statistics') }}">STATISTICS</a>
@@ -94,7 +94,7 @@ md class (for small laptops - screens equal to or greater than 992px wide)
       <div class="row">
         <div class="col-md-8 offset-md-2">
           <br>
-          <h3>Search tRF Target</h3>
+          <h3>Search tRFtarget</h3>
         </div>
       </div>
 
@@ -178,13 +178,21 @@ md class (for small laptops - screens equal to or greater than 992px wide)
           </div>
         </div>
         <div class="row">
+          <div class="col-md-6 offset-md-3">
+            <p>Binding Regions:
+            {{ form.utr5(class_="regions1") }} {{form.utr5.label}}
+            {{ form.cds(class_="regions") }} {{form.cds.label}}
+            {{ form.utr3(class_="regions") }} {{form.utr3.label}}</p>
+          </div>
+        </div>
+        <div class="row">
           <div class="col-md-6 offset-md-3 no-label intext-form">
             <p>Free Energy &#8804 {{ form.mfe_threshold(class_="form-control") }} kcal/mol</p>
           </div>
         </div>
         <div class="row">
           <div class="col-md-6 offset-md-3 no-label intext-form">
-            <p>Maximum Complementary Length &#8805 {{ form.len_threshold(class_="form-control") }} bases</p>
+            <p>Maximum Complementary Length &#8805 {{ form.len_threshold(class_="form-control") }} nucleotides</p>
           </div>
         </div>
         
@@ -216,7 +224,7 @@ md class (for small laptops - screens equal to or greater than 992px wide)
     {% if show_pathway %}
       <div class="row">
         <div class="col-md-7 offset-md-3 no-label intext-form">
-            <h4 class="d-inline-block align-middle text-success">Use top {{ form.mrna_num(class_="form-control") }} transcripts for Gene Enrichment Analysis</h4>
+            <h4 class="d-inline-block align-middle text-success">Use top {{ form.mrna_num(class_="form-control") }} target transcripts for Pathway Analysis</h4>
             {# it is not a good idea to use onclick in HTML #}
             <input class="btn btn-success ml-4" id="pathway" name="pathway" type="submit" value="Go">
           </div>
@@ -318,7 +326,7 @@ md class (for small laptops - screens equal to or greater than 992px wide)
   {# Footer #}
   <footer class="footer">
     <div class="container-fluid">
-      <p>&copy tRF Target 2020 | All Rights Reserved</p>
+      <p>&copy tRFtarget 2020 | All Rights Reserved</p>
     </div>
   </footer>
 {% endblock %}

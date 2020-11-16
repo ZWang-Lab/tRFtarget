@@ -10,7 +10,7 @@
 
 {# Replace the title block in the head section in base template #}
 {% block title %}
-  tRF Target
+  tRFtarget
 {% endblock %}
 
 {# Adding CSS file #}
@@ -34,8 +34,8 @@
     {# Add a title area before navbar #}
     <div class="row text-white h-100" style="background-color: #4169e1">
       <div class="col-md-5">
-        <h1>tRF Target</h1>
-        <p>Explore Binding <span id="strongtitle">Target</span>s of <span id="strongtitle">T</span>ransfer <span id="strongtitle">R</span>NA Derived <span id="strongtitle">F</span>ragments</p>
+        <h1>tRFtarget</h1>
+        <p>Explore <span id="strongtitle">t</span>ransfer <span id="strongtitle">R</span>NA-derived <span id="strongtitle">F</span>ragment <span id="strongtitle">target</span>s</p>
       </div>
       <div class="col-md-3 my-auto">
         <img src="{{ url_for('static', filename='pic_logo/CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
@@ -59,7 +59,7 @@
             <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCES</a>
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCE</a>
           </li>
           <li class="nav-item">
             <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='statistics') }}">STATISTICS</a>
@@ -174,7 +174,7 @@ md class (for small laptops - screens equal to or greater than 992px wide)
             <li><strong>Version</strong>: 2.1.2</li>
             <li><strong>-b = 5</strong>, reported number of interaction sites on each transcript.</li>
             <li><strong>-e = -15</strong>, free energy threshold.</li>
-            <li><strong>-m = 50000</strong>, maximum length of transcript. The default value is 50,000, so all transcripts with a longer length than 50,000 bases will be ignored and therefore have no entries in the <i>tRF Target database</i>.</li>
+            <li><strong>-m = 50000</strong>, maximum length of transcript. The default value is 50,000, so all transcripts with a longer length than 50,000 bases will be ignored and therefore have no <i>RNAhybrid</i> predictions in the <i>tRFtarget</i> database.</li>
             <li>Other parameters are set as default.</li>
             <li>Binding interactions with <strong>maximum complementary length less than 6</strong> are filtered out (The definition of <i>maximum complementary length</i> can refer <a href="{{ url_for('show', page='manual') }}" target="_blank" rel="noopener noreferrer">MANUAL</a>).</li>
           </ul>
@@ -195,7 +195,7 @@ md class (for small laptops - screens equal to or greater than 992px wide)
   {# Footer #}
   <footer class="footer">
     <div class="container-fluid">
-      <p>&copy tRF Target 2020 | All Rights Reserved</p>
+      <p>&copy tRFtarget 2020 | All Rights Reserved</p>
     </div>
   </footer>
 {% endblock %}

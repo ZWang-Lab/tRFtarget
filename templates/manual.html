@@ -10,7 +10,7 @@
 
 {# Replace the title block in the head section in base template #}
 {% block title %}
-  tRF Target
+  tRFtarget
 {% endblock %}
 
 {# Adding CSS file #}
@@ -34,8 +34,8 @@
     {# Add a title area before navbar #}
     <div class="row text-white h-100" style="background-color: #4169e1">
       <div class="col-md-5">
-        <h1>tRF Target</h1>
-        <p>Explore Binding <span id="strongtitle">Target</span>s of <span id="strongtitle">T</span>ransfer <span id="strongtitle">R</span>NA Derived <span id="strongtitle">F</span>ragments</p>
+        <h1>tRFtarget</h1>
+        <p>Explore <span id="strongtitle">t</span>ransfer <span id="strongtitle">R</span>NA-derived <span id="strongtitle">F</span>ragment <span id="strongtitle">target</span>s</p>
       </div>
       <div class="col-md-3 my-auto">
         <img src="{{ url_for('static', filename='pic_logo/CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
@@ -59,7 +59,7 @@
             <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCES</a>
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCE</a>
           </li>
           <li class="nav-item">
             <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='statistics') }}">STATISTICS</a>
@@ -89,7 +89,7 @@ md class (for small laptops - screens equal to or greater than 992px wide)
       <div class="row">
         <div class="col-md-8 offset-md-2">
           <br>
-          <h3>Typical usage of tRF Target</h3>
+          <h3>Typical usage of tRFtarget</h3>
           <img src="{{ url_for('static', filename='pic_manual/HowToSearch.png') }}" class="img-fluid mx-auto d-block" alt="How To Search"/>
         </div>
       </div>
@@ -97,10 +97,15 @@ md class (for small laptops - screens equal to or greater than 992px wide)
       <div class="row">
         <div class="col-md-8 offset-md-2">
           <br>
-          <h3>Search ways of tRF Target</h3>
-          <p>The typical data retrieving of tRF Target includes 3 ways:</p>
+          <h3>Search ways of tRFtarget</h3>
+          <p>The typical data retrieving of tRFtarget includes 3 ways:</p>
           <ul>
-            <li>Search by <strong>tRF ID</strong> to see the information of all potential transcripts which can interact with this specific tRF. tRF ID can be chosen from the drop-down selection box.</li>
+            <li>Search by <strong>tRF ID</strong> to see the information of all potential transcripts which can interact with this specific tRF. tRF ID can be chosen from the drop-down selection box.
+              <ul>
+                <li>Only top 5,000 interactions with lower free energy and longer maximum complementary length will be provided, as one tRF can have up to 500 thousands interactions.</li>
+                <li>When retrieving consensus interactions with one tRF, 2,500 top <i>RNAhybrid</i> predictions and 2,500 top <i>IntaRNA</i> predictions will be provided.</li>
+              </ul>
+            </li>
             <li>Search by <strong>transcript Ensembl ID</strong> or <strong>name</strong> to see the information of all potential tRFs which can interact with this specific transcript.</li>
             <li>Search by <strong>gene Ensembl ID</strong> or <strong>approved symbol</strong> to see the information of all potential tRFs which can interact with any transcripts transcribed by this specific gene.</li>
           </ul>
@@ -111,7 +116,7 @@ md class (for small laptops - screens equal to or greater than 992px wide)
         <div class="col-md-8 offset-md-2">
           <br>
           <h3>Additional filters</h3>
-          <p>For each data retrieving way of tRF Target, an additional filter of <strong>free energy</strong> and <strong>maximum complementary length</strong> can be used to filter out less likely interactions with higher free energy and shorter maximum complementary length.</p>
+          <p>For each data retrieving way of tRFtarget, an additional filter of <strong>free energy</strong> and <strong>maximum complementary length</strong> can be used to filter out less likely interactions with higher free energy and shorter maximum complementary length.</p>
           <ul>
             <li>Default free energy threshold:
               <ul>
@@ -122,9 +127,9 @@ md class (for small laptops - screens equal to or greater than 992px wide)
             </li>
             <li>Default maximum complementary length threshold:
               <ul>
-                <li><i>RNAhybrid</i> predictions: 10 bases</li>
-                <li><i>IntaRNA</i> predictions: 10 bases</li>
-                <li><i>Consensus</i> predictions: 10 bases</li>
+                <li><i>RNAhybrid</i> predictions: 8 bases</li>
+                <li><i>IntaRNA</i> predictions: 8 bases</li>
+                <li><i>Consensus</i> predictions: 8 bases</li>
               </ul>
             </li>
           </ul>
@@ -135,7 +140,7 @@ md class (for small laptops - screens equal to or greater than 992px wide)
         <div class="col-md-8 offset-md-2">
           <br>
           <h3>Display tabular search result</h3>
-          <p>The retrieved data from tRF Target will be formatted into a <strong>tabular form</strong> for display, and the result table supports following operations:</p>
+          <p>The retrieved data from tRFtarget will be formatted into a <strong>tabular form</strong> for display, and the result table supports following operations:</p>
           <ul>
             <li>Press the column name will sort all rows of the table in the ascending order by this column. Press that column name again will change the sorting to the descending order.</li>
             <li>Search user inputted text in all columns in the table, and show only matched rows.</li>
@@ -148,12 +153,14 @@ md class (for small laptops - screens equal to or greater than 992px wide)
       <div class="row">
         <div class="col-md-8 offset-md-2">
           <br>
-          <h3>Perform downstream gene enrichment analysis</h3>
-          <p>We provide a button to perform downstream gene enrichment analysis conveniently.</p>
+          <h3>Perform downstream functional pathway analysis</h3>
+          <p>We provide a button to perform downstream functional pathway analysis conveniently.</p>
           <ul>
             <li>All interactions between one tRF and all target transcripts are ranked by an ascending order of free energy, and interactions with the same free energy are further ranked by a descending order of maximum complementary length.</li>
-            <li>Top interactions will be selected, and corresponding genes are found. Then a list of gene Ensembl IDs will be generated and copied to clipboard automatically. The default number of included top interactions is 1000, and can be changed by users.</li>
+            <li>When ranking consensus interactions, free energies derived from IntaRNA are used.</li>
+            <li>Top interactions will be selected, and corresponding genes are found. Then a list of gene Ensembl IDs will be generated and copied to clipboard automatically. The default number of included top interactions is 2000, and can be changed by users.</li>
             <li>A new window will be opened, and automatically redirected to <a href="https://david.ncifcrf.gov/tools.jsp" target="_blank" rel="noopener noreferrer">DAVID® web server</a>. Then the gene list can be pasted into the input box for gene enriment analysis.</li>
+            <li>The filtering will be discarded during ranking interactions, that is, all retrieved entries will be included for ranking.</li> 
         </div>
       </div>
         
@@ -161,7 +168,7 @@ md class (for small laptops - screens equal to or greater than 992px wide)
         <div class="col-md-8 offset-md-2">
           <br>
           <h3>Definition of maximum complementary length</h3>
-          <p>tRF Target will report the maximum complementary length (MCL) feature of a specific binding interaction site on a transcript. The MCL is defined as the length of the longest successively complementary sequences. For example, the figure below shows a binding interaction between tRF <i>tRF-5013b</i> and transcript <i>ARF-201</i> predicted by <i>RNAhybrid</i>. The interaction has 3 distinct parts of complementary sequences as covered by green lines. The lengths of complementary sequences of the 3 parts are 6, 5, and 7, respectively. Therefore, the MCL of this interaction is 7 bases.</p>
+          <p>tRFtarget will report the maximum complementary length (MCL) feature of a specific binding site on a transcript. The MCL is defined as the length of the longest successively complementary sequences. For example, the figure below shows a binding interaction between tRF <i>tRF-5013b</i> and transcript <i>ARF-201</i> predicted by <i>RNAhybrid</i>. The interaction has 3 distinct parts of complementary sequences as covered by green lines. The lengths of complementary sequences of the 3 parts are 6, 5, and 7, respectively. Therefore, the MCL of this interaction is 7 bases.</p>
           <img src="{{ url_for('static', filename='pic_manual/MCL_Demonstration.png') }}" class="img-fluid mx-auto d-block" alt="MCL Demonstration"/>
         </div>
       </div>
@@ -170,7 +177,7 @@ md class (for small laptops - screens equal to or greater than 992px wide)
         <div class="col-md-8 offset-md-2">
           <br>
           <h3>Definition of duplicated entries in <i>IntaRNA</i> predictions</h3>
-          <p><i>IntaRNA</i> tool will return <strong>similar</strong> binding interactions between the same tRF and transcript, and among these similar entries only the one with the <strong>lowest free energy</strong> will be kept. For example, all the 5 binding interactions between tRF <i>tRF-3001a</i> and transcript <i>DCTPP1-201</i> predicted by <i>IntaRNA</i> are shown in the below figure. The 5 interactions have the similar interaction pattern, and are in the same area of the transcript. So only the toppest one entry with the lowest free energy (-20.36 kcal/mol) is kept and recoreded into tRF Target database, while the other 4 entries will be defined as duplicated entries and discarded.</p>
+          <p><i>IntaRNA</i> tool will return <strong>similar</strong> binding interactions between the same tRF and transcript, and among these similar entries only the one with the <strong>lowest free energy</strong> will be kept. For example, all the 5 binding interactions between tRF <i>tRF-3001a</i> and transcript <i>DCTPP1-201</i> predicted by <i>IntaRNA</i> are shown in the below figure. The 5 interactions have the similar interaction structure, and are almost in the identical location on the transcript. So only the toppest one entry with the lowest free energy (-20.36 kcal/mol) is kept and stored in tRFtarget database, while the other 4 entries will be defined as duplicated entries and discarded.</p>
           <img src="{{ url_for('static', filename='pic_manual/Duplicate_Demonstration.png') }}" class="img-fluid mx-auto d-block" alt="MCL Demonstration"/>
           <br>
         </div>
@@ -180,7 +187,7 @@ md class (for small laptops - screens equal to or greater than 992px wide)
         <div class="col-md-8 offset-md-2">
           <br>
           <h3>Definition of consensus entries in <i>RNAhybrid</i> and <i>IntaRNA</i> predictions</h3>
-          <p>1 <i>RNAhybrid</i> prediction and 1 <i>IntaRNA</i> predction will be defined as consensus if them have a similar interaction pattern. The interaction need to be on the same area on the transcrpt, allowing a 2 bases offset on the beginning and ending site. For example, the <i>RNAhybrid</i> prediction and <i>IntaRNA</i> predction of tRF-1001 and trandcript ARF1-213 are defined as consensus (see figure below). The beginning site of both predictions are the same, while the ending site has a offset of 1 base (<i>RNAhybrid</i> prediction ends on the 1683rd base while <i>IntaRNA</i> predction ends on the 1682nd base).</p>
+          <p>1 <i>RNAhybrid</i> prediction and 1 <i>IntaRNA</i> predction will be defined as consensus if them have a similar interaction structure. The interaction need to be on the identical location on the transcrpt, allowing a 2 bases offset on the beginning and/or ending of the interaction sequence. For example, the <i>RNAhybrid</i> prediction and <i>IntaRNA</i> predction of tRF-1001 and trandcript ARF1-213 are defined as consensus (see figure below). The beginning site of both predictions are identical, while the ending site has a offset of 1 base (<i>RNAhybrid</i> prediction ends on the 1683rd base while <i>IntaRNA</i> predction ends on the 1682nd base).</p>
           <img src="{{ url_for('static', filename='pic_manual/Consensus_Demonstration.png') }}" class="img-fluid mx-auto d-block" alt="Consensus Demonstration"/>
           <br>
         </div>
@@ -190,7 +197,7 @@ md class (for small laptops - screens equal to or greater than 992px wide)
   {# Footer #}
   <footer class="footer">
     <div class="container-fluid">
-      <p>&copy tRF Target 2020 | All Rights Reserved</p>
+      <p>&copy tRFtarget 2020 | All Rights Reserved</p>
     </div>
   </footer>
 {% endblock %}

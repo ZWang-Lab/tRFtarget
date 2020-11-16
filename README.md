@@ -1,20 +1,21 @@
 # tRFtarget
 **tRFtarget** (http://trftarget.net/) is a relational database to explore binding targets of transfer RNA-derived fragments (tRFs).
 
+### Citation
+
+If you use tRFtarget, please cite:
+
+Ningshan Li, Nayang Shan, Lingeng Lu, Zuoheng Wang. tRFtarget: a database for transfer RNA-derived fragment targets. *Nucleic Acids Research*, 2020, gkaa831. https://doi.org/10.1093/nar/gkaa831.
+
 ## About tRF
 **Transfer RNA-derived fragments** (**tRFs**) are a new class of small noncoding RNA (ncRNA) in the length of 13-48 nucleotides. tRFs are derived from non-random cleavage of either the precursor or mature tRNA.
 
 ## About tRFtarget
-**tRFtarget** is a relational database respect to the computational predicted binding interactions between between tRFs and target transcripts for multiple organisms based on the state-of-the-art prediction tools [*RNAhybrid*](https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid) and [*IntaRNA*](http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp).
+**tRFtarget** is a relational database respect to the computational predicted binding interactions between tRFs and target transcripts for multiple organisms based on the state-of-the-art prediction tools [RNAhybrid](https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid) and [IntaRNA](http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp).
 
-The database can provide detailed information about the binding interactions as well as an illustration of the interaction sequences. Furthermore, the database can be also searched by *tRF ID*, *gene* or *transcript* to get a comprehensive overview of tRF-transcript interactions.
+The database can provide detailed information about the binding interactions as well as an illustration of the interaction sequences. Furthermore, the database can be also searched by *tRF ID*, *gene* or *transcript* to get a comprehensive transcriptome-wide overview of tRF-target interactions.
 
-The database also integrates manually curated experimental evidences for tRF-target interactions from publications. The experimental evidences are classed into 2 categories: *gene level evidences* and *site level evidences*, and will be updated periodically.
-
-Our database is expected to facilitate the research of tRFs on the below aspects:
-* guide the validation experiments for targets of tRFs.
-* provide a clue of the biological functionality of tRF by downstream gene enrichment analysis of the target genes.
-* help to construct the Motif of tRFs based on predicted binding interactions.
+The database also provides experimental evidence of the predicted tRF-mRNA interactions and functional studies on tRFs based on manually curated publications. The experimental evidence are classed into 2 categories: *gene level evidence* and *site level evidence*.
 
 ## Contact Us
-If you want to send issues, feedbacks, suggestions or comments about tRF Target, please report a issue in this Github project [tRFTarget](https://github.com/ZWang-Lab/tRFTarget/issues).
+Users are welcome to send feedbacks, suggestions or comments on the tRFtarget database, and report tRF target experiments or tRF functional studies that are not included in the database through the [issue](https://github.com/ZWang-Lab/tRFtarget/issues).

@@ -40,6 +40,16 @@
   text-align: center;
 }
 
+.regions {
+  display: inline;
+  margin-left: 15px;
+}
+
+.regions1 {
+  display: inline;
+  margin-left: 5px;
+}
+
 .logo-pic {
   max-width: 100%;
   height: auto;

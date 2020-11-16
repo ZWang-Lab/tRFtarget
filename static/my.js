@@ -278,18 +278,18 @@ document.addEventListener("click", function (e) {
 // Many js functions defined here
 $(document).ready(function() {
     // Change default setting of filters according to the selected prediction tools
-    $('input[name=search_table] ').change(function() {
+    $('input[name=search_table]').change(function() {
         if (this.value == 'RNAhybrid') {
             $('#mfe_threshold').val('-25')
-            $('#len_threshold').val('10')
+            $('#len_threshold').val('8')
         }
         else if (this.value == 'IntaRNA') {
             $('#mfe_threshold').val('-10')
-            $('#len_threshold').val('10')
+            $('#len_threshold').val('8')
         }
         else if (this.value == 'Consensus') {
             $('#mfe_threshold').val('-10')
-            $('#len_threshold').val('10')
+            $('#len_threshold').val('8')
         }
     } );
     
@@ -342,11 +342,11 @@ $(document).ready(function() {
         columnDefs: [
           {
               className: "dt-body-center",
-              targets: [0,1,2,3,4,5]
+              targets: [0,1,2,3,4,5,6]
           },
           {
               className: "dt-head-center",
-              targets: [0,1,2,3,4,5]
+              targets: [0,1,2,3,4,5,6]
           }
         ],
         dom:  "<'row'<'col-md-3'i><'col-md-5'p><'col-md-3'f><'col-md-1'B>>" +
@@ -401,9 +401,14 @@ function copyToClipboard(texts) {
 
 
 // onclick function to do pathway analysis
+// do not be affected by table filtering, that is, all entries will be included for ranking
 $('#pathway').click(function () {
     // number of genes for pathway analysis
     var num = document.getElementById('mrna_num').value
+
+    // prediction tool
+    var cur_tool = $('input[name=search_table]:checked').val()
+    if (cur_tool == 'Consensus') {cur_tool='IntaRNA'}
     
     // get values from datatable
     var table = $('#table_id').DataTable()
@@ -418,6 +423,8 @@ $('#pathway').click(function () {
     var mfe = table.column(4).data()
     // 7th column: matching length
     var mcl = table.column(6).data()
+    // 4th column: prediction tool
+    var tool = table.column(3).data()
     
     // extract ensembl ID from links
     var len = gene.length
@@ -426,20 +433,23 @@ $('#pathway').click(function () {
     for (var i = 0; i < len; i++) {
         // the first element will include the '>' and '<br'
         // ensemble ID is the 2nd element
-        obj[i] = { 'id': gene[i].match(pattern)[1], 'mfe': parseFloat(mfe[i]), 'mcl': parseInt(mcl[i]) }
+        // only predictions from needed tool are included
+        if (tool[i] == cur_tool) {
+            obj.push({ 'id': gene[i].match(pattern)[1], 'mfe': parseFloat(mfe[i]), 'mcl': parseInt(mcl[i]) })
+        }
     }
-    
-    
+
+
     // sort gene ids based mfe and mcl
     // +/- to indicate ascending or descending order
     // sort genes with lowest mfe first
     // with ties going to the genes with the highest mcl
     // sorting result checked, it's corrected
     obj.sort(getSortMethod('+mfe', '-mcl'))
-    
+
     // get needed sorted gene ids
-    if (num > len) {
-        num = len
+    if (num > obj.length) {
+        num = obj.length
     }
     
     var sorted_ids = []

@@ -10,7 +10,7 @@
 
 {# Replace the title block in the head section in base template #}
 {% block title %}
-  tRF Target
+  tRFtarget
 {% endblock %}
 
 {# Adding CSS file #}
@@ -39,8 +39,8 @@
     {# Add a title area before navbar #}
     <div class="row text-white h-100" style="background-color: #4169e1">
       <div class="col-md-5">
-        <h1>tRF Target</h1>
-        <p>Explore Binding <span id="strongtitle">Target</span>s of <span id="strongtitle">T</span>ransfer <span id="strongtitle">R</span>NA Derived <span id="strongtitle">F</span>ragments</p>
+        <h1>tRFtarget</h1>
+        <p>Explore <span id="strongtitle">t</span>ransfer <span id="strongtitle">R</span>NA-derived <span id="strongtitle">F</span>ragment <span id="strongtitle">target</span>s</p>
       </div>
       <div class="col-md-3 my-auto">
         <img src="{{ url_for('static', filename='pic_logo/CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
@@ -64,7 +64,7 @@
             <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE</span></a>
           </li>
           <li class="nav-item active">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCES<span class="sr-only">(current)</a>
+            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCE<span class="sr-only">(current)</a>
           </li>
           <li class="nav-item">
             <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='statistics') }}">STATISTICS</a>
@@ -94,7 +94,13 @@ md class (for small laptops - screens equal to or greater than 992px wide)
       <div class="row">
         <div class="col-md-8 offset-md-2">
           <br>
-          <h3>List of tRF-target exprimetnal evidences</h3>
+          <h3>List of exprimental evidence for tRF targets</h3>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-9 offset-md-1">
+          <br>
+          <p>Users are welcome to report tRF target experiments or tRF functional studies that are not included in the database through the GitHub repository <a href="https://github.com/ZWang-Lab/tRFtarget/issues" target="_blank" rel="noopener noreferrer">tRFtarget</a>.</p>
         </div>
       </div>
   </div>
@@ -149,33 +155,41 @@ md class (for small laptops - screens equal to or greater than 992px wide)
                     <td>{{ field }}</td>
                   {% endif %}
                 {% elif loop.index == 3 %}
-                  {# Creat hyperlink for transcript #}
-                  {# Replace nan with empty string #}
-                  {% if td_item[3] == 'nan' or td_item[2] is none %}
-                    {% set tmp_enst = '' %}
+                  {% if field is none or field == 'nan' %}
+                    <td></td>
                   {% else %}
-                    {% set tmp_enst = td_item[3] %}
-                  {% endif %}
-                  {% if organism_name in fungi %}
-                    {% set ensembl_pre = 'fungi.' %}
-                  {% elif organism_name in bacteria %}
-                    {% set ensembl_pre = 'bacteria.' %}
-                  {% else %}
-                    {% set ensembl_pre = 'www.' %}
-                  {% endif %}
+                    {# Creat hyperlink for transcript #}
+                    {# Replace nan with empty string #}
+                    {% if td_item[3] == 'nan' or td_item[2] is none %}
+                      {% set tmp_enst = '' %}
+                    {% else %}
+                      {% set tmp_enst = td_item[3] %}
+                    {% endif %}
+                    {% if organism_name in fungi %}
+                      {% set ensembl_pre = 'fungi.' %}
+                    {% elif organism_name in bacteria %}
+                      {% set ensembl_pre = 'bacteria.' %}
+                    {% else %}
+                      {% set ensembl_pre = 'www.' %}
+                    {% endif %}
                     <td> <a href="https://{{ ensembl_pre }}ensembl.org/id/{{ field }}" target="_blank" rel="noopener noreferrer">{{ field }}<br/>({{ tmp_enst }})</a> </td>
-                {% elif loop.index == 5 %}
-                  {# Creat hyperlink for gene #}
-                  {# Replace nan with empty string #}
-                  {% if td_item[5] == 'nan' or td_item[5] is none %}
-                    {% set tmp_ensg = '' %}
-                  {% else %}
-                    {% set tmp_ensg = td_item[5] %}
                   {% endif %}
+                {% elif loop.index == 5 %}
+                  {% if field is none or field == 'nan' %}
+                    <td></td>
+                  {% else %}
+                    {# Creat hyperlink for gene #}
+                    {# Replace nan with empty string #}
+                    {% if td_item[5] == 'nan' or td_item[5] is none %}
+                      {% set tmp_ensg = '' %}
+                    {% else %}
+                      {% set tmp_ensg = td_item[5] %}
+                    {% endif %}
                     <td> <a href="https://{{ ensembl_pre }}ensembl.org/id/{{ field }}" target="_blank" rel="noopener noreferrer">{{ field }}<br/>({{ tmp_ensg }})</a> </td>
+                  {% endif %}
                 {% elif loop.index == 4 or loop.index == 6 %}
                   {# No action #}
-                {% elif loop.index == 7 or loop.index == 8 %}
+                {% elif loop.index == 7 or loop.index == 8 or loop.index == 9 %}
                   {# Display evidence #}
                   {% if field is none or field == 'nan' %}
                   <td></td>
@@ -206,7 +220,7 @@ md class (for small laptops - screens equal to or greater than 992px wide)
   {# Footer #}
   <footer class="footer">
     <div class="container-fluid">
-      <p>&copy tRF Target 2020 | All Rights Reserved</p>
+      <p>&copy tRFtarget 2020 | All Rights Reserved</p>
     </div>
   </footer>
 {% endblock %}
