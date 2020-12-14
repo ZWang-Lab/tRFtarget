@@ -224,10 +224,16 @@ md class (for small laptops - screens equal to or greater than 992px wide)
     {% if show_pathway %}
       <div class="row">
         <div class="col-md-7 offset-md-3 no-label intext-form">
-            <h4 class="d-inline-block align-middle text-success">Use top {{ form.mrna_num(class_="form-control") }} target transcripts for Pathway Analysis</h4>
+            <h4 class="d-inline-block align-middle text-success">Use top {{ form.mrna_num(class_="form-control") }} target transcripts for Downstream Analysis</h4>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-7 offset-md-3 no-label intext-form">  
             {# it is not a good idea to use onclick in HTML #}
-            <input class="btn btn-success ml-4" id="pathway" name="pathway" type="submit" value="Go">
-          </div>
+            <input class="btn btn-success ml-4" id="pathway" name="pathway" type="submit" value="DAVID">
+            <input class="btn btn-success ml-4" id="ShinyGO" name="ShinyGO" type="submit" value="ShinyGO">
+            <input class="btn btn-success ml-4" id="GENEONTOLOGY" name="GENEONTOLOGY" type="submit" value="GENEONTOLOGY">
+        </div>
       </div>
     {% endif %}
     
@@ -242,6 +248,11 @@ md class (for small laptops - screens equal to or greater than 992px wide)
             {% for th_item in th_list %}
               <th>{{ th_item }}</th>
             {% endfor %}
+            {# add hidden columns for downloading #}
+            <th>Transcript ID</th>
+            <th>Transcript Name</th>
+            <th>Gene ID</th>
+            <th>Gene Symbol</th>
           </tr>
         </thead>
         {# decide ensembl website based on organisms #}
@@ -314,6 +325,19 @@ md class (for small laptops - screens equal to or greater than 992px wide)
                   <td>{{ field }}</td>
                 {% endif %}
               {% endfor %}
+              {# add hidden columns for downloading #}
+              <td>{{ td_item[1] }}</td>
+              {% if td_item[2] is none or td_item[2] == 'nan' %}
+                <td></td>
+              {% else %}
+                <td>{{ td_item[2] }}</td>
+              {% endif %}
+              <td>{{ td_item[3] }}</td>
+              {% if td_item[4] is none or td_item[4] == 'nan' %}
+                <td></td>
+              {% else %}
+                <td>{{ td_item[4] }}</td>
+              {% endif %}
             </tr>
           {% endfor %}
         </tbody>

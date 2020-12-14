@@ -319,7 +319,13 @@ $(document).ready(function() {
           {
               className: "dt-head-center",
               targets: [0,1,2,3,4,5,6,7,8,9]
-          }
+          },
+          // hidden columns for downloading
+          {
+              targets: [10,11,12,13],
+              visible: false,
+              searchable: false
+          },
         ],
         dom:  "<'row'<'col-md-3'i><'col-md-5'p><'col-md-3'f><'col-md-1'B>>" +
           "<'row'<'col-md-12'tr>>",
@@ -329,10 +335,12 @@ $(document).ready(function() {
               text: 'Export',
               exportOptions: { // keep newline
                   stripNewlines: false,
-                  trim: false
+                  trim: false,
+                  columns: [0,10,11,12,13,3,4,5,6,7,8,9]
               }   
           }
-        ]
+        ],
+        processing: true
     } );
 } );
 
@@ -347,7 +355,13 @@ $(document).ready(function() {
           {
               className: "dt-head-center",
               targets: [0,1,2,3,4,5,6]
-          }
+          },
+          // hidden columns for downloading
+          {
+              targets: [7,8,9,10],
+              visible: false,
+              searchable: false
+          },
         ],
         dom:  "<'row'<'col-md-3'i><'col-md-5'p><'col-md-3'f><'col-md-1'B>>" +
           "<'row'<'col-md-12'tr>>",
@@ -357,7 +371,8 @@ $(document).ready(function() {
               text: 'Export',
               exportOptions: { // keep newline
                   stripNewlines: false,
-                  trim: false
+                  trim: false,
+                  columns: [0,1,7,8,9,10,4,5,6]
               }   
           }
         ]
@@ -418,7 +433,8 @@ $('#pathway').click(function () {
     // sorting will change the order of rows you get, but it does not matter
     
     // 3rd column: gene with href link, need parse
-    var gene = table.column(2).data()
+    // update: hidden column 12 gene ID; 13 gene symbol
+    var gene = table.column(12).data()
     // 5th column: free energy
     var mfe = table.column(4).data()
     // 7th column: matching length
@@ -428,14 +444,14 @@ $('#pathway').click(function () {
     
     // extract ensembl ID from links
     var len = gene.length
-    var pattern = />([a-zA-Z0-9_.]*?)<br/
+    // var pattern = />([a-zA-Z0-9_.]*?)<br/
     var obj = []
     for (var i = 0; i < len; i++) {
         // the first element will include the '>' and '<br'
         // ensemble ID is the 2nd element
         // only predictions from needed tool are included
         if (tool[i] == cur_tool) {
-            obj.push({ 'id': gene[i].match(pattern)[1], 'mfe': parseFloat(mfe[i]), 'mcl': parseInt(mcl[i]) })
+            obj.push({ 'id': gene[i], 'mfe': parseFloat(mfe[i]), 'mcl': parseInt(mcl[i]) })
         }
     }
 
@@ -465,4 +481,144 @@ $('#pathway').click(function () {
     
     // open a new window
     window.open('https://david.ncifcrf.gov/tools.jsp')    
+} )
+
+
+// onclick function to do GO analysis by ShinyGO
+// do not be affected by table filtering, that is, all entries will be included for ranking
+// only change the re-directing website
+$('#ShinyGO').click(function () {
+    // number of genes for pathway analysis
+    var num = document.getElementById('mrna_num').value
+
+    // prediction tool
+    var cur_tool = $('input[name=search_table]:checked').val()
+    if (cur_tool == 'Consensus') {cur_tool='IntaRNA'}
+    
+    // get values from datatable
+    var table = $('#table_id').DataTable()
+    
+    // get column value, index start from 0
+    // you can get all rows no matter whether filter is activated
+    // sorting will change the order of rows you get, but it does not matter
+    
+    // 3rd column: gene with href link, need parse
+    // update: hidden column 12 gene ID; 13 gene symbol
+    var gene = table.column(12).data()
+    // 5th column: free energy
+    var mfe = table.column(4).data()
+    // 7th column: matching length
+    var mcl = table.column(6).data()
+    // 4th column: prediction tool
+    var tool = table.column(3).data()
+    
+    // extract ensembl ID from links
+    var len = gene.length
+    // var pattern = />([a-zA-Z0-9_.]*?)<br/
+    var obj = []
+    for (var i = 0; i < len; i++) {
+        // the first element will include the '>' and '<br'
+        // ensemble ID is the 2nd element
+        // only predictions from needed tool are included
+        if (tool[i] == cur_tool) {
+            obj.push({ 'id': gene[i], 'mfe': parseFloat(mfe[i]), 'mcl': parseInt(mcl[i]) })
+        }
+    }
+
+
+    // sort gene ids based mfe and mcl
+    // +/- to indicate ascending or descending order
+    // sort genes with lowest mfe first
+    // with ties going to the genes with the highest mcl
+    // sorting result checked, it's corrected
+    obj.sort(getSortMethod('+mfe', '-mcl'))
+
+    // get needed sorted gene ids
+    if (num > obj.length) {
+        num = obj.length
+    }
+    
+    var sorted_ids = []
+    for (var i = 0; i < num; i++) {
+        sorted_ids[i] = obj[i].id
+    }
+    
+    // copy procedure checked, list is completed, and the order is corrected
+    copyToClipboard(sorted_ids)
+    
+    // David can also support both human and mouse 
+    alert('A list of top ' + num + ' Gene Ensemble IDs copied to clipboard. Paste them into the input box in ShinyGO website and start GO Enrichment Analysis')
+    
+    // open a new window
+    window.open('http://bioinformatics.sdstate.edu/go/')    
+} )
+
+
+// onclick function to do GO analysis by GENE ONTOLOGY
+// do not be affected by table filtering, that is, all entries will be included for ranking
+// change the re-directing website; use gene symbols instead of IDs; use /n instead of , to separate genes
+$('#GENEONTOLOGY').click(function () {
+    // number of genes for pathway analysis
+    var num = document.getElementById('mrna_num').value
+
+    // prediction tool
+    var cur_tool = $('input[name=search_table]:checked').val()
+    if (cur_tool == 'Consensus') {cur_tool='IntaRNA'}
+    
+    // get values from datatable
+    var table = $('#table_id').DataTable()
+    
+    // get column value, index start from 0
+    // you can get all rows no matter whether filter is activated
+    // sorting will change the order of rows you get, but it does not matter
+    
+    // 3rd column: gene with href link, need parse
+    // update: hidden column 12 gene ID; 13 gene symbol
+    var gene = table.column(13).data()
+    // 5th column: free energy
+    var mfe = table.column(4).data()
+    // 7th column: matching length
+    var mcl = table.column(6).data()
+    // 4th column: prediction tool
+    var tool = table.column(3).data()
+    
+    // extract ensembl ID from links
+    var len = gene.length
+    // var pattern = />([a-zA-Z0-9_.]*?)<br/
+    var obj = []
+    for (var i = 0; i < len; i++) {
+        // the first element will include the '>' and '<br'
+        // ensemble ID is the 2nd element
+        // only predictions from needed tool are included
+        if (tool[i] == cur_tool) {
+            obj.push({ 'id': gene[i], 'mfe': parseFloat(mfe[i]), 'mcl': parseInt(mcl[i]) })
+        }
+    }
+
+
+    // sort gene ids based mfe and mcl
+    // +/- to indicate ascending or descending order
+    // sort genes with lowest mfe first
+    // with ties going to the genes with the highest mcl
+    // sorting result checked, it's corrected
+    obj.sort(getSortMethod('+mfe', '-mcl'))
+
+    // get needed sorted gene ids
+    if (num > obj.length) {
+        num = obj.length
+    }
+    
+    var sorted_ids = []
+    for (var i = 0; i < num; i++) {
+        sorted_ids[i] = obj[i].id
+    }
+    
+    // copy procedure checked, list is completed, and the order is corrected
+    copyToClipboard(sorted_ids.join("\r\n"))
+    
+    // David can also support both human and mouse 
+    alert('A list of top ' + num + ' Gene Symbols copied to clipboard. Paste them into the input box in GENE ONTOLOGY website and start GO Enrichment Analysis')
+    
+    // open a new window
+    window.open('http://geneontology.org/')    
 } )

@@ -16,7 +16,7 @@ Version 3: 使用MySQL数据库
 from flask import Flask, render_template, request, send_from_directory
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
-from wtforms import SelectField, SubmitField, RadioField, StringField
+from wtforms import SelectField, SubmitField, RadioField, StringField, BooleanField
 from wtforms.validators import DataRequired
 import peewee as pw
 import json
@@ -161,7 +161,7 @@ class Zebrafish_tRF_Binding_Consensus(MYSQLBaseModel):
     pass
 
 ###############查询数据用函数#####################################################
-def doSearch(search_organism, search_table, search_type, search_item, mfe_th, len_th):
+def doSearch(search_organism, search_table, search_type, search_item, mfe_th, len_th, regions):
     '''根据搜索类型，执行相应数据库查询
     mfe_th和len_th为能量和匹配长度阈值
     '''
@@ -383,28 +383,83 @@ def doSearch(search_organism, search_table, search_type, search_item, mfe_th, le
         raise Exception('Invalid search field!')
     
     
-    return (table.select(table.tRF_ID,
-                         table.ENST_ID,
-                         table.Trans_Name,
-                         table.ENSG_ID,
-                         table.Gene_Symbol,
-                         table.Tool,
-                         table.MFE,
-                         table.Area,
-                         table.Max_Hit_Len,
-                         table.Demo,
-                         table.Gene_Evi,
-                         table.Site_Evi)
-                 .where(search_field==search_item,
-                        table.MFE<=mfe_th,
-                        table.Max_Hit_Len>=len_th)
-                 .limit(2000)
-                 .tuples())
+    # limit number of entries
+    if search_type == 'trf':
+        num = 5000
+    else:
+        num = 50000
+        
+    # rnahybrid or intarna results
+    if not search_table == 'Consensus':
+    
+        return list(table.select(table.tRF_ID,
+                                 table.ENST_ID,
+                                 table.Trans_Name,
+                                 table.ENSG_ID,
+                                 table.Gene_Symbol,
+                                 table.Tool,
+                                 table.MFE,
+                                 table.Area,
+                                 table.Max_Hit_Len,
+                                 table.Demo,
+                                 table.Gene_Evi,
+                                 table.Site_Evi)
+                         .where(search_field==search_item,
+                                 table.MFE<=mfe_th,
+                                 table.Max_Hit_Len>=len_th,
+                                 table.Area.in_(regions))
+                         .order_by(table.MFE, table.Max_Hit_Len.desc())
+                         .limit(num)
+                         .tuples())
+    else:
+        # result half rnahybrid + half intarna
+        return (list(table.select(table.tRF_ID,
+                                  table.ENST_ID,
+                                  table.Trans_Name,
+                                  table.ENSG_ID,
+                                  table.Gene_Symbol,
+                                  table.Tool,
+                                  table.MFE,
+                                  table.Area,
+                                  table.Max_Hit_Len,
+                                  table.Demo,
+                                  table.Gene_Evi,
+                                  table.Site_Evi)
+                          .where(search_field==search_item,
+                                 table.MFE<=mfe_th,
+                                 table.Max_Hit_Len>=len_th,
+                                 table.Tool=='RNAhybrid',
+                                 table.Area.in_(regions))
+                          .order_by(table.MFE, table.Max_Hit_Len.desc())
+                          .limit(int(num/2))
+                          .tuples())
+                +
+                list(table.select(table.tRF_ID,
+                                  table.ENST_ID,
+                                  table.Trans_Name,
+                                  table.ENSG_ID,
+                                  table.Gene_Symbol,
+                                  table.Tool,
+                                  table.MFE,
+                                  table.Area,
+                                  table.Max_Hit_Len,
+                                  table.Demo,
+                                  table.Gene_Evi,
+                                  table.Site_Evi)
+                          .where(search_field==search_item,
+                                 table.MFE<=mfe_th,
+                                 table.Max_Hit_Len>=len_th,
+                                 table.Tool=='IntaRNA',
+                                 table.Area.in_(regions))
+                          .order_by(table.MFE, table.Max_Hit_Len.desc())
+                          .limit(int(num/2))
+                          .tuples()))
 
 #####################网页相关####################################################
 # 载入experimental evidence文件
 evidences = pd.read_csv(r'./static/tRF-target List.csv',
-                        dtype = {'Site_Level': str, 'Gene_Level': str})
+                        dtype = {'Site_Level': str, 'Gene_Level': str,
+                                 'Functionality Study Refs': str})
 
 
 def transform(string):
@@ -421,9 +476,10 @@ global EVI_LIST
 EVI_LIST = []
 for i in evidences.index:
     EVI_LIST.append([evidences.at[i, 'Organism'], evidences.at[i, 'tRF_ID'],
-                    evidences.at[i, 'Transcript_ID'], transform(evidences.at[i, 'Transcript_Name']),
-                    evidences.at[i, 'Gene_ID'], transform(evidences.at[i, 'Gene_Name']),
-                    transform(evidences.at[i, 'Gene_Level']), transform(evidences.at[i, 'Site_Level'])])
+                    transform(evidences.at[i, 'Transcript_ID']), transform(evidences.at[i, 'Transcript_Name']),
+                    transform(evidences.at[i, 'Gene_ID']), transform(evidences.at[i, 'Gene_Name']),
+                    transform(evidences.at[i, 'Gene_Level']), transform(evidences.at[i, 'Site_Level']),
+                    transform(evidences.at[i, 'Functionality Study Refs'])])
 del evidences
 
 
@@ -488,10 +544,14 @@ class QueryForm(FlaskForm):
     trf = NonValidatingSelectField('', choices=PARA)
     gene = StringField()
     transcript = StringField()
-    mfe_threshold = StringField(default=-25)
-    len_threshold = StringField(default=10)
-    mrna_num = StringField(default=1000)
+    mfe_threshold = StringField(default=-10)
+    len_threshold = StringField(default=8)
+    mrna_num = StringField(default=2000)
     
+    utr5 = BooleanField("5' UTR", default=True, false_values=('False', 'false', ''))
+    cds = BooleanField("CDS", default=True, false_values=('False', 'false', ''))
+    utr3 = BooleanField("3' UTR", default=True, false_values=('False', 'false', ''))
+
     submit = SubmitField('Search')
 
 
@@ -534,7 +594,7 @@ def show(page):
 def evidence():
     
     th_list = ['Organism', 'tRF ID', 'Transcript', 'Gene',
-               'Gene Level Evidences', 'Site Level Evidences']
+               'Gene Level Evidence', 'Site Level Evidence', 'Functionality/Disease Study Refs']
     return render_template('evidence.html', th_list=th_list, td_list = EVI_LIST)
 
 # Search database
@@ -542,16 +602,36 @@ def evidence():
 def search():
     
     form = QueryForm(formdata=request.form)
-    
-    th_list = ['tRF ID', 'Transcript', 'Gene', 'Prediction Algorithm',
-               'Free Energy', 'Interaction Area', 'Maximum Complementary Length',
-               'Interaction Illustration', 'Gene Level Evidences',
-               'Site Level Evidences']
 
+    th_list = ['tRF ID', 'Transcript', 'Gene', 'Prediction Algorithm',
+               'Free Energy', 'Binding Region', 'Maximum Complementary Length',
+               'Interaction Illustration', 'Gene Level Evidence',
+               'Site Level Evidence']
+    
+    if request.method == 'GET':
+        # set region boolean filed value as true as default does not work
+        form.utr5.data = True
+        form.cds.data = True
+        form.utr3.data = True
+    
+    
     if form.validate_on_submit() and request.method == 'POST':
         search_type = form.search_type.data
         search_organism = form.search_organism.data
         
+        search_regions = []
+        if form.utr5.data:
+            search_regions.append('UTR5')
+        if form.cds.data:
+            search_regions.append('CDS')
+        if form.utr3.data:
+            search_regions.append('UTR3')
+            
+        if len(search_regions) < 1:
+            success = False
+            for_print = 'Please select at least one binding region!'
+            return render_template('search.html', form=form, success=success, for_print=for_print, display_table=False)
+    
         if search_type == 'trf':
             search_item = form.trf.data
         elif search_type == 'gene':
@@ -566,14 +646,15 @@ def search():
             return render_template('search.html', form=form, success=success, for_print=for_print, display_table=False)
         
         # Do search
-        td_list = list(doSearch(search_organism, form.search_table.data,
+        td_list = doSearch(search_organism, form.search_table.data,
                                 search_type, search_item,
                                 float(form.mfe_threshold.data),
-                                int(form.len_threshold.data)))
+                                int(float(form.len_threshold.data)),
+                                search_regions)
         
         # Filter infos
-        filter_infos = '\nwith filter: Energy<={:d} and MCL>={:d}'.format(
-        int(form.mfe_threshold.data), int(form.len_threshold.data))
+        filter_infos = '\nwith filter: Energy<={}, MCL>={}, and regions: {}'.format(
+        form.mfe_threshold.data, form.len_threshold.data, ', '.join(search_regions))
                 
         if td_list:
             # Result is not null

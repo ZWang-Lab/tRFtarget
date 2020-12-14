@@ -115,6 +115,12 @@ md class (for small laptops - screens equal to or greater than 992px wide)
             {% for th_item in th_list %}
               <th>{{ th_item }}</th>
             {% endfor %}
+            
+            {# add hidden columns for downloading #}
+            <th>Transcript ID</th>
+            <th>Transcript Name</th>
+            <th>Gene ID</th>
+            <th>Gene Symbol</th>
           </tr>
         </thead>
         {# decide ensembl website based on organisms #}
@@ -209,6 +215,31 @@ md class (for small laptops - screens equal to or greater than 992px wide)
                   <td>{{ field }}</td>
                 {% endif %}
               {% endfor %}
+              
+              {# add hidden columns for downloading #}
+              {% if td_item[2] is none or td_item[2] == 'nan' %}
+                <td></td>
+              {% else %}
+                <td>{{ td_item[2] }}</td>
+              {% endif %}
+            
+              {% if td_item[3] is none or td_item[3] == 'nan' %}
+                <td></td>
+              {% else %}
+                <td>{{ td_item[3] }}</td>
+              {% endif %}
+              
+              {% if td_item[4] is none or td_item[4] == 'nan' %}
+                <td></td>
+              {% else %}
+                <td>{{ td_item[4] }}</td>
+              {% endif %}
+              
+              {% if td_item[5] is none or td_item[5] == 'nan' %}
+                <td></td>
+              {% else %}
+                <td>{{ td_item[5] }}</td>
+              {% endif %}
             </tr>
           {% endfor %}
         </tbody>
