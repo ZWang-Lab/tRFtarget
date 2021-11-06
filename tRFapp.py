@@ -22,6 +22,7 @@ import peewee as pw
 import json
 import os
 import pandas as pd
+from multiprocessing import Value
 
 
 #####################数据库相关##################################################
@@ -461,6 +462,37 @@ evidences = pd.read_csv(r'./static/tRF-target List.csv',
                         dtype = {'Site_Level': str, 'Gene_Level': str,
                                  'Functionality Study Refs': str})
 
+# define a function to get value from count file
+def get_val_from_file():
+    # read saved count value
+    with open(r'./static/count.txt') as f:
+        # read all lines into a list
+        count_num = f.readlines()
+    assert(len(count_num) == 1)
+    return int(count_num[0])
+
+# define a counter shared by thread based on a multiprocessing value for thread-safe operations
+# but it does not work well
+
+class counter_obj(object):
+    def __init__(self):
+        # read saved count value
+        self.val = Value('i', get_val_from_file())
+
+    def increment(self):
+        with self.val.get_lock():
+            tmp_value = int(get_val_from_file() + 1)
+            # save result
+            with open(r'./static/count.txt', 'w') as f:
+                f.write(str(tmp_value))
+
+    def get_value(self):
+        with self.val.get_lock():
+            # return the value in counter file
+            return get_val_from_file()
+
+my_counter = counter_obj()
+
 
 def transform(string):
     '''replace nan with None
@@ -582,12 +614,12 @@ def favicon():
 # Home page
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', count=my_counter.get_value())
 
 # Other pages
 @app.route('/<string:page>')
 def show(page):
-    return render_template('{}.html'.format(page))
+    return render_template('{}.html'.format(page), count=my_counter.get_value())
 
 # Evidence page
 @app.route('/evidence')
@@ -595,7 +627,7 @@ def evidence():
     
     th_list = ['Organism', 'tRF ID', 'Transcript', 'Gene',
                'Gene Level Evidence', 'Site Level Evidence', 'Functionality/Disease Study Refs']
-    return render_template('evidence.html', th_list=th_list, td_list = EVI_LIST)
+    return render_template('evidence.html', th_list=th_list, td_list = EVI_LIST, count=my_counter.get_value())
 
 # Search database
 @app.route('/search', methods=['GET', 'POST'])
@@ -616,6 +648,10 @@ def search():
     
     
     if form.validate_on_submit() and request.method == 'POST':
+        
+        # one search, count += 1
+        my_counter.increment()
+        
         search_type = form.search_type.data
         search_organism = form.search_organism.data
         
@@ -630,7 +666,7 @@ def search():
         if len(search_regions) < 1:
             success = False
             for_print = 'Please select at least one binding region!'
-            return render_template('search.html', form=form, success=success, for_print=for_print, display_table=False)
+            return render_template('search.html', form=form, success=success, for_print=for_print, display_table=False, count=my_counter.get_value())
     
         if search_type == 'trf':
             search_item = form.trf.data
@@ -643,7 +679,7 @@ def search():
             # search item is null
             success = False
             for_print = 'Invalid search way.\nPlease select the correct search way!'
-            return render_template('search.html', form=form, success=success, for_print=for_print, display_table=False)
+            return render_template('search.html', form=form, success=success, for_print=for_print, display_table=False, count=my_counter.get_value())
         
         # Do search
         td_list = doSearch(search_organism, form.search_table.data,
@@ -673,15 +709,15 @@ def search():
             return render_template('search.html', form=form, success=success,
                                    for_print=for_print, th_list=th_list,
                                    td_list = td_list, display_table=True,
-                                   show_pathway = show_pathway)
+                                   show_pathway = show_pathway, count=my_counter.get_value())
         else:
             success = False
             for_print = 'No {} results for {}: {}'.format(form.search_table.data,
                             search_type.upper(), search_item) + filter_infos
             
-            return render_template('search.html', form=form, success=success, for_print=for_print, display_table=False)
+            return render_template('search.html', form=form, success=success, for_print=for_print, display_table=False, count=my_counter.get_value())
 
-    return render_template('search.html', form=form, display_table=False)
+    return render_template('search.html', form=form, display_table=False, count=my_counter.get_value())
 
 if __name__ == '__main__':
     # 对应intenal IP
