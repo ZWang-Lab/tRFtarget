@@ -1,0 +1,35 @@
+{# Jinja web template engine which will be redered by Flask #}
+{# Template Inheritance #}
+{% extends "mybase.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row" style="margin-top: 1rem; margin-bottom: 1rem">
+        <div class="col-md-3 offset-md-4">
+            <h4 class="text-center">Total Jobs in Queue: <strong>{{ n_total }}</strong></h4>
+            <ul class="list-group">
+                <li
+                    class="list-group-item d-flex justify-content-between align-items-center text-warning">
+                    <strong>QUEUED</strong>
+                    <span class="badge bg-warning text-dark"><strong>{{ count.QUEUED }}</strong></span>
+                </li>
+                <li
+                    class="list-group-item d-flex justify-content-between align-items-center text-info">
+                    <strong>RUNNING</strong>
+                    <span class="badge bg-info text-dark"><strong>{{ count.RUNNING }}</strong></span>
+                </li>
+                <li
+                    class="list-group-item d-flex justify-content-between align-items-center text-success">
+                    <strong>COMPLETED</strong>
+                    <span class="badge bg-success text-dark"><strong>{{ count.COMPLETED }}</strong></span>
+                </li>
+                <li
+                    class="list-group-item d-flex justify-content-between align-items-center text-danger">
+                    <strong>FAILED</strong>
+                    <span class="badge bg-danger text-dark"><strong>{{ count.FAILED }}</strong></span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

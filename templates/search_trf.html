@@ -1,0 +1,355 @@
+{# Jinja web template engine which will be rendered by Flask #}
+{# Template Inheritance #}
+{% extends "mybase.html" %}
+{% from "bootstrap5/form.html" import render_field %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <br>
+      <h3>Search by tRF</h3>
+    </div>
+  </div>
+  
+  {# query form #}
+  {# Submit action need to assigned to corresponding route #}
+  <!-- add target="_blank" will open new tab and render page when press button -->
+  <!-- set autocomplete="off" to prevent browser autofill the input fields -->
+  <!-- novalidate simple browser default validation on required attribute -->
+  <form id="myForm" class="form" method="POST" action={{ url_for('search_tRF') }} role="form" target="_blank" autocomplete="off" novalidate>
+    {{ form.csrf_token }}
+    {# a text form for tRF ID #}
+    <div class="row">
+      <div class="col-md-1 offset-md-3 d-inline-flex align-items-center">
+        <h5>tRF ID</h5>
+      </div>
+      <div class="col-md-5 d-inline-flex align-items-center">
+        <!-- add Bootstrap 5 Form Validation -->
+        {{ form.trf(class_="form-control typeahead", placeholder="e.g. tRFdb-1001", style="width: 100%", required=True) }}
+        <div id="invalid-input" class="invalid-feedback" style="margin-left: 0.25rem">
+          Field cannot be empty!
+        </div>
+      </div>
+    </div>
+    
+    {# select form for organism #}
+    <div class="row" style="margin-top: 1rem">
+      <!--  make the label center so that it looks like in a line with the radio field -->
+      <div class="col-md-1 offset-md-3 d-inline-flex align-items-center">
+        {{ form.search_organism.label(class_="form-label h5", style_="margin-bottom: 0") }}
+      </div>
+      <div class="col-md-5 d-inline-flex align-items-center">
+         {{ form.search_organism(class_="form-select", style_="width: 100%; max-width: 16rem") }}
+      </div>
+    </div>
+    
+    {# radio form for prediction tool #}
+    {# render_field function render the radio field weird, not use it #}
+    {% set rnahybrid, intarna, consensus = form.search_tool %}
+    <div class="row" style="margin-top: 1rem">
+      <!--  NOT make the label center so that it looks like in a line with the checkboxes -->
+      <div class="col-md-1 offset-md-3 d-inline-flex align-items-center">
+        <h5>Prediction Tool</h5>
+      </div>
+      <div class="col-md-5">
+        <!--  also use nested rows to let the multiple checkboxes align with previous rows -->
+        <div class="row">
+          <div class="col">
+            {{ consensus(class_="form-check-input") }} {{ consensus.label(class_="form-check-label") }} <i class="bi bi-question-circle d-inline-block" style="color: #f40c0c" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-html="true" title="<b>Consensus</b> binding sites of <i>RNAhybrid</i> and <i>IntaRNA</i> predictions"></i>
+          </div>
+          <div class="col">
+            {{ rnahybrid(class_="form-check-input") }} {{ rnahybrid.label(class_="form-check-label") }} <i class="bi bi-question-circle d-inline-block" style="color: #f40c0c" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-html="true" title="<i>RNAhybrid </i>provides binding sites with <b>minimum free energy</b>"></i>
+          </div>
+          <div class="col">
+            {{ intarna(class_="form-check-input") }} {{ intarna.label(class_="form-check-label") }} <i class="bi bi-question-circle d-inline-block" style="color: #f40c0c" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-html="true" title="<i>IntaRNA</i> provides binding sites with <b>minimum free energy</b> + <b>seed match</b> + <b>accessibility</b>"></i>
+          </div>
+          <div class="col">
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    {# multiple checkbox for RNA type #}
+     <div class="row">
+      <!--  NOT make the label center so that it looks like in a line with the checkboxes -->
+      <div class="col-md-1 offset-md-3">
+        <h5>RNA Type:</h5>
+      </div>
+      <div class="col-md-5">
+        <!--  also use nested rows to let the multiple checkboxes align with previous rows -->
+        <div class="row">
+          <div class="col">
+            {{ render_field(form.protein_rna) }}
+          </div>
+          <div class="col">
+            {{ render_field(form.r_rna) }}
+          </div>
+         <div class="col">
+            {{ render_field(form.lnc_rna) }}
+          </div>
+          <div class="col">
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    {# multiple checkbox for binding regions #}
+    <div class="row">
+      <!--  NOT make the label center so that it looks like in a line with the checkboxes -->
+      <div class="col-md-1 offset-md-3 d-inline-flex align-items-center">
+        <h5>Binding Regions:</h5>
+      </div>
+      <div class="col-md-5">
+        <!--  also use nested rows to let the multiple checkboxes align with previous rows -->
+        <div class="row">
+          <div class="col">
+            {{ render_field(form.utr5) }}
+          </div>
+          <div class="col">
+            {{ render_field(form.cds) }}
+          </div>
+         <div class="col">
+            {{ render_field(form.utr3) }}
+          </div>
+          <div class="col">
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    {# Free Energy Threshold #}
+    <div class="row">
+      <div class="col-md-5 offset-md-3 intext-form">
+        <p>Free Energy &#8804 {{ form.fe_threshold(class_="form-control") }} kcal/mol</p>
+      </div>
+    </div>
+    
+    {# MCL Threshold #}
+    <div class="row">
+      <div class="col-md-5 offset-md-3 no-label intext-form">
+        <p>Maximum Complementary Length <i class="bi bi-question-circle d-inline-block" style="color: #f40c0c" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-html="true" title="<b>Maximum Complementary Length</b> (MCL) is the length of the longest successively complementary sequences for a specific interaction, which is similar with <b>seed length</b>, but NOT limit the iteraction on the so-called <b>seed sequence</b> of tRF"></i> &#8805 {{ form.mcl_threshold(class_="form-control") }} nucleotides</p>
+      </div>
+    </div>
+    
+    {# A checkbox to indicate whether show binding sites with experimental evidence only #}
+    <div class="row">
+      <div class="col-md-5 offset-md-3">
+        {{ render_field(form.exp_only) }}
+      </div>
+    </div>
+    
+    {# submit button #}
+    <div class="row" style="margin-bottom: 1rem">
+      <div class="col-md-2 offset-md-7">
+        {{ render_field(form.submit, button_stype="primary", button_size="md") }}
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block styles %}
+  {{ super() }}
+  <!-- text field formats for Free Energy and MCL threshold -->
+  <style>
+  .intext-form .form-control {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    width: 50px;
+    text-align: center;
+  }
+  </style>
+  <!-- By default, the dropdown menu created by typeahead.js is going to look ugly and you'll want to style it to ensure it fits into the theme of your web page. -->
+  <style>
+  .typeahead, .tt-input, .tt-hint {
+    min-width: 320px;
+    padding: 8px 12px;
+  }
+
+  .typeahead {
+    background-color: #fff;
+  }
+
+  .tt-hint {
+    color: #999;
+  }
+
+  .tt-menu {
+    max-height: 150px; /* Scrollable Dropdown Menu */
+    overflow-y: auto;
+    min-width: 320px;
+    margin-top: 5px;
+    padding: 8px 0;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    -webkit-border-radius: 8px;
+       -moz-border-radius: 8px;
+            border-radius: 8px;
+    -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+       -moz-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+            box-shadow: 0 5px 10px rgba(0,0,0,.2);
+  }
+
+  .tt-suggestion {
+    padding: 3px 20px;
+    color: black;
+  }
+
+  .tt-suggestion.tt-cursor {
+    color: #fff;
+    background-color: #0d6efd;
+  }
+  
+  .tt-suggestion:hover {
+    cursor: pointer;
+    background-color: #0d6efd;
+    color: #FFFFFF;
+  }
+
+  .tt-suggestion p {
+    margin: 0;
+    text-align: left;
+  }
+  
+  .tt-highlight {
+    color: #f40c0c
+  }
+  </style>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <!-- you must initialize Tooltips yourself -->
+  <script>
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+  })
+  </script>
+  <!-- for autocomplete -->
+  <script src="{{ url_for('static', filename='js/typeahead.bundle.js') }}"></script>
+  <script>
+  // variables for autocomplete
+  var options
+  var file_type
+  var source_file
+  var this_organism
+  
+  // first determine this page is search by tRF, RNA or gene
+  // determined by autocomplete text field ID, is it trf, transcript, or gene?
+  if (typeof(document.getElementById('trf')) != 'undefined' && document.getElementById('trf') != null) {
+    file_type = "tRF_IDs";
+  } else if (typeof(document.getElementById('transcript')) != 'undefined' && document.getElementById('transcript') != null) {
+    file_type = "RNA_Names";
+  } else if (typeof(document.getElementById('gene')) != 'undefined' && document.getElementById('gene') != null) {
+    file_type = "Gene_Names";
+  }
+  
+  function determineSource() {
+    // next determine the current Organism
+    var e = document.getElementById('search_organism');
+    this_organism = e.options[e.selectedIndex].value;
+    // source json.gz file
+    source_file = "/static/json/" + this_organism.replace(" ", "_") + "_" + file_type + ".json";
+  }
+  
+  determineSource()
+  
+  // Bloodhound with Prefetched data (https://twitter.github.io/typeahead.js/examples/#prefetch)
+  options = new Bloodhound( {
+    datumTokenizer: Bloodhound.tokenizers.whitespace,
+    queryTokenizer: Bloodhound.tokenizers.whitespace,
+    // url points to a json file that contains an array of options
+    prefetch: source_file
+  } );
+    
+  // activate autocomplete
+  // passing in `null` for the `options` arguments will result in the default
+  $('.typeahead').typeahead( 
+    {
+      hint: true,
+      highlight: true,
+      minLength: 1
+    },
+    {
+      name: 'autocomplete',
+      source: options,
+      limit: 50 // Specify maximum number of suggestions to be displayed
+    }
+  );
+
+  // change autocomplete source based on organism
+  // just change source without initialize a new autocomplete input field
+  function changeList() {
+    determineSource()
+    // clear local/prefetched/remote data and reload it
+    //options.clear();
+    options.clearPrefetchCache();
+    //options.clearRemoteCache();
+    options.prefetch.url = source_file;
+    options.initialize(true)
+  }
+    
+  $(document).ready(function() {
+    // Change default setting of filters according to the selected prediction tools
+    $('input[name=search_tool]').on('change', function() {
+      if (this.value == 'RNAhybrid') {
+        $('#fe_threshold').val('-25');
+        $('#mcl_threshold').val('6');
+      }
+      else if (this.value == 'IntaRNA') {
+        $('#fe_threshold').val('-10');
+        $('#mcl_threshold').val('6');
+      }
+      else if (this.value == 'Consensus') {
+        $('#fe_threshold').val('-10');
+        $('#mcl_threshold').val('6');
+      }
+    } );
+
+    // when the selected organism changes re-initialize the aucomplete
+    $('#search_organism').on('change', function() {
+      // change placeholder of input field
+      var e = document.getElementById('search_organism');
+      var cur_organism = e.options[e.selectedIndex].value;
+      switch (cur_organism) {
+        case 'Homo sapiens':
+        case 'Mus musculus':
+        case 'Danio rerio':
+        case 'Drosophila melanogaster':
+        case 'Schizosaccharomyces pombe':
+        case 'Xenopus tropicalis':
+          $('#trf').attr('placeholder', 'e.g. tRFdb-1001');
+          break;
+        case 'Caenorhabditis elegans':
+        case 'Rhodobacter sphaeroides':
+          $('#trf').attr('placeholder', 'e.g. tRFdb-3001');
+          break;
+        case 'Rattus norvegicus':
+          $('#trf').attr('placeholder', 'e.g. rno_tsr004602');
+          break;
+      }
+      // change autocomplete list
+      changeList();
+    } );
+  } )
+    
+    // validate string field (vanilla JavaScript no jQuery)
+    document.getElementById('myForm').addEventListener('submit', function(event) {
+      const myField = document.getElementById('{{ form.trf.id }}');
+      const invalid_message = document.getElementById('invalid-input')
+
+      if (myField.value.trim() === "") {
+        event.preventDefault();
+        myField.classList.add('is-invalid');
+        invalid_message.classList.add('d-block');
+      } else {
+        myField.classList.remove('is-invalid');
+        invalid_message.classList.remove('d-block')
+      }
+    });
+  </script>
+{% endblock %}

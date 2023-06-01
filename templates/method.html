@@ -1,224 +1,367 @@
-{# Jinja web template engine which will be redered by Flask #}
+{# Jinja web template engine which will be rendered by Flask #}
 {# Template Inheritance #}
-{% extends "bootstrap/base.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
-
-{# Adding a lang="en" attribute to the <html>-tag #}
-{% block html_attribs %}
-  lang="en"
-{% endblock %}
-
-{# Replace the title block in the head section in base template #}
-{% block title %}
-  tRFtarget
-{% endblock %}
-
-{# Adding CSS file #}
-{# As bootstrap_find_resource in base html will only load Bootstrap 3, we will load Bootstrap 4 manually #}
-{% block styles %}
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-  <link rel="stylesheet" href="{{ url_for('static', filename='my.css') }}">
-{% endblock %}
-
-{# Custom Javascript #}
-{% block scripts %}
-  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-{% endblock %}
-
-
-{# Add a always expand navbar #}
-{% block navbar %}
-  <div class="container-fluid">
-    {# Add a title area before navbar #}
-    <div class="row text-white h-100" style="background-color: #4169e1">
-      <div class="col-md-5">
-        <h1>tRFtarget</h1>
-        <p>Explore <span id="strongtitle">t</span>ransfer <span id="strongtitle">R</span>NA-derived <span id="strongtitle">F</span>ragment <span id="strongtitle">target</span>s</p>
-      </div>
-      <div class="col-md-3 my-auto">
-        <img src="{{ url_for('static', filename='pic_logo/CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
-      </div>
-      <div class="col-md-4 my-auto">
-        <img src="{{ url_for('static', filename='pic_logo/Yale_School_of_Public_Health.png') }}" class="logo-pic mx-auto d-block" alt="YSPH Logo"/>
-      </div>
-    </div>
-    
-    {# Navbar #}
-    <div class="row">
-      <nav class="navbar nav-fill w-100 justify-content-center navbar-dark bg-dark navbar-expand-sm">
-        <ul class="navbar-nav nav-fill w-100">
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('index') }}">HOME</a>
-          </li>
-          <li class="nav-item active">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='method') }}">METHOD<span class="sr-only">(current)</span></a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCE</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='statistics') }}">STATISTICS</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='manual') }}">MANUAL</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='team') }}">TEAM</a>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  </div>
-{% endblock %}
-
-
-{# The .container class provides a responsive fixed width container
-The .container-fluid class provides a full width container, spanning the entire width of the viewport
-Bootstrap's grid system allows up to 12 columns across the page
-If you do not want to use all 12 columns individually, you can group the columns together to create wider columns
-md class (for small laptops - screens equal to or greater than 992px wide)
-#}
+{% extends "mybase.html" %}
 
 {% block content %}
+  <!-- require Bootstrap’s Scrollspy plugin to run Table of Contents sidebar
+  https://getbootstrap.com/docs/5.0/components/scrollspy/
+  only scroll a div rather than whole boy -> https://stackoverflow.com/a/69448283
+  but the effect is not so good as scroll whole body
+  -->
   <div class="container-fluid">
       <div class="row">
-        <div class="col-md-8 offset-md-2">
-          <br>
-          <h3>Data Source</h3>
-          <h4>Human</h4>
-          <ul>
-            <li><strong>tRFs</strong>:
-              <ul>
-                <li>Human <i>tRF-1s</i>, <i>tRF-3s</i> and <i>tRF-5s</i> are retrieved from <a href="http://genome.bioch.virginia.edu/trfdb/index.php" style="font-style:italic" target="_blank" rel="noopener noreferrer">tRFdb</a> (retrieving date November 15, 2019).</li>
-                <li>Human <i>tsRNAs</i> are download from a <a href="https://doi.org/10.1073/pnas.1706908114" target="_blank" rel="noopener noreferrer"><span style="font-style:italic">PNAS</span> study</a>.</li>
-              </ul>
-            </li>
-            <li><strong>Transcripts</strong>: Human protein-coding transcript sequences (version GRCh38.p13) are download from <a href="https://www.gencodegenes.org/human/" target="_blank" rel="noopener noreferrer" style="font-style:italic">GENCODE</a>.</li>
-            <li><strong>Transcript Names</strong>: Human transcript names (version GRCh38.p13) corresponding to the <i>Ensemble IDs</i> are download from <a href="http://www.ensembl.org/biomart/martview/" style="font-style:italic" target="_blank" rel="noopener noreferrer">Ensembl BioMart</a>.</li>
-            <li><strong>Approved Gene Symbols</strong>: Approved human gene symbols are download from <a href="https://biomart.genenames.org/" style="font-style:italic" target="_blank" rel="noopener noreferrer">HGNC BioMart</a> (retrieving date November 14, 2019).</li>
-          </ul>
+          <!-- sidebar position; hidden in small screen -->
+          <div class="col-md-2 d-none d-sm-none d-md-block">
+              <!-- don't forget to set as sticky-top -->
+              <nav
+                  id="toc"
+                  data-toggle="toc"
+                  class="sticky-top"
+                  style="margin: 10px"></nav>
+          </div>
           
-          <h4>Mouse</h4>
-          <ul>
-            <li><strong>tRFs</strong>: Mouse <i>tRF-1s</i>, <i>tRF-3s</i> and <i>tRF-5s</i> are retrieved from <a href="http://genome.bioch.virginia.edu/trfdb/index.php" style="font-style:italic" target="_blank" rel="noopener noreferrer">tRFdb</a> (retrieving date April 24, 2020).</li>
-            </li>
-            <li><strong>Transcripts</strong>: Mouse protein-coding transcript sequences (version GRCm38.p6) are download from <a href="https://www.gencodegenes.org/mouse/" style="font-style:italic" target="_blank" rel="noopener noreferrer">GENCODE</a>.</li>
-            <li><strong>Transcript Names</strong>: Mouse transcript names (version GRCm38.p6) corresponding to the <i>Ensemble IDs</i> are download from <a href="http://www.ensembl.org/biomart/martview/" style="font-style:italic" target="_blank" rel="noopener noreferrer">Ensembl BioMart</a>.</li>
-            <li><strong>Gene Symbols</strong>: Mouse gene symbols are download from <a href="http://www.informatics.jax.org/" style="font-style:italic" target="_blank" rel="noopener noreferrer">MGI</a> (retrieving date April 24, 2020).</li>
-          </ul>
-          
-          <h4>Drosophila Melanogaster</h4>
-          <ul>
-            <li><strong>tRFs</strong>: Drosophila Melanogaster <i>tRF-1s</i>, <i>tRF-3s</i> and <i>tRF-5s</i> are retrieved from <a href="http://genome.bioch.virginia.edu/trfdb/index.php" style="font-style:italic" target="_blank" rel="noopener noreferrer">tRFdb</a> (retrieving date June 13, 2020).</li>
-            </li>
-            <li><strong>Transcripts</strong>: Drosophila Melanogaster protein-coding transcript sequences (version BDGP6.28) are download from <a href="http://www.ensembl.org/biomart/martview/" style="font-style:italic" target="_blank" rel="noopener noreferrer">Ensembl BioMart</a>.</li>
-            <li><strong>Gene Symbols</strong>: Drosophila Melanogaster gene symbols (version BDGP6.28) are download from <a href="http://www.ensembl.org/biomart/martview/" style="font-style:italic" target="_blank" rel="noopener noreferrer">Ensembl BioMart</a>.</li>
-          </ul>
-          
-          <h4>Caenorhabditis elegans (C. elegans)</h4>
-          <ul>
-            <li><strong>tRFs</strong>: C. elegans <i>tRF-3s</i> and <i>tRF-5s</i> are retrieved from <a href="http://genome.bioch.virginia.edu/trfdb/index.php" style="font-style:italic" target="_blank" rel="noopener noreferrer">tRFdb</a> (retrieving date June 19, 2020).</li>
-            </li>
-            <li><strong>Transcripts</strong>: C. elegans protein-coding transcript sequences (version WBcel235) are download from <a href="http://www.ensembl.org/biomart/martview/" style="font-style:italic" target="_blank" rel="noopener noreferrer">Ensembl BioMart</a>.</li>
-            <li><strong>Gene Symbols</strong>: C. elegans gene symbols (version WBcel235) are download from <a href="http://www.ensembl.org/biomart/martview/" style="font-style:italic" target="_blank" rel="noopener noreferrer">Ensembl BioMart</a>.</li>
-          </ul>
-          
-          <h4>Schizosaccharomyces pombe (S. pombe)</h4>
-          <ul>
-            <li><strong>tRFs</strong>: S. pombe <i>tRF-1s</i>, <i>tRF-3s</i> and <i>tRF-5s</i> are retrieved from <a href="http://genome.bioch.virginia.edu/trfdb/index.php" style="font-style:italic" target="_blank" rel="noopener noreferrer">tRFdb</a> (retrieving date June 27, 2020).</li>
-            </li>
-            <li><strong>Transcripts</strong>: S. pombe protein-coding transcript sequences (version ASM294v2) are download from <a href="http://fungi.ensembl.org/biomart/martview/" style="font-style:italic" target="_blank" rel="noopener noreferrer">EnsemblFungi BioMart</a>.</li>
-            <li><strong>Gene Symbols</strong>: S. pombe gene symbols (version ASM294v2) are download from <a href="http://fungi.ensembl.org/biomart/martview/" style="font-style:italic" target="_blank" rel="noopener noreferrer">EnsemblFungi BioMart</a>.</li>
-          </ul>
-          
-          <h4>Rhodobacter sphaeroides ATCC 17025 (R. sphaeroides)</h4>
-          <ul>
-            <li><strong>tRFs</strong>: R. sphaeroides <i>tRF-3s</i> and <i>tRF-5s</i> are retrieved from <a href="http://genome.bioch.virginia.edu/trfdb/index.php" style="font-style:italic" target="_blank" rel="noopener noreferrer">tRFdb</a> (retrieving date June 28, 2020).</li>
-            </li>
-            <li><strong>Transcripts</strong>: R. sphaeroides protein-coding transcript sequences (version ASM1640v1) are download from <a href="https://bacteria.ensembl.org/Rhodobacter_sphaeroides_atcc_17025/Info/Index" style="font-style:italic" target="_blank" rel="noopener noreferrer">EnsemblBacteria</a>.</li>
-          </ul>
-          
-          <h4>Xenopus tropicalis (tropical clawed frog)</h4>
-          <ul>
-            <li><strong>tRFs</strong>: Xenopus tropicalis <i>tRF-1s</i>, <i>tRF-3s</i> and <i>tRF-5s</i> are retrieved from <a href="http://genome.bioch.virginia.edu/trfdb/index.php" style="font-style:italic" target="_blank" rel="noopener noreferrer">tRFdb</a> (retrieving date July 4, 2020).</li>
-            </li>
-            <li><strong>Transcripts</strong>: Xenopus tropicalis protein-coding transcript sequences (version Xenopus_tropicalis_v9.1) are download from <a href="http://www.ensembl.org/biomart/martview/" style="font-style:italic" target="_blank" rel="noopener noreferrer">Ensembl BioMart</a>.</li>
-            <li><strong>Transcript Names</strong>: Xenopus tropicalis transcript names (version Xenopus_tropicalis_v9.1) corresponding to the <i>Ensemble IDs</i> are download from <a href="http://www.ensembl.org/biomart/martview/" style="font-style:italic" target="_blank" rel="noopener noreferrer">Ensembl BioMart</a>.</li>
-            <li><strong>Gene Symbols</strong>: Xenopus tropicalis gene symbols (version Xenopus_tropicalis_v9.1) are download from <a href="http://www.ensembl.org/biomart/martview/" style="font-style:italic" target="_blank" rel="noopener noreferrer">Ensembl BioMart</a>.</li>
-          </ul>
-          
-          <h4>Zebrafish (Danio rerio)</h4>
-          <ul>
-            <li><strong>tRFs</strong>: Zebrafish <i>tRF-1s</i>, <i>tRF-3s</i> and <i>tRF-5s</i> are retrieved from <a href="http://genome.bioch.virginia.edu/trfdb/index.php" style="font-style:italic" target="_blank" rel="noopener noreferrer">tRFdb</a> (retrieving date July 6, 2020).</li>
-            </li>
-            <li><strong>Transcripts</strong>: Zebrafish protein-coding transcript sequences (version GRCz11) are download from <a href="http://www.ensembl.org/biomart/martview/" style="font-style:italic" target="_blank" rel="noopener noreferrer">Ensembl BioMart</a>.</li>
-            <li><strong>Transcript Names</strong>: Zebrafish transcript names (version GRCz11) corresponding to the <i>Ensemble IDs</i> are download from <a href="http://www.ensembl.org/biomart/martview/" style="font-style:italic" target="_blank" rel="noopener noreferrer">Ensembl BioMart</a>.</li>
-            <li><strong>Gene Symbols</strong>: Zebrafish gene symbols (version GRCz11) are download from <a href="http://www.ensembl.org/biomart/martview/" style="font-style:italic" target="_blank" rel="noopener noreferrer">Ensembl BioMart</a>.</li>
-          </ul>
-        </div>
-      </div>
-      
-      <div class="row">
-        <div class="col-md-8 offset-md-2">
-          <br>
-          <h3>Prediction Tools Setting</h3>
-          <p>The computational predicted binding interactions between human tRFs and target transcripts are based on the state-of-the-art prediction tools <a href="https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid" style="font-style:italic" target="_blank" rel="noopener noreferrer">RNAhybrid</a> and <a href="http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp" style="font-style:italic" target="_blank" rel="noopener noreferrer">IntaRNA</a>.</p>
-          <h4>RNAhybrid</h4>
-          <p><a href="https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid" style="font-style:italic" target="_blank" rel="noopener noreferrer">RNAhybrid</a> is an old but still popular tool. It is a free energy-based tool, and utilizes the <i>Dynamic Programming</i> technique to efficiently calculate the optimal and more suboptimal interaction sites. The detailed setting of <i>RNAhybrid</i> are shown as below:</p>
-          <ul>
-            <li><strong>Version</strong>: 2.1.2</li>
-            <li><strong>-b = 5</strong>, reported number of interaction sites on each transcript.</li>
-            <li><strong>-e = -15</strong>, free energy threshold.</li>
-            <li><strong>-m = 50000</strong>, maximum length of transcript. The default value is 50,000, so all transcripts with a longer length than 50,000 bases will be ignored and therefore have no <i>RNAhybrid</i> predictions in the <i>tRFtarget</i> database.</li>
-            <li>Other parameters are set as default.</li>
-            <li>Binding interactions with <strong>maximum complementary length less than 6</strong> are filtered out (The definition of <i>maximum complementary length</i> can refer <a href="{{ url_for('show', page='manual') }}" target="_blank" rel="noopener noreferrer">MANUAL</a>).</li>
-          </ul>
-          <h4>IntaRNA</h4>
-          <p><a href="http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp" style="font-style:italic" target="_blank" rel="noopener noreferrer">IntaRNA</a> is also a free energy-based tool, and the only difference with <i>RNAhybrid</i> is <i>IntaRNA</i> incorporates the “accessibility” feature. The detailed setting of <i>IntaRNA</i> are shown as below:</p>
-          <ul>
-            <li><strong>Version</strong>: 3.1.3</li>
-            <li><strong>--mode = M</strong>, running mode. <strong>Exact mode</strong> rather than Heuristic mode is used in order to get global minimum free energy interactions at the cost of consuming much more run time.</li>
-            <li><strong>--seedBP = 6</strong>, threshold of the number of base pairs within the seed sequences.</li>
-            <li><strong>-n = 5</strong>, number of (sub)optimal interactions to report.</li>
-            <li>Other parameters are set as default.</li>
-            <li><strong>Similar</strong> Binding interactions are recognized as duplications and are filtered out (The definition of <i>similarity</i> between interactions can refer <a href="{{ url_for('show', page='manual') }}" target="_blank" rel="noopener noreferrer">MANUAL</a>).</li>
-          </ul>
-        </div>
+          <!-- all contents need to be put in this one big column -->
+          <div class="col-md-8">
+              <div class="row shadow-sm">
+                  <h2 id="data-source" style="margin-top: 10px">Data Source</h2>
+                  <h3 id="trf-source" style="margin-top: 10px; margin-bottom: 15px">tRF Source</h3>
+                  <table id="table-multi-hover" class="table align-middle mx-auto w-auto">
+                      <!-- table-striped(-columns) not works well as there are cells span across multiple rows -->
+                      <thead class="align-middle text-center">
+                          <tr>
+                              <th scope="col" class="table-light">Organism</th>
+                              <th scope="col" class="table-secondary">Source</th>
+                              <th scope="col" class="table-light">Retrieve date</th>
+                              <th scope="col" class="table-secondary">tRF Inclusion Criteria</th>
+                          </tr>
+                      </thead>
+                      <tbody class="table-group-divider">
+                          <!-- 1st column is row header -->
+                          <tr i="0">
+                              <th scope="row" rowspan="8" class="table-light text-center" rep="organism"><em>Homo sapiens</em></th>
+                              <td class="table-secondary" rep="source"><a href="http://genome.bioch.virginia.edu/trfdb/" target="_blank" rel="noopener noreferrer">tRFdb</a></td>
+                              <td class="table-light" rep="retrieve date">2022-11-12</td>
+                              <td class="table-secondary" rep="trf inclusion criteria"></td>
+                          </tr>
+                          <tr i="1">
+                              <td class="table-secondary" rep="source"><a href="https://doi.org/10.1073/pnas.1706908114" target="_blank" rel="noopener noreferrer">tsRNA study</a></td>
+                              <td class="table-light" rep="retrieve date"></td>
+                              <td class="table-secondary" rep="trf inclusion criteria"></td>
+                          </tr>
+                          <tr i="2">
+                              <td class="table-secondary" rep="source"><a href="http://tsrbase.org/index.php" target="_blank" rel="noopener noreferrer">tsRBase</a></td>
+                              <td class="table-light" rep="retrieve date">2022-11-13</td>
+                              <td class="table-secondary" rep="trf inclusion criteria">function / expression experimentally validated</td>
+                          </tr>
+                          <tr i="3">
+                              <td class="table-secondary" rep="source"><a href="https://rna.sysu.edu.cn/tsRFun/" target="_blank" rel="noopener noreferrer">tsRFun</a></td>
+                              <td class="table-light" rep="retrieve date">2022-11-12</td>
+                              <td class="table-secondary" rep="trf inclusion criteria">1) Expressed in &gt; 30% of the TCGA samples; or 2) have experimentally validated targets</td>
+                          </tr>
+                          <tr i="4">
+                              <td class="table-secondary" rep="source"><a href="https://cm.jefferson.edu/MINTbase/" target="_blank" rel="noopener noreferrer">MINTbase v2.0 (04/04/2019)</a></td>
+                              <td class="table-light" rep="retrieve date">2022-11-15</td>
+                              <td class="table-secondary" rep="trf inclusion criteria">1) <code>[#datasets RPM&gt;100]&ge;10</code> and <code>[#datasets RPM&gt;100]/[#datasets expressed]&ge;0.05</code>, or 2) have experimentally validated targets in <a href="http://www.rnanut.net/tRFTar/" target="_blank" rel="noopener noreferrer">tRFTar</a></td>
+                          </tr>
+                          <tr i="5">
+                              <td class="table-secondary" rep="source"><a href="https://trfexplorer.cloud/" target="_blank" rel="noopener noreferrer">tRFexplorer (2019-05)</a></td>
+                              <td class="table-light" rep="retrieve date">2022-11-17</td>
+                              <td class="table-secondary" rep="trf inclusion criteria">fragment type: <em>5&#39; Leader</em> and Minimum RPM value: 10</td>
+                          </tr>
+                          <tr i="6">
+                              <td class="table-secondary" rep="source"><a href="https://grigoriev-lab.camden.rutgers.edu/tatdb/index.php" target="_blank" rel="noopener noreferrer">tatDB</a></td>
+                              <td class="table-light" rep="retrieve date">2022-11-17</td>
+                              <td class="table-secondary" rep="trf inclusion criteria">MFE&le;-20, Read count&ge;25, Unique hybrids&ge;1, Motif checked and Intro Excised unchecked</td>
+                          </tr>
+                          <tr i="7">
+                              <td class="table-secondary" rep="source"><a href="http://bioinformatics.zju.edu.cn/OncotRF/index.html" target="_blank" rel="noopener noreferrer">OncotRF</a></td>
+                              <td class="table-light" rep="retrieve date">2022-11-17</td>
+                              <td class="table-secondary" rep="trf inclusion criteria">experimentally validated</td>
+                          </tr>
+                          <tr i="8">
+                              <th scope="row" rowspan="2" class="table-light text-center" rep="organism"><em>Mus musculus</em></th>
+                              <td class="table-secondary" rep="source"><a href="http://genome.bioch.virginia.edu/trfdb/" target="_blank" rel="noopener noreferrer">tRFdb</a></td>
+                              <td class="table-light" rep="retrieve date">2022-07-16</td>
+                              <td class="table-secondary" rep="trf inclusion criteria"></td>
+                          </tr>
+                          <tr i="9">
+                              <td class="table-secondary" rep="source"><a href="http://tsrbase.org/index.php" target="_blank" rel="noopener noreferrer">tsRBase</a></td>
+                              <td class="table-light" rep="retrieve date">2022-08-21</td>
+                              <td class="table-secondary" rep="trf inclusion criteria">function / expression experimentally validated</td>
+                          </tr>
+                          <tr i="10">
+                              <th scope="row" class="table-light text-center" rep="organism"><em>Caenorhabditis elegans</em></th>
+                              <td class="table-secondary" rep="source"><a href="http://genome.bioch.virginia.edu/trfdb/" target="_blank" rel="noopener noreferrer">tRFdb</a></td>
+                              <td class="table-light" rep="retrieve date">2022-11-03</td>
+                              <td class="table-secondary" rep="trf inclusion criteria"></td>
+                          </tr>
+                          <tr i="11">
+                              <th scope="row" class="table-light text-center" rep="organism"><em>Danio rerio</em></th>
+                              <td class="table-secondary" rep="source"><a href="http://genome.bioch.virginia.edu/trfdb/" target="_blank" rel="noopener noreferrer">tRFdb</a></td>
+                              <td class="table-light" rep="retrieve date">2022-11-01</td>
+                              <td class="table-secondary" rep="trf inclusion criteria"></td>
+                          </tr>
+                          <tr i="12">
+                              <th scope="row" rowspan="2" class="table-light text-center" rep="organism"><em>Drosophila melanogaster</em></th>
+                              <td class="table-secondary" rep="source"><a href="http://genome.bioch.virginia.edu/trfdb/" target="_blank" rel="noopener noreferrer">tRFdb</a></td>
+                              <td class="table-light" rep="retrieve date">2022-10-30</td>
+                              <td class="table-secondary" rep="trf inclusion criteria"></td>
+                          </tr>
+                          <tr i="13">
+                              <td class="table-secondary" rep="source"><a href="http://tsrbase.org/index.php" target="_blank" rel="noopener noreferrer">tsRBase</a></td>
+                              <td class="table-light" rep="retrieve date">2022-10-30</td>
+                              <td class="table-secondary" rep="trf inclusion criteria">function / expression experimentally validated</td>
+                          </tr>
+                          <tr i="14">
+                              <th scope="row" class="table-light text-center" rep="organism"><em>Rattus norvegicus</em></th>
+                              <td class="table-secondary" rep="source"><a href="http://tsrbase.org/index.php" target="_blank" rel="noopener noreferrer">tsRBase</a></td>
+                              <td class="table-light" rep="retrieve date">2022-11-10</td>
+                              <td class="table-secondary" rep="trf inclusion criteria">function / expression experimentally validated</td>
+                          </tr>
+                          <tr i="15">
+                              <th scope="row" class="table-light text-center" rep="organism"><em>Rhodobacter sphaeroides</em></th>
+                              <td class="table-secondary" rep="source"><a href="http://genome.bioch.virginia.edu/trfdb/" target="_blank" rel="noopener noreferrer">tRFdb</a></td>
+                              <td class="table-light" rep="retrieve date">2022-11-06</td>
+                              <td class="table-secondary" rep="trf inclusion criteria"></td>
+                          </tr>
+                          <tr i="16">
+                              <th scope="row" class="table-light text-center" rep="organism"><em>Schizosaccharomyces pombe</em></th>
+                              <td class="table-secondary" rep="source"><a href="http://genome.bioch.virginia.edu/trfdb/" target="_blank" rel="noopener noreferrer">tRFdb</a></td>
+                              <td class="table-light" rep="retrieve date">2022-11-09</td>
+                              <td class="table-secondary" rep="trf inclusion criteria"></td>
+                          </tr>
+                          <tr i="17">
+                              <th scope="row" class="table-light text-center" rep="organism"><em>Xenopus tropicalis</em></th>
+                              <td class="table-secondary" rep="source"><a href="http://genome.bioch.virginia.edu/trfdb/" target="_blank" rel="noopener noreferrer">tRFdb</a></td>
+                              <td class="table-light" rep="retrieve date">2022-11-05</td>
+                              <td class="table-secondary" rep="trf inclusion criteria"></td>
+                          </tr>
+                      </tbody>
+                  </table>
+              
+                  <h3 id="target-rna-source" style="margin-top: 10px; margin-bottom: 10px">Target RNA Source</h3>
+                  <h4 style="margin-bottom: 15px">Reference Genome Version (protein-coding mRNA)</h4>
+                  <table class="table table-hover align-middle mx-auto w-auto">
+                      <thead class="align-middle text-center">
+                          <tr>
+                              <th scope="col" class="table-light">Organism</th>
+                              <th scope="col" class="table-secondary">Version</th>
+                              <th scope="col" class="table-light">Retrieve date</th>
+                          </tr>
+                      </thead>
+                      <tbody class="table-group-divider">
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Homo sapiens</em></th>
+                              <td class="table-secondary">GRCh38.p13 (<a href="https://www.gencodegenes.org/human/" target="_blank" rel="noopener noreferrer">GENCODE</a> Release 42)</td>
+                              <td class="table-light">2022-11-12</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Mus musculus</em></th>
+                              <td class="table-secondary">GRCm39 (<a href="https://www.gencodegenes.org/mouse/" target="_blank" rel="noopener noreferrer">GENCODE</a> Release M31)</td>
+                              <td class="table-light">2022-10-25</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Caenorhabditis elegans</em></th>
+                              <td class="table-secondary">WBcel235 (<a href="https://wormbase.org/" target="_blank" rel="noopener noreferrer">WormBase</a> WS286)</td>
+                              <td class="table-light">2022-11-03</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Danio rerio</em></th>
+                              <td class="table-secondary">GRCz11 (<a href="http://www.ensembl.org/" target="_blank" rel="noopener noreferrer">Ensembl</a> release 108)</td>
+                              <td class="table-light">2022-11-01</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Drosophila melanogaster</em></th>
+                              <td class="table-secondary">dmel_r6.32 (<a href="https://www.flybase.org/" target="_blank" rel="noopener noreferrer">FlyBase</a> FB2020_01)</td>
+                              <td class="table-light">2022-10-25</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Rattus norvegicus</em></th>
+                              <td class="table-secondary">mRatBN7.2 (<a href="http://www.ensembl.org/" target="_blank" rel="noopener noreferrer">Ensembl</a> release 108)</td>
+                              <td class="table-light">2022-11-10</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Rhodobacter sphaeroides</em></th>
+                              <td class="table-secondary">ASM1640v1 (<a href="https://bacteria.ensembl.org/index.html" target="_blank" rel="noopener noreferrer">Ensembl Bacteria</a> release 55)</td>
+                              <td class="table-light">2022-11-06</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Schizosaccharomyces pombe</em></th>
+                              <td class="table-secondary">ASM294v2 (<a href="https://www.pombase.org/" target="_blank" rel="noopener noreferrer">PomBase</a> update 2022-11-07)</td>
+                              <td class="table-light">2022-11-08</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Xenopus tropicalis</em></th>
+                              <td class="table-secondary">UCB_Xtro_10.0 (<a href="http://www.ensembl.org/" target="_blank" rel="noopener noreferrer">Ensembl</a> release 108)</td>
+                              <td class="table-light">2022-11-05</td>
+                          </tr>
+                      </tbody>
+                  </table>
+                  <h4 style="margin-top: 10px">rRNA & lncRNA</h4>
+                  <p>All rRNAs and lncRNAs are retrieved from <a href="https://rnacentral.org/" target="_blank" rel="noopener noreferrer">RNA central v21</a>.</p>
+              </div>
+              
+              <div class="row shadow-sm">
+                  <h2 id="std-trf-id" style="margin-top: 10px">Standardized tRF ID</h2>
+                  <p>Standardized tRF ID of one tRF sequence is determined by <a href="http://trna.ucsc.edu/tDRnamer/" target="_blank" rel="noopener noreferrer">tDRnamer</a>. When one tRF sequence can be matched to multiple standardized IDs, only the ID in "tDR Name" column is used, and all IDs in "Synonyms" column are discarded.</p>
+              </div>
+              
+              <div class="row shadow-sm">
+                  <h2 id="target-prediction-method" style="margin-top: 10px">Target Prediction Method</h2>
+                  <p>All tRF-RNA interactions in tRFtarget are predicted using <a href="https://github.com/ZWang-Lab/tRFtarget-pipeline" target="_blank" rel="noopener noreferrer">tRFtarget-pipeline v0.3.0</a>.</p>
+                  <p>Command options for calling tRFtarget-pipeline</p>
+                  <div class="bg-light p-3 mb-3 border border-1 rounded" style="margin-left: 10px; max-width: 380px">
+                    <code>--e_rnahybrid -15 --e_intarna -5 -b 5 -s 6</code>
+                  </div>
+              </div>
+              
+              <div class="row shadow-sm">
+                  <h2 id="label-exp-evidence" style="margin-top: 10px">Add Experimental Evidences to Target Predictions</h2>
+                  <h3 id="label-exp-evidence" style="margin-top: 10px">Gene-level Evidences</h3>
+                  <p>We add the manually curated gene-level experimental evidences to related binding sites predictions. For one tRF and one target gene in one gene-level evidence entry, we add this gene-level evidence to all predicted binding sites between all recorded tRFs with exactly the same sequence and all recorded transcripts of this specific target gene.</p>
+              </div>
+              
+              <div class="row shadow-sm">
+                  <h2 id="downstream-analysis" style="margin-top: 10px">One-click Downstream Analysis</h2>
+                  <p>Users can effortlessly conduct downstream analysis with a single click after obtaining target genes for a specific tRF in one search (see figure below). The steps to select <strong>TOP genes</strong> for downstream analysis are:</p>
+                  <ul style="list-style-position: inside">
+                      <li>All binding sites between one tRF and all target RNAs are ranked by <strong>an ascending order of free energy</strong>, and binding sites with the same free energy are further ranked by <strong>a descending order of maximum complementary length (MCL)</strong>. When ranking consensus interactions, free energies derived from <i>RNAhybrid</i> are used.</li>
+                      <li>Next top binding sites will be selected and mapped to corresponding genes. Then a list of gene Ensembl IDs/Symbols will be generated and copied to clipboard automatically. The default number of included top interactions is 2,000, and can be changed by users.</li>
+                      <li>A new window will be opened in browser, and automatically redirected to corresponding website. Then the gene list can be pasted into the input box for donstream analysis.</li>
+                      <li>Note:
+                          <ul style="list-style-position: inside">
+                              <li>All filterings on table showing retrieved binding sites will be discarded during binding sites ranking, that is, all retrieved binding sites will be included for ranking.</li>
+                              <li>Interations with empty gene Ensembl IDs or Symbols are NOT included and counted, i.e. TOP 2,000 non-empty gene are identified by default.</li>
+                          </ul>
+                      </li>
+                 </ul>
+                 <img src="{{ url_for('static', filename='img/pathway.png') }}" class="img-fluid mx-auto d-block" alt="Downstream Analysis Buttons" style="margin-bottom: 10px"/>
+              </div>
+          </div>
       </div>
   </div>
-  
-  {# Footer #}
-  <footer class="footer">
-    <div class="container-fluid text-center">
-      <p>&copy tRFtarget 2020 | All Rights Reserved</p>
-      
-      <div class="row mx-auto">
-        <div class="col" style="padding-right: 0px">
-          <p style="margin-top: 0px; margin-right: 0px; text-align: right; color: white; font-weight: bold">{{ count }}</p>
-        </div>
-        
-        <div class="col" style="padding-left: 5px">
-          <p style="margin-top: 0px; margin-left: 0px; text-align: left">Total Database Retrieves</p>
-        </div>
-      </div>
-      
-      <div class="row mx-auto">
-        <div class="col" style="padding-right: 0px">
-          <p style="margin-top: 0px; margin-right: 0px; text-align: right">
-          <!-- hitwebcounter Code START -->
-          <a href="https://www.hitwebcounter.com" target="_blank">
-          <img src="https://hitwebcounter.com/counter/counter.php?page=7737095&style=0006&nbdigits=9&type=ip&initCount=0" title="Free Counter" Alt="web counter"   border="0" /></a></p>
-        </div>
-        
-        <div class="col" style="padding-left: 5px">
-          <p style="margin-top: 0px; margin-left: 0px; text-align: left">Visitors</p>
-        </div>
-      </div>
-    </div>
-  </footer>
+{% endblock %}
+
+<!-- add scroll to body -->
+{% block body_attribs %}
+   data-bs-spy="scroll" data-bs-target="#toc" data-bs-offset="0"
+{% endblock %}
+
+{% block styles %}
+  {{ super() }}
+  <!-- for Table of Contents sidebar -->
+  <link rel="stylesheet" href="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.css" />
+  <style>
+      body {
+          position: relative;
+      }
+      nav[data-toggle="toc"] .nav > li > a:hover,
+      nav[data-toggle="toc"] .nav > li > a:focus {
+          color: #0d6efd;
+          border-left-color: #0d6efd;
+      }
+      nav[data-toggle="toc"] .nav-link.active,
+      nav[data-toggle="toc"] .nav-link.active:hover,
+      nav[data-toggle="toc"] .nav-link.active:focus {
+          color: #0d6efd;
+          border-left-color: #0d6efd;
+      }
+      /* Bootstrap 5 table hover background color table-secondary: #d1d2d4; table-light: #e5e6e7 */
+      .hover-secondary {
+          background-color: #d1d2d4 !important;
+      }
+      .hover-light {
+          background-color: #e5e6e7 !important;
+      }
+  </style>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <!-- for Table of Contents sidebar -->
+  <script src="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js"></script>
+  <!-- Custom script to fix table hover with row spans (https://stackoverflow.com/a/63395199) -->
+  <script>
+      jQuery(() => {
+          if ($("#table-multi-hover").length) {
+              const headerValues = Array.from(
+                  $("thead")[0].children[0].children
+              ).map((item) => item.innerText.toLowerCase());
+              let table = [];
+              const tableCells = Array.from($("tbody")[0].children)
+                  .map((item) => item.children)
+                  .map((item) => Array.from(item));
+              for (let i = 0; i < tableCells.length; i++) {
+                  let tempObj = {};
+                  for (let j = 0; j < tableCells[i].length; j++) {
+                      tempObj[tableCells[i][j].attributes.rep.value] =
+                          tableCells[i][j];
+                  }
+                  for (let j = 0; j < headerValues.length; j++) {
+                      if (i != 0 && tempObj[headerValues[j]] == undefined) {
+                          tempObj[headerValues[j]] =
+                              table[i - 1][headerValues[j]];
+                      }
+                  }
+                  table.push(Object.assign({}, tempObj));
+              }
+              $("#table-multi-hover tbody td, #table-multi-hover tbody th").on(
+                  "mouseover",
+                  (event) => {
+                      const rowIndex = parseInt(
+                          event.currentTarget.parentElement.attributes.i.value
+                      );
+                      const rep = event.currentTarget.attributes.rep.value;
+                      const rowspan =
+                          event.currentTarget.attributes.rowspan != undefined
+                              ? parseInt(
+                                    event.currentTarget.attributes.rowspan.value
+                                )
+                              : 1;
+                      for (let i = 0; i < rowspan; i++) {
+                          for (let j in table[rowIndex + i]) {
+                              if (j === "organism" || j === "retrieve date") {
+                                  $(table[rowIndex + i][j]).addClass(
+                                      "hover-light"
+                                  );
+                              } else {
+                                  $(table[rowIndex + i][j]).addClass(
+                                      "hover-secondary"
+                                  );
+                              }
+                          }
+                      }
+                  }
+              );
+              $("#table-multi-hover tbody td, #table-multi-hover tbody th").on(
+                  "mouseleave",
+                  (event) => {
+                      const rowIndex = parseInt(
+                          event.currentTarget.parentElement.attributes.i.value
+                      );
+                      const rep = event.currentTarget.attributes.rep.value;
+                      const rowspan =
+                          event.currentTarget.attributes.rowspan != undefined
+                              ? parseInt(
+                                    event.currentTarget.attributes.rowspan.value
+                                )
+                              : 1;
+                      for (let i = 0; i < rowspan; i++) {
+                          for (let j in table[rowIndex + i]) {
+                              if (j === "organism" || j === "retrieve date") {
+                                  $(table[rowIndex + i][j]).removeClass(
+                                      "hover-light"
+                                  );
+                              } else {
+                                  $(table[rowIndex + i][j]).removeClass(
+                                      "hover-secondary"
+                                  );
+                              }
+                          }
+                      }
+                  }
+              );
+          }
+      });
+  </script>
 {% endblock %}

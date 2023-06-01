@@ -1,0 +1,34 @@
+{# Jinja web template engine which will be redered by Flask #}
+{# Template Inheritance #}
+{% extends "mybase.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row" style="margin-top: 1rem; margin-bottom: 1rem">
+        <div class="col-md-6 offset-md-3">
+            {# use different colors to show differenet job status #}
+            {# All job status: QUEUED, RUNNING, COMPLETED, DELETED, FAILED, TERMINATED, NOT FOUND #}
+            
+            {% if job_status == 'COMPLETED' %}
+                <h4 class="text-center">Your job status is: <span class="text-success"><strong>{{ job_status }}</strong></span></h4>
+            {% elif job_status == 'DELETED' %}
+                <h4 class="text-center">Your job status is: <span class="text-warning"><strong>{{ job_status }}</strong></span></h4>
+            {% elif job_status == 'QUEUED' or job_status == 'RUNNING' %}
+                <h4 class="text-center">Your job status is: <span class="text-info"><strong>{{ job_status }}</strong></span></h4>
+            {% else %}
+                <h4 class="text-center">Your job status is: <span class="text-danger"><strong>{{ job_status }}</strong></span></h4>
+            {% endif %}
+            
+            {# show message #}
+            <pre><p>{{ message|safe }}</p></pre>
+            
+            {# show download button #}
+            {% if job_status == 'COMPLETED' %}
+                <div class="d-flex justify-content-center">
+                    <a class="btn btn-primary" role="button" href="{{ url_for('download_file', job_id=job_id) }}">Download</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

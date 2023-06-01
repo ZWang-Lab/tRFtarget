@@ -1,0 +1,116 @@
+{# Jinja web template engine which will be rendered by Flask #}
+{# Template Inheritance #}
+{% extends "mybase.html" %}
+{% from "bootstrap5/form.html" import render_field %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <br>
+      <h3>Browse by tRF</h3>
+    </div>
+  </div>
+  
+  {# query form #}
+  {# Submit action need to assigned to corresponding route #}
+  <!-- add target="_blank" will open new tab and render page when press button -->
+  <form class="form" method="POST" action={{ url_for('browse_tRF') }} role="form" target="_blank">
+    {{ form.csrf_token }}
+    {# select form for organism #}
+    <div class="row">
+      <!--  make the label center so that it looks like in a line with the radio field -->
+      <div class="col-md-1 offset-md-3 d-inline-flex align-items-center">
+        {{ form.search_organism.label(class_="form-label h5", style_="margin-bottom: 0") }}
+      </div>
+      <div class="col-md-5 d-inline-flex align-items-center">
+         {{ form.search_organism(class_="form-select", style_="width: 100%; max-width: 16rem") }}
+      </div>
+    </div>
+    
+    {# filter part #}
+    {# multiple checkbox for tRF type #}
+    <div class="row" style="margin-top: 1.5rem">
+      <div class="col-md-1 offset-md-3 d-inline-flex align-items-center">
+        <h5>tRF Types:</h5>
+      </div>
+      <div class="col-md-5">
+        <!--  nested rows of multiple checkboxes -->
+        <div class="row">
+          <div class="col">
+            {{ render_field(form.trf_1) }}
+          </div>
+          <div class="col">
+            {{ render_field(form.trf_3) }}
+          </div>
+         <div class="col">
+            {{ render_field(form.trf_5) }}
+          </div>
+          <div class="col">
+            {{ render_field(form.trf_5u) }}
+          </div>
+        </div>
+        <div class="row">
+          <div class="col">
+            {{ render_field(form.trf_i) }}
+          </div>
+          <div class="col">
+            {{ render_field(form.trf_3half) }}
+          </div>
+         <div class="col">
+            {{ render_field(form.trf_5half) }}
+          </div>
+          <div class="col">
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    {# multiple checkbox for tRF source #}
+    <div class="row">
+      <!--  NOT make the label center so that it looks like in a line with the checkboxes -->
+      <div class="col-md-1 offset-md-3 d-inline-flex align-items-center">
+        <h5>tRF Sources:</h5>
+      </div>
+      <div class="col-md-5">
+        <!--  also use nested rows to let the multiple checkboxes align with previous rows -->
+        <div class="row">
+          <div class="col">
+            {{ render_field(form.trfdb) }}
+          </div>
+          <div class="col">
+            {{ render_field(form.tsrna) }}
+          </div>
+         <div class="col">
+            {{ render_field(form.tsrfun) }}
+          </div>
+          <div class="col">
+            {{ render_field(form.tsrbase) }}
+          </div>
+        </div>
+        <div class="row">
+          <div class="col">
+            {{ render_field(form.tatdb) }}
+          </div>
+          <div class="col">
+            {{ render_field(form.mintbase) }}
+          </div>
+         <div class="col">
+            {{ render_field(form.trfexp) }}
+          </div>
+          <div class="col">
+            {{ render_field(form.oncotrf) }}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    {# submit button #}
+    <div class="row" style="margin-bottom: 1rem">
+      <div class="col-md-2 offset-md-7">
+        {{ render_field(form.submit, button_stype="primary", button_size="md") }}
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

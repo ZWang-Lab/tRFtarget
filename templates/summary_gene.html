@@ -1,0 +1,237 @@
+{# Jinja web template engine which will be rendered by Flask #}
+{# Template Inheritance #}
+{% extends "mybase.html" %}
+<!-- Speed up on large dataset
+1. DataTables give instructions for table data source in https://datatables.net/faqs/index#speed. After exploration, specify the data source by data option (https://datatables.net/reference/option/data) will be much more fast than DOM sourced, and is easy to implement (equivalent to Ajax sourced)
+2. Move the work of adding hyperlinks to contents in table and changing integers back to meaningful strings from back-end to front-end, to reduce the pressure of back-end, and also reduce the data size for network transmission
+3. avoid using select filter or autocomplete with huge options, text input filter without autocomplete is the only choice -->
+
+{% block content %}
+<div class="container-fluid">
+  {# first print some text #}
+  {# add "|safe" to turn off autoescaping and show html-format string directly #}
+  <div class="row" style="margin-top: 1rem">
+    <div class="col-md-6 offset-md-3">
+      {% if success %}
+        <pre><h4 class="text-success">{{ for_print|safe }}</h4></pre>
+      {% else %}
+        <pre><h4 class="text-danger">{{ for_print|safe }}</h4></pre>
+      {% endif %}
+    </div>
+  </div>
+  
+  {# data #}
+  {# add "|safe" to turn off autoescaping and show html-format string directly #}
+  {% if display_table %}
+    <!-- a spinner shown first, then be hidden after table initialized -->
+    <div class="d-flex justify-content-center" id="spinner">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+    
+    <div class="row" style="margin-bottom: 1rem">
+      <!-- first just hidden the table, then use JS to show it -->
+      <table id="summary_table" class="display invisible" style="width:100%">
+        <thead>
+          <tr>
+            <th scope="col">Gene ID</th>
+            <th scope="col">Gene Name</th>
+            <th scope="col">#Transcripts in tRFtarget</th>
+            <th scope="col">Transcript Types</th>
+            <th scope="col">Search Targets</th>
+          </tr>
+        </thead>
+      </table>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block styles %}
+  {{ super() }}
+  <!-- DataTable plugin with Buttons, HTML5 export extensions -->
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.12.1/b-2.2.3/b-html5-2.2.3/datatables.min.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.dataTables.yadcf.css') }}"/>
+  <style>
+    /* The .yadcf-filter-wrapper will set the white-space to nowrap, which makes the selected options only goes in one row forever. Change it to normal to allow options takes multiple rows (https://stackoverflow.com/questions/22464534/make-select2-multi-select-not-wrap-to-multiple-lines) */
+    ul.select2-selection__rendered {
+      white-space: normal
+    }
+    /* yadcf text input filter will increase the table width, so control their max width in CSS (https://stackoverflow.com/questions/27862386/how-to-stop-yadcf-filters-in-datatables-to-mess-with-the-headers-cell-width) */
+    #yadcf-filter--summary_table-0, #yadcf-filter--summary_table-1 {
+      max-width: 12rem
+    }
+    #yadcf-filter-wrapper-inner--summary_table-2 {
+      max-width: 10rem
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/busy-load/dist/app.min.css"/>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <!-- DataTable plugin with some Buttons, HTML5 export extensions -->
+  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.12.1/b-2.2.3/b-html5-2.2.3/datatables.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script src="{{ url_for('static', filename='js/jquery.dataTables.yadcf.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/busy-load/dist/app.min.js"></script>
+  <script>
+  // declare the DataTable variable in GLOBAL, then we can access it in HTML
+  var myTable;
+  $(document).ready( function () {
+    // determine the Ensembl website as a prefix based on Organism
+    var this_organism = "{{ organism|safe }}"; // don't forget to quote the string, otherwise error occurs
+    
+    // link prefix for Gene
+    var gene_link;
+    switch (this_organism) {
+      case "Rhodobacter sphaeroides":
+        gene_link = "https://bacteria.ensembl.org/id/";
+        break;
+      case "Schizosaccharomyces pombe":
+        gene_link = "https://www.pombase.org/gene/";
+        break;
+      case "Drosophila melanogaster":
+        gene_link = "https://flybase.org/reports/";
+        break;
+      case "Caenorhabditis elegans":
+        gene_link = "https://wormbase.org/species/c_elegans/gene/";
+        break;
+      default:
+        gene_link = "https://www.ensembl.org/id/";
+    }
+    
+    // a function to change integers back to RNA Type string
+    function mapRNAType (x) {
+      var tmp_array = x.split(":")
+      switch (tmp_array[0]) {
+        // note that now the integers are actually strings
+        case "1":
+          return "protein_coding".concat(": ", tmp_array[1]);
+        case "2":
+          return "rRNA".concat(": ", tmp_array[1]);
+        case "3":
+          return "lncRNA".concat(": ", tmp_array[1]);
+      }
+    }
+    // a function to map all RNA Type strings
+    function mapAllRNAType (x) {
+      return x.split(";").map(n => mapRNAType(n)).join("; ");
+    }
+    
+    myTable = $('#summary_table').DataTable(
+      {
+        // define columns in table using array index (since data source is array of row data)
+        // if definition of column property conflicts, columns always take priority over columnsDefs
+        // the columns of each row from Flask is 'rna_id', 'rna_name', 'num_rna_type', 'gene_id', 'gene_name', 'seq_len'
+        // give up the columns definition since we need a range_number_slider, and it not works on rendered_html column_data_type. So do not shift columns to add the 1st column Organism
+        columnDefs: [
+          // 1th column, Gene ID, need to add hyperlinks, note that gene_id from Flask are all Ensembl IDs without missing value
+          {target: 0,
+           render: function ( data, type, row, meta ) {
+             return '<a href=' + gene_link + data + ' target="_blank" rel="noopener noreferrer">' + data + '</a>';
+           }
+          },
+          // 4th column, RNA Types, need to change integers back to RNA Type string
+          {target: 3,
+           render: function ( data, type, row, meta ) {
+             return mapAllRNAType(data);
+           }
+          },
+          // 5th column, a Search button
+          {target: 4,
+           data: null,
+           render: function ( data, type, row, meta ) {
+             // since Jinja html template rendered first, there is no way to evaluate JavaScript in Jinja
+             // a simple workaround, or directly use the tRFtarget website link
+             if (type === 'export') {
+                 // for download, only use the hyperlink
+                 return 'http://trftarget.net/show_target?gene_id=' + row[0] + '&organism=' + this_organism;
+             } else {
+                return '<a class="btn btn-primary btn-sm" href="{{ url_for('show_Target', gene_id='replace1', organism='replace2') }}" role="button" target="_blank">Search</a>'.replace("replace1", row[0]).replace("replace2", this_organism);
+             }
+           }
+          },
+          {
+            targets: [0,1,2,3,4],
+            className: "dt-body-center"
+          },
+          {
+            targets: [0,1,2,3,4],
+            className: "dt-head-center"
+          },
+          // do not sort Organism and Search Targets column
+          {
+            targets: 4,
+            orderable: false
+          },
+        ],
+        // since DataTables by default sort by 1st column, even we disable the sorting for 1st column, it still be sorted. So change the default row order by sorted on RNA ID
+        order: [[0, 'asc']],
+        // control the DOM position by Bootstrap grid
+        dom:  "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-2 offset-md-4'B>>" +
+              "<'row'<'col-sm-12'tr>>" +
+              "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        buttons: [
+          {
+            text: 'Reset all filters',
+            attr: {
+              id: 'reset-all-table-filter',
+              class: 'dt-button',
+              onclick: 'yadcf.exResetAllFilters(myTable)'
+            }
+          },
+          { // ref https://datatables.net/reference/button/csv
+            extend: 'csv',
+            text: 'Export',
+            header: false,
+            filename: 'tRFtarget_' + this_organism.replace(" ", "_") + '_Genes',
+            exportOptions: {
+              stripNewlines: true,
+              trim: true,
+              orthogonal: 'export' // use Orthogonal data (https://datatables.net/manual/data/orthogonal-data) for downloading, used for search button columns
+            },
+            // replace the header since adding filters changes the header text
+            customize: function(csv) {
+              return '"Gene ID","Gene Name","#Transcripts in tRFtarget","Transcript Types","Search Targets"\n' + csv
+            },
+            // besides the action to create and save a CSV file, show a spinner during downloading
+            action: function (e, dt, node, config) {
+              var that = this;
+              $("#summary_table").busyLoad("show", { text: "DOWNLOADING ..." });
+              
+              setTimeout(function () { // it will download and hide the loading spin when csv is ready after waiting 1 second
+                $.fn.DataTable.ext.buttons.csvHtml5.action.call(that, e, dt, node, config);
+                $("#summary_table").busyLoad("hide");
+              }, 1000);
+            }
+          }
+        ],
+        // directly pass the list of lists (array of row data) as Jinja variable to DataTable data option as data source
+        // and this data source do not support setting processing option to display a processing indicator, so we need a wordaround to display a spinner while data loading
+        data: {{ data|safe }},
+        deferRender: true, // speed up filtering a little
+        processing: true, // show effect on sorting; effect on yadcf filtering not observed
+        scrollX: false, // conflict with yadcf, if true, headers will be invisible
+        // when table is ready, show table while hide the spinner
+        initComplete: function (settings, json) {
+          $("#spinner").addClass("d-none"); // directly remove the space for spinner, not just make it invisible
+          $("#summary_table").removeClass("invisible");
+        }
+      }
+    );
+    // No cumulative filtering, and set column_data_type to rendered_html since render function of columnDefs has been used
+    // based on extensive exploration, single column filtering can achieve acceptable speed on large data only by text input filter without autocomplete and with deferRender turned on
+    yadcf.init ( myTable,
+      [
+        {column_number : 0, filter_type: "text", column_data_type: "rendered_html", filter_default_label: "Type to search"},
+        {column_number : 1, filter_type: "text", column_data_type: "text", filter_default_label: "Type to search"},
+        {column_number : 2, filter_type: "range_number_slider", column_data_type: "text"},
+        {column_number : 3, filter_type: "text", column_data_type: "rendered_html", filter_default_label: "Type to search"},
+      ]
+    ); 
+  } ); 
+  </script>
+{% endblock %}

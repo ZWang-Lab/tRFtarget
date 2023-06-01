@@ -1,0 +1,134 @@
+{# Jinja web template engine which will be redered by Flask #}
+{# Template Inheritance #}
+{% extends "mybase.html" %}
+
+{% block content %}
+  <div class="container-fluid">
+      <div class="row">
+        <!-- sidebar position; hidden in small screen -->
+        <div class="col-md-2 d-none d-sm-none d-md-block">
+          <!-- don't forget to set as sticky-top -->
+          <nav id="toc" data-toggle="toc" class="sticky-top" style="margin: 10px"></nav>
+        </div>
+        <!-- all contents need to be put in this one big column -->
+        <div class="col-md-8">
+          <div class="row shadow-sm">
+            <h3 id="search-way" style="margin-top: 10px">Search ways of tRFtarget</h3>
+            <p>The typical data retrieving of tRFtarget includes 4 ways:</p>
+            <ul style="list-style-position: inside">
+              <li>Search by <strong>tRF ID</strong> (also support <strong>Standardized tRF ID</strong>) to see the information of all potential transcripts which can interact with this specific tRF.
+                <ul style="list-style-position: inside">
+                  <li>Only top 50,000 binding sites with lower free energy and larger maximum complementary length will be provided in one search.</li>
+                  <li>When retrieving consensus binding sites of one tRF, 25,000 top <i>RNAhybrid</i> predictions and 25,000 top <i>IntaRNA</i> predictions will be provided.</li>
+                </ul>
+              </li>
+              <li>Search by <strong>target RNA Ensembl ID</strong> or <strong>name</strong> to see the information of all potential tRFs which can interact with this specific RNA.</li>
+              <li>Search by <strong>gene Ensembl ID</strong> or <strong>symbol</strong> to see the information of all potential tRFs which can interact with any transcripts transcribed by this specific gene.</li>
+              <li><strong>Advanced Search</strong> to see the information of all binding sites between the specific tRF and target RNA or gene.</li>
+            </ul>
+            <p>Users can also <strong>browse</strong> the information of all tRFs, target RNAs and genes covered in tRFtarget.</p>
+            <p>For tRFs, target RNAs and genes not covered by tRFtarget, users can obtain the binding site information via our <strong>online service</strong>.</p>
+          </div>
+                   
+          <div class="row shadow-sm">
+            <h3 id="linking" style="margin-top: 10px">Linking to tRFtarget</h3>
+            <h4 id="linking-target">Linking to binding sites in tRFtarget</h4>
+            <p>Please use the following format to link to page showing binding sites in tabular form:</p>
+            <ul style="list-style-position: inside">
+                <li>Binding sites for <i>Homo sapiens</i> <strong>tRF</strong> tRFdb-1001:
+                    <ul style="list-style-position: inside">
+                        <li><a href="http://trftarget.net/show_target?trf_id=tRFdb-1001&organism=Homo sapiens" target="_blank" rel="noopener noreferrer">http://trftarget.net/<span style="color: red">show_target</span>?<span style="color: green">trf_id</span>=tRFdb-1001&<span style="color: green">organism</span>=Homo sapiens</a></li>
+                    </ul>
+                </li>
+                
+                <li>Binding sites for <i>Homo sapiens</i> <strong>transcript</strong> ARF5-201 (ENST00000000233):
+                    <ul style="list-style-position: inside">
+                        <li><a href="http://trftarget.net/show_target?rna_name=ARF5-201&organism=Homo sapiens" target="_blank" rel="noopener noreferrer">http://trftarget.net/<span style="color: red">show_target</span>?<span style="color: green">rna_name</span>=ARF5-201&<span style="color: green">organism</span>=Homo sapiens</a></li>
+                        <li><a href="http://trftarget.net/show_target?rna_id=ENST00000000233&organism=Homo sapiens" target="_blank" rel="noopener noreferrer">http://trftarget.net/<span style="color: red">show_target</span>?<span style="color: green">rna_id</span>=ENST00000000233&<span style="color: green">organism</span>=Homo sapiens</a></li>
+                    </ul>
+                </li>
+                
+                <li>Binding sites for <i>Homo sapiens</i> <strong>gene</strong> ARF5 (ENSG00000004059):
+                    <ul style="list-style-position: inside">
+                        <li><a href="http://trftarget.net/show_target?gene_name=ARF5&organism=Homo sapiens" target="_blank" rel="noopener noreferrer">http://trftarget.net/<span style="color: red">show_target</span>?<span style="color: green">gene_name</span>=ARF5&<span style="color: green">organism</span>=Homo sapiens</a></li>
+                        <li><a href="http://trftarget.net/show_target?gene_id=ENSG00000004059&organism=Homo sapiens" target="_blank" rel="noopener noreferrer">http://trftarget.net/<span style="color: red">show_target</span>?<span style="color: green">gene_id</span>=ENSG00000004059&<span style="color: green">organism</span>=Homo sapiens</a></li>
+                    </ul>
+                </li>
+                
+                <li>Binding sites between <i>Homo sapiens</i> <strong>tRF</strong> tRF-db1001 and <strong>transcript</strong> ARF5-201 (ENST00000000233):
+                    <ul style="list-style-position: inside">
+                        <li><a href="http://trftarget.net/show_target?trf_id=tRFdb-1001&rna_name=ARF5-201&organism=Homo sapiens" target="_blank" rel="noopener noreferrer">http://trftarget.net/<span style="color: red">show_target</span>?<span style="color: green">trf_id</span>=tRFdb-1001&<span style="color: green">rna_name</span>=ARF5-201&<span style="color: green">organism</span>=Homo sapiens</a></li>
+                        <li><a href="http://trftarget.net/show_target?trf_id=tRFdb-1001&rna_id=ENST00000000233&organism=Homo sapiens" target="_blank" rel="noopener noreferrer">http://trftarget.net/<span style="color: red">show_target</span>?<span style="color: green">trf_id</span>=tRFdb-1001&<span style="color: green">rna_id</span>=ENST00000000233&<span style="color: green">organism</span>=Homo sapiens</a></li>
+                    </ul>
+                </li>
+                
+                <li>Binding sites between <i>Homo sapiens</i> <strong>tRF</strong> tRFdb-1001 and <strong>gene</strong> ARF5 (ENSG00000004059):
+                    <ul style="list-style-position: inside">
+                        <li><a href="http://trftarget.net/show_target?trf_id=tRFdb-1001&gene_name=ARF5&organism=Homo sapiens" target="_blank" rel="noopener noreferrer">http://trftarget.net/<span style="color: red">show_target</span>?<span style="color: green">trf_id</span>=tRFdb-1001&<span style="color: green">gene_name</span>=ARF5&<span style="color: green">organism</span>=Homo sapiens</a></li>
+                        <li><a href="http://trftarget.net/show_target?trf_id=tRFdb-1001&gene_id=ENSG00000004059&organism=Homo sapiens" target="_blank" rel="noopener noreferrer">http://trftarget.net/<span style="color: red">show_target</span>?<span style="color: green">trf_id</span>=tRFdb-1001&<span style="color: green">gene_id</span>=ENSG00000004059&<span style="color: green">organism</span>=Homo sapiens</a></li>
+                    </ul>
+                </li>
+            </ul>
+              
+            <h4 id="linking-evidence">Linking to experimental evidences in tRFtarget</h4>
+            <h5 id="linking-evidence-gene">Linking to gene-level experimental evidences</h5>
+            <p>Please use the following format to link to page showing gene-level experimental evidences in tabular form:</p>
+            <ul style="list-style-position: inside">
+                <li>Gene-level evidences for <i>Homo sapiens</i> <strong>tRF</strong> tRFdb-3009a:
+                    <ul style="list-style-position: inside">
+                        <li><a href="http://trftarget.net/gene_evidence?trf_id=tRFdb-3009a&organism=Homo sapiens" target="_blank" rel="noopener noreferrer">http://trftarget.net/<span style="color: red">gene_evidence</span>?<span style="color: green">trf_id</span>=tRFdb-3009a&<span style="color: green">organism</span>=Homo sapiens</a></li>
+                    </ul>
+                </li>
+                
+                <li>Gene-level evidences for <i>Homo sapiens</i> <strong>gene</strong> FER (ENSG00000151422):
+                    <ul style="list-style-position: inside">
+                        <li><a href="http://trftarget.net/gene_evidence?gene_name=FER&organism=Homo sapiens" target="_blank" rel="noopener noreferrer">http://trftarget.net/<span style="color: red">gene_evidence</span>?<span style="color: green">gene_name</span>=FER&<span style="color: green">organism</span>=Homo sapiens</a></li>
+                        <li><a href="http://trftarget.net/gene_evidence?gene_id=ENSG00000151422&organism=Homo sapiens" target="_blank" rel="noopener noreferrer">http://trftarget.net/<span style="color: red">gene_evidence</span>?<span style="color: green">gene_id</span>=ENSG00000151422&<span style="color: green">organism</span>=Homo sapiens</a></li>
+                    </ul>
+                </li>
+                
+                <li>Gene-level evidences between <i>Homo sapiens</i> <strong>tRF</strong> tRFdb-3009a and <strong>gene</strong> FER (ENSG00000151422):
+                    <ul style="list-style-position: inside">
+                        <li><a href="http://trftarget.net/gene_evidence?trf_id=tRFdb-3009a&gene_name=FER&organism=Homo sapiens" target="_blank" rel="noopener noreferrer">http://trftarget.net/<span style="color: red">gene_evidence</span>?<span style="color: green">trf_id</span>=tRFdb-3009a&<span style="color: green">gene_name</span>=FER&<span style="color: green">organism</span>=Homo sapiens</a></li>
+                        <li><a href="http://trftarget.net/gene_evidence?trf_id=tRFdb-3009a&gene_id=ENSG00000151422&organism=Homo sapiens" target="_blank" rel="noopener noreferrer">http://trftarget.net/<span style="color: red">gene_evidence</span>?<span style="color: green">trf_id</span>=tRFdb-3009a&<span style="color: green">gene_id</span>=ENSG00000151422&<span style="color: green">organism</span>=Homo sapiens</a></li>
+                    </ul>
+                </li>
+            </ul>
+          </div>
+        </div>
+     </div>
+  </div>
+{% endblock %}
+
+<!-- add scroll to body -->
+{% block body_attribs %}
+   data-bs-spy="scroll" data-bs-target="#toc" data-bs-offset="0"
+{% endblock %}
+
+{% block styles %}
+  {{ super() }}
+  <!-- for Table of Contents sidebar -->
+  <link rel="stylesheet" href="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.css" />
+  <style>
+      body {
+          position: relative;
+      }
+      nav[data-toggle="toc"] .nav > li > a:hover,
+      nav[data-toggle="toc"] .nav > li > a:focus {
+          color: #0d6efd;
+          border-left-color: #0d6efd;
+      }
+      nav[data-toggle="toc"] .nav-link.active,
+      nav[data-toggle="toc"] .nav-link.active:hover,
+      nav[data-toggle="toc"] .nav-link.active:focus {
+          color: #0d6efd;
+          border-left-color: #0d6efd;
+      }
+  </style>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <!-- for Table of Contents sidebar -->
+  <script src="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js"></script>
+{% endblock %}

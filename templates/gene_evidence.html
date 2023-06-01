@@ -1,0 +1,450 @@
+{# Jinja web template engine which will be rendered by Flask #}
+{# Template Inheritance #}
+{% extends "mybase.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    {# first print some text #}
+    {# add "|safe" to turn off autoescaping and show html-format string directly #}
+    <div class="row" style="margin-top: 1rem">
+        <div class="col-md-6 offset-md-3">
+            {% if success %}
+            <pre><h4 class="text-success" id="message">{{ for_print|safe }}</h4></pre>
+            {% else %}
+            <pre><h4 class="text-danger" id="message">{{ for_print|safe }}</h4></pre>
+            {% endif %}
+        </div>
+    </div>
+    
+    {# data #}
+    {# add "|safe" to turn off autoescaping and show html-format string directly #}
+    {% if display_table %}
+        <!-- a spinner shown first, then be hidden after table initialized -->
+        <div class="d-flex justify-content-center" id="spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    
+        <div class="row" style="margin-bottom: 1rem">
+            <!-- first just hidden the table, then use JS to show it -->
+            <table
+                id="result_table"
+                class="display invisible"
+                style="width: 100%">
+                <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Organism</th>
+                        <th scope="col">tRF ID</th>
+                        <th scope="col">Standardized tRF ID</th>
+                        <th scope="col">tRF Sequence</th>
+                        <th scope="col">Gene ID</th>
+                        <th scope="col">Gene Name</th>
+                        <th scope="col">Tissue/Cell line/Animal</th>
+                        <th scope="col">Disease</th>
+                        <th scope="col">Regulation</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Reference</th>
+                        <th scope="col">Journal</th>
+                        <th scope="col">Year</th>
+                        <!-- This column will be hidden -->
+                        <th scope="col">PMID</th>
+                        <th scope="col">tRF Source</th>
+                        <th scope="col">Cellosaurus ID</th>
+                        <th scope="col">Search Targets</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+    
+    
+{% block styles %}
+  {{ super() }}
+  <!-- DataTable plugin with Buttons, HTML5 export extensions -->
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.12.1/b-2.2.3/b-html5-2.2.3/datatables.min.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.dataTables.yadcf.css') }}"/>
+  <style>
+    /* The .yadcf-filter-wrapper will set the white-space to nowrap, which makes the selected options only goes in one row forever. Change it to normal to allow options takes multiple rows (https://stackoverflow.com/questions/22464534/make-select2-multi-select-not-wrap-to-multiple-lines) */
+    ul.select2-selection__rendered {
+      white-space: normal
+    }
+    /* yadcf text input filter will increase the table width, so control their max width in CSS (https://stackoverflow.com/questions/27862386/how-to-stop-yadcf-filters-in-datatables-to-mess-with-the-headers-cell-width) */
+    /* 2th Organism + select2 */
+    #yadcf-filter-wrapper--result_table-1 .select2 {
+      max-width: 6rem
+    }
+    /* 3th tRF ID + search bar; 4th standardized tRF ID + search bar; 5th tRF sequence + search bar; 6th gene id + search bar; 7th gene name + search bar */
+    #yadcf-filter--result_table-2, #yadcf-filter--result_table-3, #yadcf-filter--result_table-4, #yadcf-filter--result_table-5, #yadcf-filter--result_table-6 {
+      max-width: 6rem
+    }
+    /* 8th tissue + select2; 9th disease + select2; 10th regulation + select2; 11th technique + select2; 13th Journal + select2 */
+    #yadcf-filter-wrapper--result_table-7 .select2, #yadcf-filter-wrapper--result_table-8 .select2, #yadcf-filter-wrapper--result_table-9 .select2, #yadcf-filter-wrapper--result_table-10 .select2, #yadcf-filter-wrapper--result_table-12 .select2 {
+      max-width: 6rem
+    }
+    /* 14th year + range slide */
+    #yadcf-filter-wrapper-inner--result_table-13 {
+      max-width: 4rem
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/busy-load/dist/app.min.css"/>
+{% endblock %}
+
+
+{% block scripts %}
+  {{ super() }}
+  <!-- DataTable plugin with some Buttons, HTML5 export extensions -->
+  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.12.1/b-2.2.3/b-html5-2.2.3/datatables.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script src="{{ url_for('static', filename='js/jquery.dataTables.yadcf.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/busy-load/dist/app.min.js"></script>
+  <script src="{{ url_for('static', filename='js/pako.min.js') }}"></script>
+  <script>
+  // declare the DataTable variable in GLOBAL, then we can access it in HTML
+  var myTable;
+      
+  
+  // link prefix for Gene, note each row has its own organism
+  function get_gene_link(this_organism) {
+    switch (this_organism) {
+      case "Rhodobacter sphaeroides":
+        return "https://bacteria.ensembl.org/id/";
+      case "Schizosaccharomyces pombe":
+        return "https://www.pombase.org/gene/";
+      case "Drosophila melanogaster":
+        return "https://flybase.org/reports/";
+      case "Caenorhabditis elegans":
+        return "https://wormbase.org/species/c_elegans/gene/";
+      default:
+        return "https://www.ensembl.org/id/";
+    }
+  }
+      
+  // determine the tRFdb organism string based on Organism (not the same in tRFtarget), note each row has its own organism
+  function get_trfdb_organism(this_organism) {
+    switch (this_organism) {
+      case "Homo sapiens":
+        return "human";
+      case "Mus musculus":
+        return "mouse";
+      case "Drosophila melanogaster":
+        return "drosophila";
+      case "Danio rerio":
+        return "Zebra_fish_Zv9";
+      case "Caenorhabditis elegans":
+        return "c.elegans";
+      case "Xenopus tropicalis":
+        return "Xenopus-tropicalis";
+      case "Rhodobacter sphaeroides":
+        return "r.sphaeroides";
+      case "Schizosaccharomyces pombe":
+        return "s.pombe";
+      default:
+        return this_organism;
+    }
+  }
+  
+  // experimental Techniques and Tissues for select2
+  var tech_set = new Set();
+  var tissue_set = new Set();
+  var tissue_opts = [];
+  var tech_opts = [];
+    
+  $(document).ready( function () {
+    
+    myTable = $('#result_table').DataTable(
+      {
+        // define columns in table using array index (since data source is array of row data)
+        // if definition of column property conflicts, columns always take priority over columnsDefs
+        // the columns of each row from Flask is 'Gene_Evidence_ID', 'Organism', 'tRF_ID', 'tRF_ID_std', 'tRF_Seq', 'Gene_ID', 'Gene_Name', 'Tissue', 'Disease', 'Direction', 'Technique', 'Title', 'Journal', 'Year', 'PMID', 'tRF_Source', 'Cellosaurus_ID'
+        // give up the columns definition since we need a range_number_slider, and it not works on rendered_html column_data_type. So do not shift columns to add the 1st column Organism
+        columnDefs: [
+          // 2nd column, organism, make italic
+          {target: 1,
+           render: function ( data, type, row, meta ) {
+               return '<i>' + data + '</i>';
+           }
+          },
+          // 3rd column, tRF ID, need to add hyperlinks based on tRF Source
+          // note empty tRF ID may exist, and in this table, there may be organism name inside a parentheses behind the tRF ID
+          {target: 2,
+           render: function ( data, type, row, meta ) {
+             let this_trf = data;
+             let this_organism = row[1];
+             if (this_trf.includes("(")) {
+                 let parts = this_trf.split(/ ?\(([^)]+)\) ?/);
+                 this_trf = parts[0].trim();
+                 this_organism = parts[1].trim();
+             }
+             switch (row[15]) {
+               // for hyperlink data, we still show the text inside parentheses
+               case "tRFdb":
+                 return '<a href="http://genome.bioch.virginia.edu/trfdb/experiments_display.php?trf_id=' + this_trf.split("-")[1].substr(0, 5) + '&organism=' + get_trfdb_organism(this_organism) + '" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+               case "tsRNA study":
+                 return '<a href="https://pubmed.ncbi.nlm.nih.gov/28696308" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+               case "tsRBase":
+                 return '<a href="http://www.tsrbase.org/entry.php?acc=' + this_trf + '" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+               case "tsRFun":
+                 return '<a href="https://rna.sysu.edu.cn/tsRFun/searchDetail-tsRNA.php?tsRNAid=' + this_trf + '" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+               case "MINTbase v2.0":
+                 return '<a href="https://cm.jefferson.edu/MINTbase/InputController?v=g&g=GRCh37&e=1&search=submit&t=All&am=All&an=All&da=&tn=&fs=&fn=' + this_trf + '&c=All&st=All&gs=&ge=" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+               case "tRFexplorer":
+                 return '<a href="https://trfexplorer.cloud/fragments/' + this_trf + '" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+               case "tatDB":
+                 var tmp_array = this_trf.split("-")
+                 return '<a href="https://grigoriev-lab.camden.rutgers.edu/tatdb/trf_type.php?trna_id=' + tmp_array.slice(0, 3).join('-') + '&trna_region=' + tmp_array[3] + '" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+               case "OncotRF":
+                 return '<a href="http://bioinformatics.zju.edu.cn/OncotRF/Pages/validation.php?tRF_ID=' + this_trf + '" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+               default:
+                 return data;
+             }
+           }
+          },
+          // 4th column, Standardized tRF ID, only use the first one
+          // already handled in backend
+          /*{target: 3,
+           render: function ( data, type, row, meta ) {
+             if (data.length > 0) {
+               return data.split(';')[0].trim();
+             } else {
+               return data;
+             }
+           }
+          },*/
+          // 5th column, tRF Sequence, separate it into multiple lines
+          // note since there is no spaces in sequences, regular text wrapping doesn't work because it relies on spaces or hyphens to find suitable break points, use text-break class
+          {target: 4,
+           className: 'text-break',
+          },
+          // 6th column, Gene ID, need to add hyperlinks, note that gene_id from Flask may be empty string, otherwise all are Ensembl IDs
+          {target: 5,
+           render: function ( data, type, row, meta ) {
+             if (data.length > 0) {
+               return '<a href=' + get_gene_link(row[1]) + data + ' target="_blank" rel="noopener noreferrer">' + data + '</a>';
+             } else {
+               return data;
+             }
+           }
+          },
+          // 8th column, Tissue, add hyperlinks and newlines
+          {target: 7,
+           render: function ( data, type, row, meta ) {
+             if (data.length > 0) {
+                 const tissue_array = data.split(';');
+                 const link_array = row[16].split(';');
+                 let tmp_array = [];
+                 for (let i = 0; i < tissue_array.length; i++) {
+                     let this_tissue = tissue_array[i].trim();
+                     if (typeof link_array[i] !== 'undefined' && link_array[i].trim().length > 0) {
+                         let this_link = link_array[i].trim();  
+                         if (this_link.startsWith('http')) {
+                             tmp_array.push('<a href=' + this_link + ' target="_blank" rel="noopener noreferrer">' + this_tissue + '</a>');
+                         } else if (this_link.startsWith('CVCL')) {
+                             tmp_array.push('<a href=https://www.cellosaurus.org/' + this_link + ' target="_blank" rel="noopener noreferrer">' + this_tissue + '</a>');
+                         } else {
+                             tmp_array.push(this_tissue);
+                         }
+                     } else {
+                         tmp_array.push(this_tissue);
+                     }
+                     // add tissue to options for select2
+                     tissue_set.add(this_tissue)
+                 }
+                 return tmp_array.join(';<br>');
+             } else {
+                 return data;
+             }
+           }
+          },
+          // 10th column, Regulation direction, red for upregulate, green for downregulate
+          {target: 9,
+           render: function ( data, type, row, meta ) {
+             if (data == 'Upregulate') {
+               return '<span style="color: red">' + data + '</span>';
+             } else if (data == 'Downregulate') {
+               return '<span style="color: green">' + data + '</span>';
+             }
+           }
+          },
+          // 11th column, Technique, add colors and newlines
+          {target: 10,
+           render: function ( data, type, row, meta ) {
+             if (data.length > 0) {
+                 const tech_array = data.split(';');
+                 let tmp_array = [];
+                 for (let i = 0; i < tech_array.length; i++) {
+                     let this_tech = tech_array[i].trim();
+                     tech_set.add(this_tech)
+                     switch (this_tech) {
+                         case "qRT-PCR":
+                             tmp_array.push('<span style="color: purple">' + this_tech + '</span>');
+                             break;
+                         case "Western blot":
+                             tmp_array.push('<span style="color: orange">' + this_tech + '</span>');
+                             break;
+                         case "Luciferase assay":
+                             tmp_array.push('<span style="color: #a77f06">' + this_tech + '</span>');
+                             break;
+                         case "Immunofluorescence":
+                             tmp_array.push('<span style="color: brown">' + this_tech + '</span>');
+                             break;
+                         case "Immunohistochemistry":
+                             tmp_array.push('<span style="color: brown">' + this_tech + '</span>');
+                             break;
+                         default:
+                             tmp_array.push(this_tech);
+                     }
+                 }
+                 return tmp_array.join(';<br>');
+             } else {
+                 return data;
+             }
+           }
+          },
+          // 12th column, reference paper title, add hyperlink based on PMID
+          {target: 11,
+           render: function ( data, type, row, meta ) {
+             return '<a href="https://pubmed.ncbi.nlm.nih.gov/' + row[14] + '" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+           }
+          },
+          // 1st column ID; 15th column, PMID; 16th column, tRF Source; 17th column, Cellosaurus ID hidden
+          {target: [0, 14, 15, 16],
+           visible: false,
+           searchable: false
+          },
+          // 18th column, a Search button
+          // note here, we loose the threshold
+          {target: 17,
+           data: null,
+           render: function ( data, type, row, meta ) {
+             // since Jinja html template rendered first, there is no way to evaluate JavaScript in Jinja
+             // a simple workaround, or directly use the tRFtarget website link
+             let tmp_link = '';
+             if (row[3].length > 0 || row[5].length > 0) {
+                 tmp_link = 'http://trftarget.net/show_target?';
+                 if (row[3].length > 0) {
+                     // need to get first ID
+                     tmp_link += 'trf_id=' + row[3].split(';')[0].trim() + '&';
+                 }
+                 if (row[5].length > 0) {
+                     tmp_link += 'gene_id=' + row[5] + '&';
+                 }
+                 tmp_link += 'organism=' + row[1] + '&fe_threshold=0&mcl_threshold=6';
+             }
+             if (type === 'export') {
+                 // for download, only use the hyperlink; here we use Standardized tRF ID
+                 return tmp_link;
+             } else {
+                 if (tmp_link.length > 0) {
+                     return '<a class="btn btn-primary btn-sm" href="' + tmp_link + '" role="button" target="_blank">Search</a>';
+                 } else {
+                     return ''
+                 }
+             }
+           }
+          },
+          {
+            targets: [0,1,2,3,5,6,7,8,9,10,12,13,14,15,16,17], // except sequence and title column
+            className: "dt-body-center"
+          },
+          {
+            targets: '_all',
+            className: "dt-head-center"
+          },
+          // do not sort search button column
+          {
+            targets: 17,
+            orderable: false
+          },
+        ],
+        // since DataTables by default sort by 1st column, even we disable the sorting for 1st column, it still be sorted. So change the default row order by sorted on entry ID
+        order: [[0, 'asc']],
+        // control the DOM position by Bootstrap grid
+        dom:  "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-2 offset-md-4'B>>" +
+              "<'row'<'col-sm-12'tr>>" +
+              "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        buttons: [
+          {
+            text: 'Reset all filters',
+            attr: {
+              id: 'reset-all-table-filter',
+              class: 'dt-button',
+              onclick: 'yadcf.exResetAllFilters(myTable)'
+            }
+          },
+          { // ref https://datatables.net/reference/button/csv
+            extend: 'csv',
+            text: 'Export',
+            header: false,
+            filename: 'tRFtarget_gene_level_evidences',
+            exportOptions: {
+              stripNewlines: true,
+              trim: true,
+              columns: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,17], // do not download Evidence ID, tRF Source and Cellosaurus ID
+              orthogonal: 'export' // use Orthogonal data (https://datatables.net/manual/data/orthogonal-data) for downloading, used for search button columns
+            },
+            // replace the header since adding filters changes the header text
+            customize: function(csv) {
+              return '"Organism","tRF ID","Standardized tRF ID","tRF Sequence","Gene ID","Gene Name","Tissue/Cell line/Animal","Disease","Regulation","Technique","Reference","Journal","Year","PMID","Search Targets"\n' + csv
+            },
+            // besides the action to create and save a CSV file, show a spinner during downloading
+            action: function (e, dt, node, config) {
+              var that = this;
+              $("#result_table").busyLoad("show", { text: "DOWNLOADING ..." });
+              
+              setTimeout(function () { // it will download and hide the loading spin when csv is ready after waiting 1 second
+                $.fn.DataTable.ext.buttons.csvHtml5.action.call(that, e, dt, node, config);
+                $("#result_table").busyLoad("hide");
+              }, 1000);
+            }
+          }
+        ],
+        // directly pass the list of lists (array of row data) as Jinja variable to DataTable data option as data source
+        // and this data source do not support setting processing option to display a processing indicator, so we need a wordaround to display a spinner while data loading
+        data: {{ data|safe }},
+        deferRender: true, // speed up filtering a little
+        processing: true, // show effect on sorting; effect on yadcf filtering not observed
+        scrollX: false, // conflict with yadcf, if true, headers will be invisible
+        // when table is ready, show table while hide the spinner
+        initComplete: function (settings, json) {
+          $("#spinner").addClass("d-none"); // directly remove the space for spinner, not just make it invisible
+          $("#result_table").removeClass("invisible");
+          $("#pathway_label").removeClass("invisible");
+          $("#pathway_button").removeClass("invisible");
+        }
+      }
+    );
+    // No cumulative filtering, and set column_data_type to rendered_html since render function of columnDefs has been used
+    // based on extensive exploration, single column filtering can achieve acceptable speed on large data only by text input filter without autocomplete and with deferRender turned on
+    // update options for select2
+    for (let val of tech_set) {
+        tech_opts.push({value:val, label:val});
+    }
+    for (let val of tissue_set) {
+        tissue_opts.push({value:val, label:val});
+    }
+      
+    yadcf.init ( myTable,
+      [
+        {column_number : 1, filter_type: "multi_select", select_type: 'select2', column_data_type: "rendered_html", filter_default_label: "Select Organisms"},
+        {column_number : 2, filter_type: "text", column_data_type: "rendered_html", filter_default_label: "Type to search"},
+        {column_number : 3, filter_type: "text", column_data_type: "text", filter_default_label: "Type to search"},
+        {column_number : 4, filter_type: "text", column_data_type: "text", filter_default_label: "Type to search"},
+        {column_number : 5, filter_type: "text", column_data_type: "rendered_html", filter_default_label: "Type to search"},
+        {column_number : 6, filter_type: "text", column_data_type: "text", filter_default_label: "Type to search"},
+        {data: tissue_opts, column_number : 7, filter_type: "multi_select", select_type: 'select2', column_data_type: "text", filter_default_label: "Select Tissues"},
+        {column_number : 8, filter_type: "multi_select", select_type: 'select2', column_data_type: "text", filter_default_label: "Select Diseases"},
+        {column_number : 9, filter_type: "multi_select", select_type: 'select2', column_data_type: "text", filter_default_label: "Select Regulations"},
+        {data: tech_opts, column_number : 10, filter_type: "multi_select", select_type: 'select2', column_data_type: "text", filter_default_label: "Select Techniques"}, // custom the select options
+        {column_number : 11, filter_type: "text", column_data_type: "rendered_html", filter_default_label: "Type to search"},
+        {column_number : 12, filter_type: "multi_select", select_type: 'select2', column_data_type: "text", filter_default_label: "Select Journals"},
+        {column_number : 13, filter_type: "range_number_slider", column_data_type: "text"}, // range_number_slider not works on rendered_html column_data_type
+      ]
+    ); 
+  } ); 
+  </script>
+{% endblock %}

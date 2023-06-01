@@ -1,81 +1,6 @@
 {# Jinja web template engine which will be redered by Flask #}
 {# Template Inheritance #}
-{% extends "bootstrap/base.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
-
-{# Adding a lang="en" attribute to the <html>-tag #}
-{% block html_attribs %}
-  lang="en"
-{% endblock %}
-
-{# Replace the title block in the head section in base template #}
-{% block title %}
-  tRFtarget
-{% endblock %}
-
-{# Adding CSS file #}
-{# As bootstrap_find_resource in base html will only load Bootstrap 3, we will load Bootstrap 4 manually #}
-{% block styles %}
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-  <link rel="stylesheet" href="{{ url_for('static', filename='my.css') }}">
-{% endblock %}
-
-{# Custom Javascript #}
-{% block scripts %}
-  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-{% endblock %}
-
-
-{# Add a always expand navbar #}
-{% block navbar %}
-  <div class="container-fluid">
-    {# Add a title area before navbar #}
-    <div class="row text-white h-100" style="background-color: #4169e1">
-      <div class="col-md-5">
-        <h1>tRFtarget</h1>
-        <p>Explore <span id="strongtitle">t</span>ransfer <span id="strongtitle">R</span>NA-derived <span id="strongtitle">F</span>ragment <span id="strongtitle">target</span>s</p>
-      </div>
-      <div class="col-md-3 my-auto">
-        <img src="{{ url_for('static', filename='pic_logo/CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
-      </div>
-      <div class="col-md-4 my-auto">
-        <img src="{{ url_for('static', filename='pic_logo/Yale_School_of_Public_Health.png') }}" class="logo-pic mx-auto d-block" alt="YSPH Logo"/>
-      </div>
-    </div>
-    
-    {# Navbar #}
-    <div class="row">
-      <nav class="navbar nav-fill w-100 justify-content-center navbar-dark bg-dark navbar-expand-sm">
-        <ul class="navbar-nav nav-fill w-100">
-          <li class="nav-item active">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('index') }}">HOME<span class="sr-only">(current)</span></a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='method') }}">METHOD</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCE</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='statistics') }}">STATISTICS</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='manual') }}">MANUAL</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='team') }}">TEAM</a>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  </div>
-{% endblock %}
-
+{% extends "mybase.html" %}
 
 {# The .container class provides a responsive fixed width container
 The .container-fluid class provides a full width container, spanning the entire width of the viewport
@@ -85,88 +10,103 @@ md class (for small laptops - screens equal to or greater than 992px wide)
 #}
 
 {% block content %}
+  <!-- require Bootstrap’s Scrollspy plugin to run Table of Contents sidebar
+  https://getbootstrap.com/docs/5.0/components/scrollspy/
+  only scroll a div rather than whole boy -> https://stackoverflow.com/a/69448283
+  but the effect is not so good as scroll whole body
+  -->
   <div class="container-fluid">
       <div class="row">
-        <div class="col-md-8 offset-md-2">
-          <br>
-          <h3>Update</h3>
-          <p>tRFtarget pipeline is now available!</p>
-          <p>For running our pipeline to get target genes of tRFs not indexed in our database or other small non-coding RNAs (such as miRNAs), please refer our GitHub repository <a href="https://github.com/ZWang-Lab/tRFtarget-pipeline" target="_blank" rel="noopener noreferrer">tRFtarget-pipeline</a>.</p>
+        <!-- sidebar position; hidden in small screen -->
+        <div class="col-md-2 d-none d-sm-none d-md-block">
+          <!-- don't forget to set as sticky-top -->
+          <nav id="toc" data-toggle="toc" class="sticky-top" style="margin: 10px"></nav>
         </div>
+        <!-- all contents need to be put in this one big column -->
+        <div class="col-md-8">
+          <div class="row shadow-sm">
+            <h3 style="padding-top: 10px">About tRF</h3>
+            <p><strong>Transfer RNA-derived fragments</strong> (<strong>tRFs</strong>) are a new class of small noncoding RNA (ncRNA) in the length of 13-48 nucleotides. tRFs are derived from non-random cleavage of either the precursor or mature tRNA. According to the cleavage site of tRNA, tRFs are classified into 6 categories as shown in the figure below:</p>
+            <ul style="list-style-position: inside">
+              <li><strong>tRF-1</strong>: also termed as <i>tRNA-derived small RNA</i> (<strong>tsRNA</strong>); generated from the 3’ ends of precursor tRNAs.</li>
+              <li><strong>5'U tRF</strong>: generated from the 5’ ends of precursor tRNAs.</li>
+              <li><strong>tRF-3</strong>: generated from the 3’ ends of mature tRNAs; has 2 subcategories (<i>tRF-3a</i> and <i>tRF-3b</i>) with different lengths.</li>
+              <li><strong>tRF-5</strong>: generated from the 5’ ends of mature tRNAs; has 3 subcategories (<i>tRF-5a</i>, <i>tRF-5b</i> and <i>tRF-5c</i>) with different lengths.</li>
+              <li><strong>tiR</strong>: <i>stress-induced tRNA</i>, also termed as <i>tRNA halve</i> (<strong>tRH</strong>); has 2 subcategories (<i>5' tiR</i> and <i>3' tiR</i>).</li>
+              <li><strong>i-tRF</strong>: <i>internal tRFs</i>; generated from the anticodon loop of mature tRNAs.</li>
+            </ul>
+            <!-- do not scale up image -->
+            <img src="{{ url_for('static', filename='img/tRF_Category.png') }}" class="img-fluid mx-auto d-block" alt="tRF Categories" style="max-width: 743px; max-height: 774px; padding-bottom: 10px"/>
+          </div>
+        
+          <div class="row shadow-sm">
+              <h3 style="padding-top: 10px">About tRFtarget</h3>
+              <p><strong>tRFtarget</strong> includes the <strong>computational predicted binding interactions</strong> between tRFs and target transcripts for multiple organisms based on the state-of-the-art prediction tools <a href="https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid" style="font-style:italic" target="_blank" rel="noopener noreferrer">RNAhybrid</a> and <a href="http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp" style="font-style:italic" target="_blank" rel="noopener noreferrer">IntaRNA</a>.</p>
+              <p>tRFtarget can provide detailed information about the binding interactions as well as an illustration of the interaction sequences. Furthermore, tRFtarget can be also searched by <i>tRF ID</i>, <i>gene</i> or <i>transcript</i> to get a comprehensive transcriptome-wide overview of tRF-target interactions.</p>
+              <p>tRFtarget also provides <strong>online service</strong> to allow users upload custom tRF and target sequences and get the predicted binding interactions using our pipeline <a href="https://github.com/ZWang-Lab/tRFtarget-pipeline" target="_blank" rel="noopener noreferrer">tRFtarget-pipeline</a>.</p>
+              <p>Besides, tRFtarget also integrates <strong>experimental evidence</strong> of the predicted tRF-RNA interactions based on manually curated publications. The experimental evidence are classed into 2 categories: <i>gene-level evidence</i> and <i>site-level evidence</i>.</p>
+              <!-- do not scale up image -->
+              <img src="{{ url_for('static', filename='img/tRFtarget.png') }}" class="img-fluid mx-auto d-block" alt="tRFtarget" style="max-width: 858px; max-height: 858px; padding-bottom: 10px"/>
+          </div>
+            
+          <div class="row shadow-sm">
+              <h3 style="padding-top: 10px">Citation</h3>
+              <p>If you use tRFtarget or <a href="https://github.com/ZWang-Lab/tRFtarget-pipeline" target="_blank" rel="noopener noreferrer">tRFtarget-pipeline</a>, please cite:</p>
+              <!-- set display to flex to make the span and text in the same line -->
+              <div style="display: flex">
+                  <span class="__dimensions_badge_embed__" data-doi="10.1093/nar/gkaa831" data-style="small_circle"></span><script async src="https://badge.dimensions.ai/badge.js" charset="utf-8"></script>
+                  <p class="align-top" style="padding-left: 10px">Ningshan Li, Nayang Shan, Lingeng Lu, Zuoheng Wang. tRFtarget: a database for transfer RNA-derived fragment targets. <i>Nucleic Acids Research</i>, Volume 49, Issue D1, 8 January 2021, Pages D254–D260. <a href="https://doi.org/10.1093/nar/gkaa831" target="_blank" rel="noopener noreferrer">https://doi.org/10.1093/nar/gkaa831</a>.</p>
+              </div>
+          </div>
+          
+          <div class="row shadow-sm">
+              <h3 style="padding-top: 10px">Updates</h3>
+              <ul style="list-style-position: inside">
+                  <li><span class="badge" style="background-color: #5cb85c">New!</span> 2023-06-01 <strong>tRFtarget 2.0</strong> released! For updates and new features please refer <a href="https://github.com/ZWang-Lab/tRFtarget/releases/tag/v2.0.0" target="_blank" rel="noopener noreferrer">release note</a>.</li>
+                  <li>2023-04-17 <strong><a href="http://trftarget.net/online_targets" target="_blank" rel="noopener noreferrer">Online Service</a></strong> of tRFtarget-pipeline available!</li>
+                  <li>2021-10-29 <strong><a href="https://github.com/ZWang-Lab/tRFtarget-pipeline" target="_blank" rel="noopener noreferrer">tRFtarget-pipeline</a></strong> released!</li>
+              </ul>
+          </div>
+        
+          <div class="row shadow-sm">
+              <h3 style="padding-top: 10px">Contact us</h3>
+              <p>Users are welcome to send feedbacks, suggestions or comments on the tRFtarget database, and report tRF target experiments that are not included in the database through our GitHub repository <a href="https://github.com/ZWang-Lab/tRFtarget" target="_blank" rel="noopener noreferrer">tRFtarget</a>.</p>
+              <p>For issues in using tRFtarget-pipeline, please report to GitHub repository <a href="https://github.com/ZWang-Lab/tRFtarget-pipeline" target="_blank" rel="noopener noreferrer">tRFtarget-pipeline</a>.</p>
+          </div>
+        </div> 
       </div>
-      
-      <div class="row">
-        <div class="col-md-8 offset-md-2">
-          <br>
-          <h3>Citation</h3>
-          <p>If you use tRFtarget or tRFtarget pipeline, please cite:</p>
-          <p>Ningshan Li, Nayang Shan, Lingeng Lu, Zuoheng Wang. tRFtarget: a database for transfer RNA-derived fragment targets. <i>Nucleic Acids Research</i>, 2020, gkaa831. <a href="https://doi.org/10.1093/nar/gkaa831" target="_blank" rel="noopener noreferrer">https://doi.org/10.1093/nar/gkaa831</a>.</p>
-        </div>
-      </div>
-      
-      <div class="row">
-        <div class="col-md-8 offset-md-2">
-          <br>
-          <h3>About tRF</h3>
-          <p><strong>Transfer RNA-derived fragments</strong> (<strong>tRFs</strong>) are a new class of small noncoding RNA (ncRNA) in the length of 13-48 nucleotides. tRFs are derived from non-random cleavage of either the precursor or mature tRNA. According to the cleavage site of tRNA, tRFs are classified into 5 categories as shown in the figure below:</p>
-          <ul>
-            <li><strong>tRF-1</strong>: also termed as <strong>tsRNA</strong> [<i>tRNA-derived small RNA</i>]; generated from the 3’ ends of precursor tRNAs.</li>
-            <li><strong>tRF-3</strong>: generated from the 3’ ends of mature tRNAs; has 2 subcategories (<i>tRF-3a</i> and <i>tRF-3b</i>) with different lengths.</li>
-            <li><strong>tRF-5</strong>: generated from the 5’ ends of mature tRNAs; has 3 subcategories (<i>tRF-5a</i>, <i>tRF-5b</i> and <i>tRF-5c</i>) with different lengths.</li>
-            <li><strong>tiR</strong>: <i>stress-induced tRNA</i>; has 2 subcategories (<i>5tiR</i> and <i>3tiR</i>).</li>
-            <li><strong>tRF-2</strong>: generated from the anticodon loop of mature tRNAs.</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_index/tRF_Category.png') }}" class="img-fluid mx-auto d-block" alt="tRF Categories"/>
-        </div>
-      </div>
-      
-      <div class="row">
-        <div class="col-md-8 offset-md-2">
-          <br>
-          <h3>About tRFtarget</h3>
-          <p><strong>tRFtarget</strong> is a relational database respect to the computational predicted binding interactions between tRFs and target transcripts for multiple organisms based on the state-of-the-art prediction tools <a href="https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid" style="font-style:italic" target="_blank" rel="noopener noreferrer">RNAhybrid</a> and <a href="http://rna.informatik.uni-freiburg.de/IntaRNA/Input.jsp" style="font-style:italic" target="_blank" rel="noopener noreferrer">IntaRNA</a>.</p>
-          <p>The database can provide detailed information about the binding interactions as well as an illustration of the interaction sequences. Furthermore, the database can be also searched by <i>tRF ID</i>, <i>gene</i> or <i>transcript</i> to get a comprehensive transcriptome-wide overview of tRF-target interactions.</p>
-          <p>The database also provides experimental evidence of the predicted tRF-mRNA interactions and functional studies on tRFs based on manually curated publications. The experimental evidence are classed into 2 categories: <i>gene level evidence</i> and <i>site level evidence</i>.</p>
-        </div>
-      </div>
-      
-      <div class="row">
-        <div class="col-md-8 offset-md-2">
-          <br>
-          <h3>Contact Us</h3>
-          <p>Users are welcome to send feedbacks, suggestions or comments on the tRFtarget database, and report tRF target experiments or tRF functional studies that are not included in the database through the GitHub repository <a href="https://github.com/ZWang-Lab/tRFtarget" target="_blank" rel="noopener noreferrer">tRFtarget</a>.</p>
-          <p>For issues in using tRFtarget pipeline, please report to GitHub repository <a href="https://github.com/ZWang-Lab/tRFtarget-pipeline" target="_blank" rel="noopener noreferrer">tRFtarget-pipeline</a>.</p>
-        </div>
-      </div>    
   </div>
-  
-  {# Footer #}
-  <footer class="footer">
-    <div class="container-fluid text-center">
-      <p>&copy tRFtarget 2020 | All Rights Reserved</p>
-      
-      <div class="row mx-auto">
-        <div class="col" style="padding-right: 0px">
-          <p style="margin-top: 0px; margin-right: 0px; text-align: right; color: white; font-weight: bold">{{ count }}</p>
-        </div>
-        
-        <div class="col" style="padding-left: 5px">
-          <p style="margin-top: 0px; margin-left: 0px; text-align: left">Total Database Retrieves</p>
-        </div>
-      </div>
-      
-      <div class="row mx-auto">
-        <div class="col" style="padding-right: 0px">
-          <p style="margin-top: 0px; margin-right: 0px; text-align: right">
-          <!-- hitwebcounter Code START -->
-          <a href="https://www.hitwebcounter.com" target="_blank">
-          <img src="https://hitwebcounter.com/counter/counter.php?page=7737095&style=0006&nbdigits=7&type=ip&initCount=0" title="Free Counter" Alt="web counter"   border="0" /></a></p>
-        </div>
-        
-        <div class="col" style="padding-left: 5px">
-          <p style="margin-top: 0px; margin-left: 0px; text-align: left">Visitors</p>
-        </div>
-      </div>
-    </div>
-  </footer>
+{% endblock %}
+
+<!-- add scroll to body -->
+{% block body_attribs %}
+   data-bs-spy="scroll" data-bs-target="#toc" data-bs-offset="0"
+{% endblock %}
+
+{% block styles %}
+  {{ super() }}
+  <!-- for Table of Contents sidebar -->
+  <link rel="stylesheet" href="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.css" />
+  <style>
+      body {
+          position: relative;
+      }
+      nav[data-toggle="toc"] .nav > li > a:hover,
+      nav[data-toggle="toc"] .nav > li > a:focus {
+          color: #0d6efd;
+          border-left-color: #0d6efd;
+      }
+      nav[data-toggle="toc"] .nav-link.active,
+      nav[data-toggle="toc"] .nav-link.active:hover,
+      nav[data-toggle="toc"] .nav-link.active:focus {
+          color: #0d6efd;
+          border-left-color: #0d6efd;
+      }
+  </style>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <!-- for Table of Contents sidebar -->
+  <script src="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js"></script>
 {% endblock %}

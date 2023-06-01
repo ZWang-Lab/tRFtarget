@@ -1,0 +1,895 @@
+{# Jinja web template engine which will be rendered by Flask #}
+{# Template Inheritance #}
+{% extends "mybase.html" %}
+{% from "bootstrap5/form.html" import render_field %}
+{# We use Dropzone to handle file uploading. Dropzone uses an XMLHttpRequest to send the file data to the server through its own binding url, while the other form fields are sent through the standard form submission process (POST request). Since we need two Dropzones, if we use Dropzone in the default manner, then we need 3 urls/flask routes to implement this online service. #}
+{# After exploration, the final implement is: #}
+{# 1. Creat custom **FormData** for data transfer, including form fields and Dropzone files. #}
+{# 2. The Dropzone files will be parsed, changed into gzipped Uint8Arrays and packaged as a **blob** of binary data, then attached to the custom FormData. The default Dropzone file upload will be blocked by directly marked it as successfully uploaded. #}
+{# 3. When submitting, create the **XMLHttpRequest** by Ajax. #}
+{# 4. Check **SHA-256** of the user input strings in frontend and recovered strings in backend to make sure no error in compression and data transfer. To avoid issues with special characters or different character sets, encode and decode strings using **UTF-8**. SHA-256 is implemented via `crypto.subtle` (https://developer.mozilla.org/en-US/docs/Web/API/Crypto/subtle), in Web Crypto API. #}
+{# Update: in Google Chrome, Web Crypto API can only be used over **https**, in http `crypto.subtle` is undefined. Use }
+{# If we use POST request to transfer data, we have to change gzipped Uint8Arrays to base64-encoded strings, then attach them to hidden input fields. This way is not elegant, and base64 string is larger in size than binary string. #}
+
+{% block content %}
+<div class="container-fluid" id="main-div">
+  <div>
+    <div class="row">
+      <div class="col-md-10 offset-md-1">
+          <br />
+          <h3>Run tRFtarget-pipeline Online</h3>
+          <p>We provide online service of running <strong>tRFtarget-pipeline v0.3.2</strong> to find binding sites between small RNAs (such as tRFs and miRNAs) and target RNAs. Detailed documentation of tRFtarget-pipeline can be found in our GitHub repository <a href="https://github.com/ZWang-Lab/tRFtarget-pipeline" target="_blank" rel="noopener noreferrer">tRFtarget-pipeline</a>.</p>
+          <p>Users are welcome to send issues, feedbacks, suggestions or comments on running online service through our GitHub repository <a href="https://github.com/ZWang-Lab/tRFtarget" target="_blank" rel="noopener noreferrer">tRFtarget</a>.</p>
+          
+          {# query form #}
+          {# Submit action need to assigned to corresponding route #}
+          <!-- add target="_blank" will open new tab and render page when press button -->
+          <!-- multipart/form-data is required when at least one of the fields in the form is a file field -->
+          <form id="main-form" class="form" method="POST" action={{ url_for('online_Targets') }} role="form" enctype="multipart/form-data" >
+              {{ form.csrf_token }}
+              {# left + middle + right panels #}
+              <div class="row border border-dark">
+                  {# left panel #}
+                  <div class="col-sm-3 border-end border-white border-2" style="background: #efbe8c">
+                      <div class="row border-bottom border-white border-1" style="background: #53bff3">
+                          <h4 style="color: white">tRF(s)</h4>
+                      </div>
+                      {# radio form for switch paste and upload for query small RNAs #}
+                      {# render_field function render the radio field weird, not use it #}
+                      {% set query_paste, query_upload = form.query_switch %}
+                      <div class="row">
+                          <div class="col">
+                          {{ query_paste(class_="form-check-input") }} {{ query_paste.label(class_="form-check-label") }}
+                          </div>
+                          <div class="col">
+                          {{ query_upload(class_="form-check-input") }} {{ query_upload.label(class_="form-check-label") }}
+                          </div>
+                      </div>
+                      <!-- help message -->
+                      <div class="row">
+                          <p id="text_query_paste" class="d-block"><i class="bi bi-exclamation-circle d-inline-block" style="color: #f40c0c"></i> <small>At most 50 sequences!</small></p>
+                          <p id="text_query_upload" class="d-none"><i class="bi bi-exclamation-circle d-inline-block" style="color: #f40c0c"></i> <small>Accept FASTA file with <code>fa</code>, <code>fasta</code> extensions, or compressed FASTA file with <code>gz</code>, <code>zip</code> extensions; Only 1 file &#8804 50 KB allowed!</small></p>
+                      </div>
+                      <!-- text box or uploader -->
+                      <div class="row" >
+                          <!-- add a col to make some space around the text box and uploader -->
+                          <div class="col">
+                              {{ form.query_input(class_="form-control d-block", placeholder="Paste FASTA here", style="width: 100%; min-height: 170px; margin-bottom: 0px") }}
+                              <div class="dropzone d-none" id="query_uploader" style="margin-bottom: 0px"></div>
+                              <!-- use a blank to make some space between the input/upload box and bottom border -->
+                              <div id="valid_query_paste" class="invalid-feedback d-block"> </div>
+                              <div id="valid_query_upload" class="invalid-feedback d-none"> </div>
+                          </div>
+                      </div>
+                  </div>
+                  {# middle panel #}
+                  <div class="col-sm-3 border-end border-white border-2" style="background: #efbe8c">
+                      <div class="row border-bottom border-white border-1" style="background: #53bff3">
+                          <h4 style="color: white">target RNA(s)</h4>
+                      </div>
+                      {# radio form for switch paste and upload for target long RNAs #}
+                      {# render_field function render the radio field weird, not use it #}
+                      {% set target_paste, target_upload = form.target_switch %}
+                      <div class="row">
+                          <div class="col">
+                          {{ target_paste(class_="form-check-input") }} {{ target_paste.label(class_="form-check-label") }}
+                          </div>
+                          <div class="col">
+                          {{ target_upload(class_="form-check-input") }} {{ target_upload.label(class_="form-check-label") }}
+                          </div>
+                      </div>
+                      <!-- help message -->
+                      <div class="row">
+                          <p id="text_target_paste" class="d-block"><i class="bi bi-exclamation-circle d-inline-block" style="color: #f40c0c"></i> <small>At most 50,000 sequences!</small></p>
+                          <p id="text_target_upload" class="d-none"><i class="bi bi-exclamation-circle d-inline-block" style="color: #f40c0c"></i> <small>Accept FASTA file with <code>fa</code>, <code>fasta</code> extensions, or compressed FASTA file with <code>gz</code>, <code>zip</code> extensions; Only 1 file &#8804 50 MB allowed!</small></p>
+                      </div>
+                      <!-- text box or uploader -->
+                      <div class="row">
+                          <!-- add a col to make some space around the text box and uploader -->
+                          <div class="col">
+                              {{ form.target_input(class_="form-control d-block", placeholder="Paste FASTA here", style="width: 100%; min-height: 170px; margin-bottom: 0px") }}
+                              <div class="dropzone d-none" id="target_uploader" style="margin-bottom: 0px"></div>
+                              <!-- use a blank to make some space between the input/upload box and bottom border -->
+                              <div id="valid_target_paste" class="invalid-feedback d-block"> </div>
+                              <div id="valid_target_upload" class="invalid-feedback d-none"> </div>
+                          </div>
+                      </div>
+                  </div>
+                  {# right panel #}
+                  <div class="col-sm-6" style="background: #efbe8c">
+                      <div class="row border-bottom border-white border-1" style="background: #53bff3">
+                          <h4 style="color: white">Options</h4>
+                      </div>
+                      <div class="row">
+                          <ul style="list-style-position: inside">
+                              <li style="padding-top: 5px; padding-bottom: 5px">
+                                  Free energy threshold for RNAhybrid (<code>--e_rnahybrid</code>): {{ form.e_rnahybrid(class_="form-control intext-form") }} kcal/mol
+                              </li>
+                              <li style="padding-top: 5px; padding-bottom: 5px">
+                                  Free energy threshold for IntaRNA (<code>--e_intarna</code>): {{ form.e_intarna(class_="form-control intext-form") }} kcal/mol
+                              </li>
+                              <li style="padding-top: 5px; padding-bottom: 5px">
+                                  Maximum Complementary Length <i class="bi bi-question-circle d-inline-block" style="color: #f40c0c" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-html="true" title="<b>Maximum Complementary Length</b> (MCL) is the length of the longest successively complementary sequences for a specific interaction, which is similar with <b>seed length</b>, but NOT limit the iteraction on the so-called <b>seed sequence</b> of tRF"></i> threshold (<code>-s</code>): {{ form.mcl(class_="form-control intext-form") }} nucleotides
+                              </li>
+                              <li style="padding-top: 5px; padding-bottom: 5px">
+                                  Reported number of interaction sites on each target RNA (<code>-b</code>): {{ form.suboptimal(class_="form-control intext-form") }}
+                              </li>
+                              <li style="padding-top: 5px; padding-bottom: 5px">
+                                  Email (optional) <i class="bi bi-question-circle d-inline-block" style="color: #f40c0c" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-html="true" title="Enter your email address to receive a notification upon completion of the analysis"></i>: {{ form.email(class_="form-control intext-email", style_="border-radius: 0") }}
+                              </li>
+                          </ul>
+                      </div>
+                  </div>
+              </div>
+              
+              {# submit button #}
+              <div class="row" style="margin-bottom: 1rem; margin-top: 10px">
+                  <div class="col-md-4 offset-md-6 d-flex gap-4">
+                      <input class="btn btn-success btn-md bottom-button" style="min-width: 100px; font-size: larger" id="reset" type="button" value="Reset">
+                      <input class="btn btn-success btn-md bottom-button" style="min-width: 100px; font-size: larger" id="example" type="button" value="Example">
+                      {{ render_field(form.submit, button_size="md", style="min-width: 100px; font-size: larger") }}
+                  </div>
+              </div>
+          </form> 
+      </div>
+    </div>
+  </div>    
+  <!-- an overlay to show a progress bar during data transition, NOT full screen, only cover the form area -->
+  <div id="overlay" style="display: none">
+      <!-- note The .progress-bar requires an inline style, utility class, or custom CSS to set their width. Otherwise it not show. so create row and col to show it -->
+      <div class="container h-100">
+          <div class="row h-100 justify-content-center align-items-center text-center">
+              <div class="col-sm-8 col-md-6 col-lg-4">
+                  <div class="progress">
+                      <div
+                          class="progress-bar progress-bar-striped progress-bar-animated"
+                          role="progressbar"
+                          style="width: 0%"
+                          aria-valuenow="0"
+                          aria-valuemin="0"
+                          aria-valuemax="100"
+                          id="upload-progress">
+                          0%
+                      </div>
+                  </div>
+                  <p style="font-size: bold; color: #0d6efd"><strong>Uploading...</strong></p>
+              </div>
+          </div>
+      </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+  {{ super() }}
+  <!-- Dropzone for file upload -->
+  <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" type="text/css" />
+  <style>
+      /* text field formats for Free Energy and MCL threshold */
+      .intext-form {
+          display: inline;
+          margin: 0;
+          padding: 0;
+          width: 50px;
+          text-align: center;
+      }
+      
+      .intext-email {
+          display: inline;
+          margin: 0;
+          padding: 0;
+          width: 200px;
+          text-align: left;
+      }
+      
+      textarea::placeholder {
+          font-size: 22px; /* Change the font size */
+          text-align: center; /* center horizontally  */
+          /* vertical-align: middle; sadly not supported */
+          /* instead use transform to center vertically */
+          transform: translateY(55px);
+      }
+
+      /* Dropzone placeholder text */
+      .dropzone .dz-message .dz-button {
+          font-size: 22px;
+      }
+
+      /* close marker in Dropzone preview */
+      .dz-remove {
+          position: absolute;
+          top: 5px;
+          right: 5px;
+          cursor: pointer;
+          font-size: 16px;
+          font-weight: bold;
+          opacity: 0.5;
+          z-index: 999;
+      }
+
+      .dz-remove:hover {
+          opacity: 1;
+      }
+      
+      /* stop success mark from disappearing (https://github.com/dropzone/dropzone/issues/1762) */
+      .dropzone .dz-preview.dz-success .dz-success-mark {
+          opacity: 1;
+          -webkit-animation: slide-in 3s cubic-bezier(0.77, 0, 0.175, 1);
+          -moz-animation: slide-in 3s cubic-bezier(0.77, 0, 0.175, 1);
+          -ms-animation: slide-in 3s cubic-bezier(0.77, 0, 0.175, 1);
+          -o-animation: slide-in 3s cubic-bezier(0.77, 0, 0.175, 1);
+          animation: slide-in 3s cubic-bezier(0.77, 0, 0.175, 1)
+      }
+      
+      /* disable the uploading progress bar */
+      .dropzone .dz-preview .dz-progress {
+          opacity: 0;
+      }
+      
+      /* overlay showing progress bar in data transition */
+      /* in order to let overlay only covers Form area, we need to specify the position: relative here */
+      #main-div {
+          position: relative;
+      }
+      
+      #overlay {
+          display: none; /* initially hidden */
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(255, 255, 255, 0.7); /* semi-transparent white background */
+          z-index: 10; /* ensure the overlay is above the main content */
+          justify-content: center;
+          align-items: center;
+      }
+  </style>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <!-- Dropzone for file upload -->
+    <script src="https://unpkg.com/dropzone@5.9.3/dist/min/dropzone.min.js"></script>
+    <!-- fflate for file uncompression -->
+    <script src="https://unpkg.com/fflate@0.7.4/umd/index.js"></script>
+    <!-- Stanford Javascript Crypto Library for SHA-256 calculation -->
+    <script src="https://cdn.jsdelivr.net/npm/sjcl@1.0.8/sjcl.min.js"></script>
+    <!-- Don't forget to include the codecBytes.js for convert TypedArray to bitArray -->
+    <script src="https://cdn.jsdelivr.net/npm/sjcl@1.0.8/core/codecBytes.min.js"></script>
+
+    <script>
+        <!-- you must initialize Tooltips yourself -->
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        })
+        
+        // Function to calculates a SHA-256 digest, then converts the ArrayBuffer to a hex string by crypto.subtle
+        // Use digestMessage().then((hash) => {console.log(hash);}); to access the result
+        async function digestMessage(msgUint8) {
+            // note the input is already utf-8 Uint8Array
+            const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8); // hash the message
+            const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
+            const hashHex = hashArray
+                .map((b) => b.toString(16).padStart(2, "0"))
+                .join(""); // convert bytes to hex string
+            return hashHex;
+        }
+        
+        // Function to calculates a SHA-256 digest, then converts to a hex string by sjcl
+        // Note SJCL does all computation on bitArrays, so for input Uint8Array (JS TypedArray), it's need to be converted to bitArray first
+        function digestMessageSJCL(msgUint8) {
+            // note the input is already utf-8 Uint8Array
+            const msgbitArray = sjcl.codec.bytes.toBits(msgUint8);
+            const hashBitArray = sjcl.hash.sha256.hash(msgbitArray);
+            const hashHex = sjcl.codec.hex.fromBits(hashBitArray);
+            return hashHex;
+        }
+        
+        // Function to uncompress file by fflate
+        // recommend to use Synchronous version of fflate functions
+        // fflate.decompressSync can automatically detecting the format, but only for GZIP, Zlib, or DEFLATE files
+        // fflate.unzipSync is for ZIP files
+        function uncompressFile(fileUint8Array, fileExt) {
+            if (fileExt === 'gz') {
+                try {
+                    const decompressedContent = fflate.gunzipSync(fileUint8Array);
+                    const decompressedString = fflate.strFromU8(decompressedContent);
+                    return decompressedString;
+                } catch (error) {
+                    throw new Error("Error in decompressing, invalid or damaged gz file!");
+                }
+            } else if (fileExt === 'zip') {
+                try {
+                    const decompressedContent = fflate.unzipSync(fileUint8Array);
+                    // first check whether zip file contains only 1 file. Note gz is designed to compress a single file
+                    if (Object.values(decompressedContent).length > 1) {
+                        // note this error will be caught in the same try-catch block
+                        throw new Error("More than 1 file found in zip file!");
+                    } else {
+                        const decompressedString = fflate.strFromU8(Object.values(decompressedContent)[0]);
+                        return decompressedString;
+                    } 
+                } catch (error) {
+                    if (error.message === "More than 1 file found in zip file!") {
+                        // re-throwing the error 
+                        throw error;
+                    } else {
+                        throw new Error("Error in decompressing, invalid or damaged zip file!");
+                    }
+                }
+            } else {
+                throw new Error("Unsupported file format!");
+            }
+        }
+
+        // Function to check FASTA format by chatGPT 4 ~_~
+        function isValidFasta(fasta) {
+            const lines = fasta.split("\n");
+            let sequenceCount = 0;
+            let inSequence = false;
+            const sequenceIds = new Set();
+            let curSeqId = "";
+
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+                if (trimmedLine.length === 0) continue;
+
+                if (trimmedLine.startsWith(">")) {
+                    if (inSequence) {
+                        sequenceCount++;
+                    }
+
+                    // get sequence ID, discard all characters after whitespace or TAB
+                    const sequenceId = trimmedLine.slice(1).split(/\s+/)[0];
+                    if (sequenceIds.has(sequenceId)) {
+                        return {
+                            isValid: false,
+                            sequenceCount: 0,
+                            reason: "Non-unique sequence ID found: '" + sequenceId + "'!"
+                        };
+                    }
+                    sequenceIds.add(sequenceId);
+                    curSeqId = sequenceId;
+
+                    inSequence = true;
+                } else if (inSequence) {
+                    if (!trimmedLine.match(/^[ACGTUNacgtun\s]+$/)) {
+                        return {
+                            isValid: false,
+                            sequenceCount: 0,
+                            reason: "Non-ATCGN characters found in sequence: '" + curSeqId + "'!"
+                        };
+                    }
+                } else {
+                    return {
+                        isValid: false,
+                        sequenceCount: 0,
+                        reason: "Invalid FASTA format!"
+                    };
+                }
+            }
+
+            if (inSequence) {
+                sequenceCount++;
+            }
+
+            return { isValid: true, sequenceCount: sequenceCount, reason: "" };
+        }
+        
+        // Function to uncompress file and check FASTA format
+        function uncompressAndValidateFastaFile(fileUint8Array, fileExt) {
+            try {
+                // file uncompressing successful
+                const decompressedContent = uncompressFile(fileUint8Array, fileExt);
+                const fastaValidationResult = isValidFasta(decompressedContent);
+                if (fastaValidationResult.isValid) {
+                    return {isValid: true, reason: "Checking passed! Total " + fastaValidationResult.sequenceCount + " sequences. Upload will be started when submitting.", raw: decompressedContent}
+                } else {
+                    return {isValid: false, reason: fastaValidationResult.reason}
+                }
+            } catch (error) {
+                // file uncompressing failed, use try-cache to make the code more readable and easier to understand
+                return {isValid: false, reason: error.message}
+            } 
+        }
+        
+        // Function to add is-valid and is-invalid class
+        function updateValidationClass(element, isValid) {
+            element.toggleClass('is-valid', isValid);
+            element.toggleClass('is-invalid', !isValid);
+        }
+        
+        // Function to clear is-valid and is-invalid class
+        function clearValidationClass(element) {
+            element.toggleClass('is-valid', false);
+            element.toggleClass('is-invalid', false);
+        }
+        
+        // Function to update display classes
+        // use d-block to force showing message related to validation (https://stackoverflow.com/a/50522718)
+        function updateDisplayClass(element, isVisible) {
+            element.toggleClass('d-block', isVisible);
+            element.toggleClass('d-none', !isVisible);
+        }
+        
+        // Function to show the validation message for file uploader
+        // since we already use d-block and d-none to switch between paste and upload, so set the text to empty string when want to hide it
+        function showUploaderMessage(element, message, dis_color) {
+            element.text(message);
+            element.css('color', dis_color);
+            updateDisplayClass(element, true);
+        }
+        
+        function resetMessage(element, isVisible) {
+            element.text(" ");
+            updateDisplayClass(element, isVisible);
+        }
+        
+        // group of elements to show or hiden during switching paste and upload
+        const query_paste_group = [$("#text_query_paste"), $("#query_input"), $("#valid_query_paste")];
+        const query_upload_group = [$("#text_query_upload"), $("#query_uploader"), $("#valid_query_upload")];
+        
+        const target_paste_group = [$("#text_target_paste"), $("#target_input"), $("#valid_target_paste")];
+        const target_upload_group = [$("#text_target_upload"), $("#target_uploader"), $("#valid_target_upload")];
+        
+        // Configure Dropzone for the small RNA file uploader, Note that the name is the camelized id of the form
+        Dropzone.options.queryUploader = {
+            url: '{{ url_for("online_Targets") }}', // Dropzone requires a URL (or action) that points to a Flask route function to handle file uploads
+            paramName: "query", // Specifies the parameter name for the uploaded file in the form data; retrieved by flask
+            maxFiles: 1, // Sets the maximum number of files allowed to be uploaded
+            maxFilesize: 0.05, // MB
+            acceptedFiles: '.fa, .fasta, .gz, .zip', // Set the accepted file extensions
+            autoProcessQueue: false, // it prevents Dropzone from automatically uploading the files when they are added. Instead, the files are uploaded when the form is submitted
+            dictDefaultMessage: "Click or Drop File here", // change placeholder text
+            accept: function (file, done) {
+                // Decide the elements to work on
+                this_box = $('#query_uploader');
+                this_valid_message = $('#valid_query_upload');
+                this_uploader_string = '#query_uploader';
+                // also display checking message below the box
+                showUploaderMessage(this_valid_message, 'Checking file, please wait... Unacceptted file will be removed after 10 seconds automatically.', 'brown');
+                
+                // use FileReader to make sure file content properly loaded before processing
+                // readAsText() reads the content of the file as a text string
+                // readAsArrayBuffer() reads the content of the file as an ArrayBuffer (binary data)
+                const reader = new FileReader();
+                
+                if (file.name.endsWith(".gz") || file.name.endsWith(".zip")) {
+                    reader.onload = (event) => {
+                        const fileContent = new Uint8Array(event.target.result);
+                        const validationResult = uncompressAndValidateFastaFile(fileContent, file.name.split('.').pop());
+                        if (validationResult.isValid) {
+                            showUploaderMessage(this_valid_message, validationResult.reason, 'green');
+                            updateValidationClass(this_box, true);
+                            // A custom gzipped binary string for uploading
+                            const utf8Array = new TextEncoder("utf-8").encode(validationResult.raw); // make sure it's UTF-8 encoding, so not use fflate.strToU8()
+                            file.forUpload = fflate.gzipSync(utf8Array);
+                            file.sha256 = digestMessageSJCL(utf8Array);
+                            done();
+                            Dropzone.forElement(this_uploader_string).emit("success", file); // Mark the file as successfully uploaded to block uploading
+                        } else {
+                            this_valid_message.text(' '); // Don't forget the blank to make some space between the input/upload box and bottom border
+                            done(validationResult.reason);
+                        }
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else if (file.name.endsWith(".fa") || file.name.endsWith(".fasta")) {
+                    reader.onload = (event) => {
+                        const fileContent = event.target.result;
+                        const validationResult = isValidFasta(fileContent);
+                        if (validationResult.isValid) {
+                            showUploaderMessage(this_valid_message, "Checking passed! Total " + validationResult.sequenceCount + " sequences. Upload will be started when submitting.", 'green');
+                            updateValidationClass(this_box, true);
+                            const utf8Array = new TextEncoder("utf-8").encode(fileContent); // make sure it's UTF-8 encoding, so not use fflate.strToU8()
+                            file.forUpload = fflate.gzipSync(utf8Array);
+                            file.sha256 = digestMessageSJCL(utf8Array);
+                            done();
+                            Dropzone.forElement(this_uploader_string).emit("success", file); // Mark the file as successfully uploaded to block uploading
+                        } else {
+                            this_valid_message.text(' '); // Don't forget the blank to make some space between the input/upload box and bottom border
+                            done(validationResult.reason);
+                        }
+                    };
+                    reader.readAsText(file);
+                } else {
+                    this_valid_message.text(' '); // Don't forget the blank to make some space between the input/upload box and bottom border
+                    done("Unsupported file extension!");
+                }
+            },
+            init: function () { // enhances the behavior by providing additional functionality
+                // Decide the elements to work on
+                this_box = $('#query_uploader');
+                this_valid_message = $('#valid_query_upload');
+                this_uploader_string = '#query_uploader';
+                
+                // automatically remove unaccepted files after 10 seconds 
+                this.on("error", function (file, errorMessage) {
+                    const dropzoneInstance = this;
+                    setTimeout(function () {
+                        dropzoneInstance.removeFile(file);
+                    }, 10000);
+                });
+                
+                // add a "close" marker for removing the file. By default, Dropzone use addRemoveLinks: true to remove a file from the preview, but it doesn't looks nice
+                this.on("addedfile", function (file) {
+                    const removeButton = Dropzone.createElement('<div class="dz-remove" title="Remove file">&times;</div>');
+                    removeButton.addEventListener("click", function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.removeFile(file);
+                        if (Dropzone.forElement(this_uploader_string).getAcceptedFiles().length == 0) {
+                            // all accepted file is being removed, so clear the validation message
+                            this_valid_message.text(' '); // Don't forget the blank to make some space between the input/upload box and bottom border
+                            updateValidationClass(this_box, false);
+                        }
+                    }.bind(this));
+                    file.previewElement.appendChild(removeButton);
+                });
+            }
+        };
+        
+        // Configure Dropzone for the target long RNA file uploader, Note that the name is the camelized id of the form
+        Dropzone.options.targetUploader = {
+            url: '{{ url_for("online_Targets") }}', // Dropzone requires a URL (or action) that points to a Flask route function to handle file uploads
+            paramName: "query", // Specifies the parameter name for the uploaded file in the form data; retrieved by flask
+            maxFiles: 1, // Sets the maximum number of files allowed to be uploaded
+            maxFilesize: 50, // MB
+            acceptedFiles: '.fa, .fasta, .gz, .zip', // Set the accepted file extensions
+            autoProcessQueue: false, // it prevents Dropzone from automatically uploading the files when they are added. Instead, the files are uploaded when the form is submitted
+            dictDefaultMessage: "Click or Drop File here", // change placeholder text
+            accept: function (file, done) {
+                // Decide the elements to work on
+                this_box = $('#target_uploader');
+                this_valid_message = $('#valid_target_upload');
+                this_uploader_string = '#target_uploader';
+                // also display checking message below the box
+                showUploaderMessage(this_valid_message, 'Checking file, please wait... Unacceptted file will be removed after 10 seconds automatically.', 'brown');
+                
+                // use FileReader to make sure file content properly loaded before processing
+                // readAsText() reads the content of the file as a text string
+                // readAsArrayBuffer() reads the content of the file as an ArrayBuffer (binary data)
+                const reader = new FileReader();
+                
+                if (file.name.endsWith(".gz") || file.name.endsWith(".zip")) {
+                    reader.onload = (event) => {
+                        const fileContent = new Uint8Array(event.target.result);
+                        const validationResult = uncompressAndValidateFastaFile(fileContent, file.name.split('.').pop());
+                        if (validationResult.isValid) {
+                            showUploaderMessage(this_valid_message, validationResult.reason, 'green');
+                            updateValidationClass(this_box, true);
+                            // A custom gzipped binary string for uploading
+                            const utf8Array = new TextEncoder("utf-8").encode(validationResult.raw); // make sure it's UTF-8 encoding, so not use fflate.strToU8()
+                            file.forUpload = fflate.gzipSync(utf8Array);
+                            file.sha256 = digestMessageSJCL(utf8Array);
+                            done();
+                            Dropzone.forElement(this_uploader_string).emit("success", file); // Mark the file as successfully uploaded to block uploading
+                        } else {
+                            this_valid_message.text(' '); // Don't forget the blank to make some space between the input/upload box and bottom border
+                            done(validationResult.reason);
+                        }
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else if (file.name.endsWith(".fa") || file.name.endsWith(".fasta")) {
+                    reader.onload = (event) => {
+                        const fileContent = event.target.result;
+                        const validationResult = isValidFasta(fileContent);
+                        if (validationResult.isValid) {
+                            showUploaderMessage(this_valid_message, "Checking passed! Total " + validationResult.sequenceCount + " sequences. Upload will be started when submitting.", 'green');
+                            updateValidationClass(this_box, true);
+                            const utf8Array = new TextEncoder("utf-8").encode(fileContent); // make sure it's UTF-8 encoding, so not use fflate.strToU8()
+                            file.forUpload = fflate.gzipSync(utf8Array);
+                            file.sha256 = digestMessageSJCL(utf8Array);
+                            done();
+                            Dropzone.forElement(this_uploader_string).emit("success", file); // Mark the file as successfully uploaded to block uploading
+                        } else {
+                            this_valid_message.text(' '); // Don't forget the blank to make some space between the input/upload box and bottom border
+                            done(validationResult.reason);
+                        }
+                    };
+                    reader.readAsText(file);
+                } else {
+                    this_valid_message.text(' '); // Don't forget the blank to make some space between the input/upload box and bottom border
+                    done("Unsupported file extension!");
+                }
+            },
+            init: function () { // enhances the behavior by providing additional functionality
+                // Decide the elements to work on
+                this_box = $('#target_uploader');
+                this_valid_message = $('#valid_target_upload');
+                this_uploader_string = '#target_uploader';
+                
+                // automatically remove unaccepted files after 10 seconds 
+                this.on("error", function (file, errorMessage) {
+                    const dropzoneInstance = this;
+                    setTimeout(function () {
+                        dropzoneInstance.removeFile(file);
+                    }, 10000);
+                });
+                
+                // add a "close" marker for removing the file. By default, Dropzone use addRemoveLinks: true to remove a file from the preview, but it doesn't looks nice
+                this.on("addedfile", function (file) {
+                    const removeButton = Dropzone.createElement('<div class="dz-remove" title="Remove file">&times;</div>');
+                    removeButton.addEventListener("click", function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.removeFile(file);
+                        if (Dropzone.forElement(this_uploader_string).getAcceptedFiles().length == 0) {
+                            // all accepted file is being removed, so clear the validation message
+                            this_valid_message.text(' '); // Don't forget the blank to make some space between the input/upload box and bottom border
+                            updateValidationClass(this_box, false);
+                        }
+                    }.bind(this));
+                    file.previewElement.appendChild(removeButton);
+                });
+            }
+        };
+        
+        // Function to reset all fields
+        function resetFields() {
+            $("#query_input").val("");
+            $("#target_input").val("");
+            Dropzone.forElement('#query_uploader').removeAllFiles();
+            Dropzone.forElement('#target_uploader').removeAllFiles();
+            // clear validation tag
+            clearValidationClass($("#query_input"))
+            clearValidationClass($("#target_input"))
+            clearValidationClass($("#query_uploader"))
+            clearValidationClass($("#target_uploader"))
+            // hide validation message
+            resetMessage($("#valid_query_paste"), true)
+            resetMessage($("#valid_query_upload"), false)
+            resetMessage($("#valid_target_paste"), true)
+            resetMessage($("#valid_target_upload"), false)
+            // rest options to default value
+            $("#e_rnahybrid").val("-15");
+            $("#e_intarna").val("0");
+            $("#mcl").val("6");
+            $("#suboptimal").val("1");
+            $("#email").val("");
+            // switch to paste page, note programmatically check a radio button using jQuery, the change event is not automatically triggered. You need to explicitly trigger the change event
+            $("input[name='query_switch'][value='paste']").prop("checked", true).trigger("change");;
+            $("input[name='target_switch'][value='paste']").prop("checked", true).trigger("change");
+        }
+        
+        $(document).ready(function () {
+            // Switch areas based on paste or upload
+            // directly remove the space by set to d-none, not just make it invisible
+            $("input[name=query_switch]").on("change", function () {
+                let paste_visible;
+                if (this.value == "paste") {
+                    paste_visible = true;
+                } else if (this.value == "upload") {
+                    paste_visible = false;
+                }
+                $(query_paste_group).each(function (index, element) {
+                    updateDisplayClass(element, paste_visible);
+                });
+                $(query_upload_group).each(function (index, element) {
+                    updateDisplayClass(element, !paste_visible);
+                });
+            });
+            
+            $("input[name=target_switch]").on("change", function () {
+                let paste_visible;
+                if (this.value == "paste") {
+                    paste_visible = true;
+                } else if (this.value == "upload") {
+                    paste_visible = false;
+                }
+                $(target_paste_group).each(function (index, element) {
+                    updateDisplayClass(element, paste_visible);
+                });
+                $(target_upload_group).each(function (index, element) {
+                    updateDisplayClass(element, !paste_visible);
+                });
+            });
+
+            // check input box when user input
+            $("#query_input").on("input", function () {
+                const this_valid_message = $('#valid_query_paste');
+                const this_box = $(this);
+                // Is it FASTA format, and whether the number of sequences > 100
+                if (this_box.val().trim() === "") {
+                    this_valid_message.text('NO valid sequences inputted!');
+                    updateValidationClass(this_box, false);
+                } else {
+                    const fastaValidationResult = isValidFasta(this_box.val());
+                    if (fastaValidationResult.isValid) {
+                        if (fastaValidationResult.sequenceCount > 50) {
+                            this_valid_message.text('Only 50 Sequences allowed but ' + fastaValidationResult.sequenceCount + ' provided!');
+                            updateValidationClass(this_box, false);
+                        } else {
+                            this_valid_message.text('Checking passed! Total ' + fastaValidationResult.sequenceCount + ' sequences.');
+                            updateValidationClass(this_box, true);
+                        } 
+                    } else {
+                        this_valid_message.text(fastaValidationResult.reason);
+                        updateValidationClass(this_box, false);
+                    }
+                }
+                // show validation message
+                if (this_box.hasClass('is-valid')) {
+                    this_valid_message.css('color', 'green');
+                } else {
+                    this_valid_message.css('color', 'red');
+                }
+                updateDisplayClass(this_valid_message, true);
+            });
+            
+            $("#target_input").on("input", function () {
+                const this_valid_message = $('#valid_target_paste');
+                const this_box = $(this);
+                // Is it FASTA format, and whether the number of sequences > 100
+                if (this_box.val().trim() === "") {
+                    this_valid_message.text('NO valid sequences inputted!');
+                    updateValidationClass(this_box, false);
+                } else {
+                    const fastaValidationResult = isValidFasta(this_box.val());
+                    if (fastaValidationResult.isValid) {
+                        if (fastaValidationResult.sequenceCount > 50000) {
+                            this_valid_message.text('Only 50,000 Sequences allowed but ' + fastaValidationResult.sequenceCount + ' provided!');
+                            updateValidationClass(this_box, false);
+                        } else {
+                            this_valid_message.text('Checking passed! Total ' + fastaValidationResult.sequenceCount + ' sequences.');
+                            updateValidationClass(this_box, true);
+                        } 
+                    } else {
+                        this_valid_message.text(fastaValidationResult.reason);
+                        updateValidationClass(this_box, false);
+                    }
+                }
+                // show validation message
+                if (this_box.hasClass('is-valid')) {
+                    this_valid_message.css('color', 'green');
+                } else {
+                    this_valid_message.css('color', 'red');
+                }
+                updateDisplayClass(this_valid_message, true);
+            });
+            
+            $("#reset").click(function() {
+                resetFields();
+            });
+            
+            $("#example").click(function() {
+                resetFields();
+                $("#query_input").val(">tRFdb-1001\nGAAGCGGGTGCTCTTATTTT\n>tRFdb-1003\nGCTAAGGAAGTCCTGTGCTCAGTTTT\n>tRFdb-1004\nGTGTGTAGCTGCACTTTT\n>tRFdb-1005\nATGTGGTGGCTTACTTT\n>tRFdb-1006\nGTGTAAGCAGGGTCGTTTT");
+                $("#target_input").val(">ENST00000641515.2|OR4F5-201|\nCCCAGATCTCTTCAGTTTTTATGCCTCATTCTGTGAAAATTGCTGTAGTCTCTTCCAGTT\nATGAAGAAGGTAACTGCAGAGGCTATTTCCTGGAATGAATCAACGAGTGAAACGAATAAC\nTCTATGGTGACTGAATTCATTTTTCTGGGTCTCTCTGATTCTCAGGAACTCCAGACCTTC\nCTATTTATGTTGTTTTTTGTATTCTATGGAGGAATCGTGTTTGGAAACCTTCTTATTGTC\nATAACAGTGGTATCTGACTCCCACCTTCACTCTCCCATGTACTTCCTGCTAGCCAACCTC\nTCACTCATTGATCTGTCTCTGTCTTCAGTCACAGCCCCCAAGATGATTACTGACTTTTTC\nAGCCAGCGCAAAGTCATCTCTTTCAAGGGCTGCCTTGTTCAGATATTTCTCCTTCACTTC\nTTTGGTGGGAGTGAGATGGTGATCCTCATAGCCATGGGCTTTGACAGATATATAGCAATA\nTGCAAGCCCCTACACTACACTACAATTATGTGTGGCAACGCATGTGTCGGCATTATGGCT\nGTCACATGGGGAATTGGCTTTCTCCATTCGGTGAGCCAGTTGGCGTTTGCCGTGCACTTA\nCTCTTCTGTGGTCCCAATGAGGTCGATAGTTTTTATTGTGACCTTCCTAGGGTAATCAAA\nCTTGCCTGTACAGATACCTACAGGCTAGATATTATGGTCATTGCTAACAGTGGTGTGCTC\nACTGTGTGTTCTTTTGTTCTTCTAATCATCTCATACACTATCATCCTAATGACCATCCAG\nCATCGCCCTTTAGATAAGTCGTCCAAAGCTCTGTCCACTTTGACTGCTCACATTACAGTA\nGTTCTTTTGTTCTTTGGACCATGTGTCTTTATTTATGCCTGGCCATTCCCCATCAAGTCA\nTTAGATAAATTCCTTGCTGTATTTTATTCTGTGATCACCCCTCTCTTGAACCCAATTATA\nTACACACTGAGGAACAAAGACATGAAGACGGCAATAAGACAGCTGAGAAAATGGGATGCA\nCATTCTAGTGTAAAGTTTTAGATCTTATATAACTGTGAGATTAATCTCAGATAATGACAC\nAAAATATAGTGAAGTTGGTAAGTTATTTAGTAAAGCTCATGAAAATTGTGCCCTCCATTC\nCCATATAATTTAGTAATTGTCTAGGAACTTCCACATACATTGCCTCAATTTATCTTTCAA\nCAACTTGTGTGTTATATTTTGGAATACAGATACAAAGTTATTATGCTTTCAAAATATTCT\nTTTGCTAATTCTTAGAACAAAGAAAGGCATAAATATATTAGTATTTGTGTACACCTGTTC\nCTTCCTGTGTGACCCTAAGTTTAGTAGAAGAAAGGAGAGAAAATATAGCCTAGCTTATAA\nATTTAAAAAAAAATTTATTTGGTCCATTTTGTGAAAAACATAAAAAAAGAACTGTCACAT\nCTTAATTTAAAAAATATATGCTTAGTGGTAAGGAGATATATGTCAACTTTTAAGAGGTTG\nAAAAACAAACGCCTCCCATTATAAGTTTATACTTCACCTCCCACCACTATAACAACCCAG\nAATCCATGAGGGCATTATCAGGAGTGAGTGGAAGAGTAAGTTTGCCAATGTGAAATGTGC\nCTTCTAGGTCCTAGACGTCTGTGGTATAACTGCTCATAAGCAGTAGAAAGAATTTAGAGG\nGATCCAGGCTCTCATCACGTTGGCACAAAGTATATTACTTGGATCCATCTATGTCATTTT\nCCATGGTTAATGTTTAAAAGCACAGGCTTTAAAGTAAAAAACAAAGAGCTGGATTCAACT\nCTACTGACTCTTATTAATCATGATTTTGGGCACATTACGTAGCTTTCATGAGCTTTAGTT\nTCTACATTTATAAACAGGAGATTATACCTATTATGCATGGTTATTATGAAGGAAAATGAC\nAAAATAGATATAAATCAAATAGCCCACTTCGAGACATATTAAGCATGAATAAACATTAGA\nTACTATTAAAATCCTATATATTAACAAAGCCAAAAGTTTCAAACTTTACTTTTTCCCAAC\nATTCTTGTGAAATATGACACATCCCAATCTTAACAGATGCTCATTTGGGATACTGTACTT\nGTGAGTGGAAGTGTGTATATTTGTGTGCAAGTGTGTACTCATATACTTCCACCTTACCAC\nCCTAGAAAGGCATGATGAAAATTTAAGATAGAAGGAAAATATAAATTGAAAAAAAAAAAC\nCTTAACAAATGATTCTGACAAATATCTTCTCTTTCCAGGGAGAATCACTGAGCCAGAATA\nAAATTGAACACTAAATATTCTAAGAAAAAAGGAATCTAGTTTGTCAAAATGTGACTTGAA\nTTAATAGATAAGGAGAGTCAGATGATAAGAGGGTCAAAATTATGTTTATCTTAGGAAAAG\nTAGAATAGAAAATTTATAAGCAGATTAAAAACACATAATAAAAGTAGTAAATAATAATGA\nCAGTATCTCAAATCAGTGCAGGGGGGAAAGGCCTACTAATGTGATGGTGGGATAATTGGA\nTAGCAATATGGGAAAAGATATATTTAATTTATTTGCTACACCAAATGCCAGGACAATCTC\nTAAGTGAATTCAAGACATAACTCTTTTTTCAAAAAAAC\n>ENST00000426406.4|OR4F29-201|\nATGGATGGAGAGAATCACTCAGTGGTATCTGAGTTTTTGTTTCTGGGACTCACTCATTCA\nTGGGAGATCCAGCTCCTCCTCCTAGTGTTTTCCTCTGTGCTCTATGTGGCAAGCATTACT\nGGAAACATCCTCATTGTGTTTTCTGTGACCACTGACCCTCACTTACACTCCCCCATGTAC\nTTTCTACTGGCCAGTCTCTCCTTCATTGACTTAGGAGCCTGCTCTGTCACTTCTCCCAAG\nATGATTTATGACCTGTTCAGAAAGCGCAAAGTCATCTCCTTTGGAGGCTGCATCGCTCAA\nATCTTCTTCATCCACGTCGTTGGTGGTGTGGAGATGGTGCTGCTCATAGCCATGGCCTTT\nGACAGATATGTGGCCCTATGTAAGCCCCTCCACTATCTGACCATTATGAGCCCAAGAATG\nTGCCTTTCATTTCTGGCTGTTGCCTGGACCCTTGGTGTCAGTCACTCCCTGTTCCAACTG\nGCATTTCTTGTTAATTTAGCCTTCTGTGGCCCTAATGTGTTGGACAGCTTCTACTGTGAC\nCTTCCTCGGCTTCTCAGACTAGCCTGTACCGACACCTACAGATTGCAGTTCATGGTCACT\nGTTAACAGTGGGTTTATCTGTGTGGGTACTTTCTTCATACTTCTAATCTCCTACGTCTTC\nATCCTGTTTACTGTTTGGAAACATTCCTCAGGTGGTTCATCCAAGGCCCTTTCCACTCTT\nTCAGCTCACAGCACAGTGGTCCTTTTGTTCTTTGGTCCACCCATGTTTGTGTATACACGG\nCCACACCCTAATTCACAGATGGACAAGTTTCTGGCTATTTTTGATGCAGTTCTCACTCCT\nTTTCTGAATCCAGTTGTCTATACATTCAGGAATAAGGAGATGAAGGCAGCAATAAAGAGA\nGTATGCAAACAGCTAGTGATTTACAAGAGGATCTCATAA\n>ENST00000332831.5|OR4F16-201|\nATGGATGGAGAGAATCACTCAGTGGTATCTGAGTTTTTGTTTCTGGGACTCACTCATTCA\nTGGGAGATCCAGCTCCTCCTCCTAGTGTTTTCCTCTGTGCTCTATGTGGCAAGCATTACT\nGGAAACATCCTCATTGTGTTTTCTGTGACCACTGACCCTCACTTACACTCCCCCATGTAC\nTTTCTACTGGCCAGTCTCTCCTTCATTGACTTAGGAGCCTGCTCTGTCACTTCTCCCAAG\nATGATTTATGACCTGTTCAGAAAGCGCAAAGTCATCTCCTTTGGAGGCTGCATCGCTCAA\nATCTTCTTCATCCACGTCGTTGGTGGTGTGGAGATGGTGCTGCTCATAGCCATGGCCTTT\nGACAGATATGTGGCCCTATGTAAGCCCCTCCACTATCTGACCATTATGAGCCCAAGAATG\nTGCCTTTCATTTCTGGCTGTTGCCTGGACCCTTGGTGTCAGTCACTCCCTGTTCCAACTG\nGCATTTCTTGTTAATTTAGCCTTCTGTGGCCCTAATGTGTTGGACAGCTTCTACTGTGAC\nCTTCCTCGGCTTCTCAGACTAGCCTGTACCGACACCTACAGATTGCAGTTCATGGTCACT\nGTTAACAGTGGGTTTATCTGTGTGGGTACTTTCTTCATACTTCTAATCTCCTACGTCTTC\nATCCTGTTTACTGTTTGGAAACATTCCTCAGGTGGTTCATCCAAGGCCCTTTCCACTCTT\nTCAGCTCACAGCACAGTGGTCCTTTTGTTCTTTGGTCCACCCATGTTTGTGTATACACGG\nCCACACCCTAATTCACAGATGGACAAGTTTCTGGCTATTTTTGATGCAGTTCTCACTCCT\nTTTCTGAATCCAGTTGTCTATACATTCAGGAATAAGGAGATGAAGGCAGCAATAAAGAGA\nGTATGCAAACAGCTAGTGATTTACAAGAGGATCTCATAA\n>ENST00000616016.5|SAMD11-209|\nGGCGGCGGAGTCTCCCAAGTCCCCGCCGGGCGGGCGCGCGCCAGTGGACGCGGGTGCACG\nACTGACGCGGCCCGGGCGGCGGGGCGGGGGCTTGGGACCCCCGAGAGGGGCGGGGACTCC\nGCGACTCCTCGCTGCCGGGCTCGGCCTGGCGGGTGGGTCGGCGAGCCGGGCGTGGGACTG\nCCCCGGGCGCGGGCGCTGGTGGCCGGGGCGCGGGACTCCAGACGCCCCGGGGAGCCCCGA\nGGCCCTGGAACTGCGGCGCTCGGCGAGTCGATCCGGGATCGATAGCAGCTCCATGTCTCC\nGGCCTCTGAGGCCCCGCCGGCCGGCTGGGCAGTCCGGGGAGGCCTGGCGGGCGGCGCGTA\nGGCGGCGGCTGCGGGCGCCGGGGCGCACTAGCGGACGGCGTGGGCGCGCGGCCAGGCGCC\nTCCCCGGCCCCCGCGACCCAACTCCAGCCCGGGCCGGAATAAGTTGCTGCCGCCGGCGGA\nGAGCGGGGCTGCGGAGCCACCGGGGCGCCATGCCGGCGGTCAAGAAGGAGTTCCCGGGCC\nGCGAGGACCTGGCCCTGGCTCTGGCCACGTTCCACCCGACCCTGGCCGCGCTGCCGCTGC\nCGCCGCTGCCAGGCTACCTGGCGCCACTGCCCGCGGCGGCCGCCCTCCCCCCGGCCGCCT\nCGCTGCCCGCCTCGGCCGCCGGTTACGAGGCTCTGCTGGCCCCGCCGCTCCGCCCCCCGC\nGCGCCTACCTCAGCCTGCACGAGGCCGCCCCGCACCTCCACCTGCCCAGGGACCCGCTGG\nCCCTCGAGCGCTTCTCGGCCACCGCGGCCGCGGCCCCGGATTTCCAGCCGCTGCTGGACA\nACGGCGAGCCGTGCATCGAGGTGGAGTGCGGCGCCAACCGCGCGCTGCTCTACGTGCGCA\nAACTCTGCCAGGGCAGCAAGGGCCCGTCCATCCGCCACCGCGGCGAGTGGCTCACGCCCA\nACGAGTTCCAGTTCGTCAGCGGCCGCGAGACGGCCAAGGACTGGAAGCGCAGCATCCGCC\nACAAAGGGAAAAGTCTGAAGACGCTTATGTCCAAGGGGATCCTGCAGGTGCATCCTCCGA\nTCTGCGACTGCCCGGGCTGCCGAATATCCTCCCCGGTGAACCGGGGGCGGCTGGCAGACA\nAGAGGACAGTCGCCCTGCCTGCCGCCCGGAACCTGAAGAAGGAGCGAACTCCCAGCTTCT\nCTGCCAGCGATGGTGACAGCGACGGGAGTGGCCCCACCTGTGGGCGGCGGCCAGGCTTGA\nAGCAGGAGGATGGTCCGCACATCCGTATCATGAAGAGAAGAGTCCACACCCACTGGGACG\nTGAACATCTCTTTCCGAGAGGCGTCCTGCAGCCAGGACGGCAACCTTCCCACCCTCATAT\nCCAGCGTCCACCGCAGCCGCCACCTCGTTATGCCCGAGCATCAGAGCCGCTGTGAATTCC\nAGAGAGGCAGCCTGGAGATTGGCCTGCGACCCGCCGGTGACCTGTTGGGCAAGAGGCTGG\nGCCGCTCCCCCCGTATCAGCAGCGACTGCTTTTCAGAGAAGAGGGCACGAAGCGAATCGC\nCTCAAGAGGCGCTGCTGCTGCCGCGGGAGCTGGGGCCCAGCATGGCCCCGGAGGACCATT\nACCGCCGGCTTGTGTCAGCACTGAGCGAGGCCAGCACCTTTGAGGACCCTCAGCGCCTCT\nACCACCTGGGCCTCCCCAGCCACGATCTCCTGAGGGTCCGGCAGGAGGTGGCGGCTGCAG\nCTCTGAGGGGCCCCAGTGGCCTGGAAGCCCACCTGCCCTCCTCCACGGCAGGTCAGCGTC\nGGAAGCAGGGCCTGGCTCAGCACCGGGAGGGCGCCGCCCCAGCTGCCGCCCCGTCCTTCT\nCGGAGAGGGAGCTGCCTCAGCCGCCCCCCTTGCTGTCGCCGCAGAATGCCCCTCACGTCG\nCCCTGGGCCCCCATCTCAGGCCCCCCTTCCTGGGGGTGCCCTCGGCTCTGTGCCAGACCC\nCAGGCTACGGCTTCCTGCCCCCCGCGCAGGCGGAGATGTTCGCCTGGCAGCAGGAGCTCC\nTGCGGAAGCAGAACCTGGCCCGGCTGGAGCTGCCCGCCGACCTCCTGCGGCAGAAGGAGC\nTGGAGAGCGCGCGCCCACAGCTGCTGGCGCCCGAGACCGCCCTGCGCCCCAACGACGGCG\nCCGAGGAGCTGCAGCGGCGCGGGGCCCTGCTGGTGCTGAACCACGGCGCGGCGCCACTGC\nTGGCCCTGCCCCCCCAGGGGCCCCCGGGCTCCGGACCCCCCACCCCGTCCCGGGACTCTG\nCCCGGCGAGCCCCCCGGAAGGGGGGTCCCGGCCCTGCCTCAGCGCGGCCCAGCGAGTCCA\nAGGAGATGACGGGGGCTAGGCTCTGGGCACAAGATGGCTCGGAAGACGAGCCCCCCAAAG\nACTCGGACGGAGAGGACCCCGAGACGGCAGCTGTTGGGTGCAGGGGGCCCACTCCGGGCC\nAAGCTCCAGCTGGAGGGGCCGGCGCCGAGGGGAAGGGGCTTTTCCCAGGGTCCACACTGC\nCCCTGGGCTTCCCTTATGCCGTCAGCCCCTACTTCCACACAGGCGCGGTAGGGGGACTCT\nCCATGGATGGGGAGGAGGCCCCAGCCCCTGAGGACGTCACCAAGTGGACCGTGGATGACG\nTCTGCAGCTTCGTGGGGGGCCTGTCTGGCTGTGGAGAGTACACTCGGGTCTTCAGGGAGC\nAGGGGATCGACGGGGAGACCCTGCCACTGCTGACGGAGGAGCACCTGCTGACCAACATGG\nGGCTGAAGCTGGGGCCCGCCCTCAAGATCCGGGCCCAGGTGGCCAGGCGCCTGGGCCGAG\nTTTTCTACGTGGCCAGCTTCCCCGTGGCTCTGCCACTGCAGCCACCAACCCTGCGGGCCC\nCGGAGCGAGAACTCGGCACAGGAGAGCAGCCCTTGTCCCCCACGACGGCCACGTCCCCCT\nATGGAGGGGGCCACGCCCTTGCCGGTCAAACTTCACCCAAGCAGGAGAATGGGACCTTGG\nCTCTACTTCCAGGGGCCCCCGACCCTTCCCAGCCTCTGTGTTGAGGTTGCCGGGGGTAGG\nGGTGGGGCCACACAAATCTCCAGGAGCCACCACTCAACACAATGGCCCTGCCTCCCACCG\nCTTTATTTCTTTCGGTTTCGGATGCAAAACAAAAAATTTTAAAAGAAAATGTGACTTCAA\nAGGAAAGGAACAAATTTTCAAAGACTTGGGGGAGTGAAGGCAGAGCCTGGTGCAGATGGA\nCGAGGTCTGCAGACGGAGGGCAGAGGTGGTGGAAGGGGCCAGGGGCCTGCAGGCCTCCCC\nCTGGAACTGGGACTGGTCTCGGTCTGCTGACGTCAGGGTCAGCTCCCCCGCGGAGCTGAC\nTTCAGCAGCCCACAGCTGTGGGGCTTCAGCAGCCACACCAGCCCAGCCCAGCCCAGCTCT\nCGATACGTTTGGTCTTTCATGCTGAAAAATAAATAATAAAGCCTG\n>ENST00000618323.5|SAMD11-213|\nGGCGGCGGAGTCTCCCAAGTCCCCGCCGGGCGGGCGCGCGCCAGTGGACGCGGGTGCACG\nACTGACGCGGCCCGGGCGGCGGGGCGGGGGCTTGGGACCCCCGAGAGGGGCGGGGACTCC\nGCGACTCCTCGCTGCCGGGCTCGGCCTGGCGGGTGGGTCGGCGAGCCGGGCGTGGGACTG\nCCCCGGGCGCGGGCGCTGGTGGCCGGGGCGCGGGACTCCAGACGCCCCGGGGAGCCCCGA\nGGCCCTGGAACTGCGGCGCTCGGCGAGTCGATCCGGGATCGATAGCAGCTCCATGTCTCC\nGGCCTCTGAGGCCCCGCCGGCCGGCTGGGCAGTCCGGGGAGGCCTGGCGGGCGGCGCGTA\nGGCGGCGGCTGCGGGCGCCGGGGCGCACTAGCGGACGGCGTGGGCGCGCGGCCAGGCGCC\nTCCCCGGCCCCCGCGACCCAACTCCAGCCCGGGCCGGAATAAGTTGCTGCCGCCGGCGGA\nGAGCGGGGCTGCGGAGCCACCGGGGCGCCATGCCGGCGGTCAAGAAGGAGTTCCCGGGCC\nGCGAGGACCTGGCCCTGGCTCTGGCCACGTTCCACCCGACCCTGGCCGCGCTGCCGCTGC\nCGCCGCTGCCAGGCTACCTGGCGCCACTGCCCGCGGCGGCCGCCCTCCCCCCGGCCGCCT\nCGCTGCCCGCCTCGGCCGCCGGTTACGAGGCTCTGCTGGCCCCGCCGCTCCGCCCCCCGC\nGCGCCTACCTCAGCCTGCACGAGGCCGCCCCGCACCTCCACCTGCCCAGGGACCCGCTGG\nCCCTCGAGCGCTTCTCGGCCACCGCGGCCGCGGCCCCGGATTTCCAGCCGCTGCTGGACA\nACGGCGAGCCGTGCATCGAGGTGGAGTGCGGCGCCAACCGCGCGCTGCTCTACGTGCGCA\nAACTCTGCCAGGGCAGCAAGGGCCCGTCCATCCGCCACCGCGGCGAGTGGCTCACGCCCA\nACGAGTTCCAGTTCGTCAGCGGCCGCGAGACGGCCAAGGACTGGAAGCGCAGCATCCGCC\nACAAAGGGAAAAGTCTGAAGACGCTTATGTCCAAGGGGATCCTGCAGGTGCATCCTCCGA\nTCTGCGACTGCCCGGGCTGCCGAATATCCTCCCCGGTGAACCGGGGGCGGCTGGCAGACA\nAGAGGACAGTCGCCCTGCCTGCCGCCCGGAACCTGAAGAAGGAGCGAACTCCCAGCTTCT\nCTGCCAGCGATGGTGACAGCGACGGGAGTGGCCCCACCTGTGGGCGGCGGCCAGGCTTGA\nAGCAGGAGGATGGTCCGCACATCCGTATCATGAAGAGAAGAGTCCACACCCACTGGGACG\nTGAACATCTCTTTCCGAGAGGCGTCCTGCAGCCAGGACGGCAACCTTCCCACCCTCATAT\nCCAGCGTCCACCGCAGCCGCCACCTCGTTATGCCCGAGCATCAGAGCCGCTGTGAATTCC\nAGAGAGGCAGCCTGGAGATTGGCCTGCGACCCGCCGGTGACCTGTTGGGCAAGAGGCTGG\nGCCGCTCCCCCCGTATCAGCAGCGACTGCTTTTCAGAGAAGAGGGCACGAAGCGAATCGC\nCTCAAGCAGAGGCGCTGCTGCTGCCGCGGGAGCTGGGGCCCAGCATGGCCCCGGAGGACC\nATTACCGCCGGCTTGTGTCAGCACTGAGCGAGGCCAGCACCTTTGAGGACCCTCAGCGCC\nTCTACCACCTGGGCCTCCCCAGCCACGATCTCCTGAGGGTCCGGCAGGAGGTGGCGGCTG\nCAGCTCTGAGGGGCCCCAGTGGCCTGGAAGCCCACCTGCCCTCCTCCACGGCAGGTCAGC\nGTCGGAAGCAGGGCCTGGCTCAGCACCGGGAGGGCGCCGCCCCAGCTGCCGCCCCGTCCT\nTCTCGGAGAGGGAGCTGCCTCAGCCGCCCCCCTTGCTGTCGCCGCAGAATGCCCCTCACG\nTCGCCCTGGGCCCCCATCTCAGGCCCCCCTTCCTGGGGGTGCCCTCGGCTCTGTGCCAGA\nCCCCAGGCTACGGCTTCCTGCCCCCCGCGCAGGCGGAGATGTTCGCCTGGCAGCAGGAGC\nTCCTGCGGAAGCAGAACCTGGCCCGGCTGGAGCTGCCCGCCGACCTCCTGCGGCAGAAGG\nAGCTGGAGAGCGCGCGCCCACAGCTGCTGGCGCCCGAGACCGCCCTGCGCCCCAACGACG\nGCGCCGAGGAGCTGCAGCGGCGCGGGGCCCTGCTGGTGCTGAACCACGGCGCGGCGCCAC\nTGCTGGCCCTGCCCCCCCAGGGGCCCCCGGGCTCCGGACCCCCCACCCCGTCCCGGGACT\nCTGCCCGGCGAGCCCCCCGGAAGGGGGGTCCCGGCCCTGCCTCAGCGCGGCCCAGCGAGT\nCCAAGGAGATGACGGGGGCTAGGCTCTGGGCACAAGATGGCTCGGAAGACGAGCCCCCCA\nAAGACTCGGACGGAGAGGACCCCGAGACGGCAGCTGTTGGGTGCAGGGGGCCCACTCCGG\nGCCAAGCTCCAGCTGGAGGGGCCGGCGCCGAGGGGAAGGGGCTTTTCCCAGGGTCCACAC\nTGCCCCTGGGCTTCCCTTATGCCGTCAGCCCCTACTTCCACACAGGCGCGGTAGGGGGAC\nTCTCCATGGATGGGGAGGAGGCCCCAGCCCCTGAGGACGTCACCAAGTGGACCGTGGATG\nACGTCTGCAGCTTCGTGGGGGGCCTGTCTGGCTGTGGAGAGTACACTCGGGTCTTCAGGG\nAGCAGGGGATCGACGGGGAGACCCTGCCACTGCTGACGGAGGAGCACCTGCTGACCAACA\nTGGGGCTGAAGCTGGGGCCCGCCCTCAAGATCCGGGCCCAGGTGGCCAGGCGCCTGGGCC\nGAGTTTTCTACGTGGCCAGCTTCCCCGTGGCTCTGCCACTGCAGCCACCAACCCTGCGGG\nCCCCGGAGCGAGAACTCGGCACAGGAGAGCAGCCCTTGTCCCCCACGACGGCCACGTCCC\nCCTATGGAGGGGGCCACGCCCTTGCCGGTCAAACTTCACCCAAGCAGGAGAATGGGACCT\nTGGCTCTACTTCCAGGGGCCCCCGACCCTTCCCAGCCTCTGTGTTGAGGTTGCCGGGGGT\nAGGGGTGGGGCCACACAAATCTCCAGGAGCCACCACTCAACACAATGGCCCTGCCTCCCA\nCCGCTTTATTTCTTTCGGTTTCGGATGCAAAACAAAAAATTTTAAAAGAAAATGTGACTT\nCAAAGGAAAGGAACAAATTTTCAAAGACTTGGGGGAGTGAAGGCAGAGCCTGGTGCAGAT\nGGACGAGGTCTGCAGACGGAGGGCAGAGGTGGTGGAAGGGGCCAGGGGCCTGCAGGCCTC\nCCCCTGGAACTGGGACTGGTCTCGGTCTGCTGACGTCAGGGTCAGCTCCCCCGCGGAGCT\nGACTTCAGCAGCCCACAGCTGTGGGGCTTCAGCAGCCACACCAGCCCAGCCCAGCCCAGC\nTCTCGATACGTTTGGTCTTTCATGCTGAAAAATAAATAATAAAGCCTG\n>ENST00000437963.5|SAMD11-203|\nCAGCGCTTGGGGCTCGCGGGCCGCTCCCTCCGCTCGGAAGGGAAAAGTCTGAAGACGCTT\nATGTCCAAGGGGATCCTGCAGGTGCATCCTCCGATCTGCGACTGCCCGGGCTGCCGAATA\nTCCTCCCCGGTGAACCGGGGGCGGCTGGCAGACAAGAGGACAGTCGCCCTGCCTGCCGCC\nCGGAACCTGAAGAAGGAGCGAACTCCCAGCTTCTCTGCCAGCGATGGTGACAGCGACGGG\nAGTGGCCCCACCTGTGGGCGGCGGCCAGGCTTGAAGCAGGAGGATGGTCCGCACATCCGT\nATCATGAAGAGAAGAGTCCACACCCACTGGGACGTGAACATCTCTTTCCGAGAGGCGTCC\nTGCAGCCAGGACGGCAACCTTCCCACC\n>ENST00000342066.8|SAMD11-202|\nGCAGAGCCCAGCAGATCCCTGCGGCGTTCGCGAGGGTGGGACGGGAAGCGGGCTGGGAAG\nTCGGGCCGAGGGAAAAGTCTGAAGACGCTTATGTCCAAGGGGATCCTGCAGGTGCATCCT\nCCGATCTGCGACTGCCCGGGCTGCCGAATATCCTCCCCGGTGAACCGGGGGCGGCTGGCA\nGACAAGAGGACAGTCGCCCTGCCTGCCGCCCGGAACCTGAAGAAGGAGCGAACTCCCAGC\nTTCTCTGCCAGCGATGGTGACAGCGACGGGAGTGGCCCCACCTGTGGGCGGCGGCCAGGC\nTTGAAGCAGGAGGATGGTCCGCACATCCGTATCATGAAGAGAAGAGTCCACACCCACTGG\nGACGTGAACATCTCTTTCCGAGAGGCGTCCTGCAGCCAGGACGGCAACCTTCCCACCCTC\nATATCCAGCGTCCACCGCAGCCGCCACCTCGTTATGCCCGAGCATCAGAGCCGCTGTGAA\nTTCCAGAGAGGCAGCCTGGAGATTGGCCTGCGACCCGCCGGTGACCTGTTGGGCAAGAGG\nCTGGGCCGCTCCCCCCGTATCAGCAGCGACTGCTTTTCAGAGAAGAGGGCACGAAGCGAA\nTCGCCTCAAGAGGCGCTGCTGCTGCCGCGGGAGCTGGGGCCCAGCATGGCCCCGGAGGAC\nCATTACCGCCGGCTTGTGTCAGCACTGAGCGAGGCCAGCACCTTTGAGGACCCTCAGCGC\nCTCTACCACCTGGGCCTCCCCAGCCACGGTGAGGACCCACCCTGGCATGATCCCCCTCAT\nCACCTCCCCAGCCACGATCTCCTGAGGGTCCGGCAGGAGGTGGCGGCTGCAGCTCTGAGG\nGGCCCCAGTGGCCTGGAAGCCCACCTGCCCTCCTCCACGGCAGGTCAGCGTCGGAAGCAG\nGGCCTGGCTCAGCACCGGGAGGGCGCCGCCCCAGCTGCCGCCCCGTCCTTCTCGGAGAGG\nGAGCTGCCTCAGCCGCCCCCCTTGCTGTCGCCGCAGAATGCCCCTCACGTCGCCCTGGGC\nCCCCATCTCAGGCCCCCCTTCCTGGGGGTGCCCTCGGCTCTGTGCCAGACCCCAGGCTAC\nGGCTTCCTGCCCCCCGCGCAGGCGGAGATGTTCGCCTGGCAGCAGGAGCTCCTGCGGAAG\nCAGAACCTGGCCCGGCTGGAGCTGCCCGCCGACCTCCTGCGGCAGAAGGAGCTGGAGAGC\nGCGCGCCCACAGCTGCTGGCGCCCGAGACCGCCCTGCGCCCCAACGACGGCGCCGAGGAG\nCTGCAGCGGCGCGGGGCCCTGCTGGTGCTGAACCACGGCGCGGCGCCACTGCTGGCCCTG\nCCCCCCCAGGGGCCCCCGGGCTCCGGACCCCCCACCCCGTCCCGGGACTCTGCCCGGCGA\nGCCCCCCGGAAGGGGGGTCCCGGCCCTGCCTCAGCGCGGCCCAGCGAGTCCAAGGAGATG\nACGGGGGCTAGGCTCTGGGCACAAGATGGCTCGGAAGACGAGCCCCCCAAAGACTCGGAC\nGGAGAGGACCCCGAGACGGCAGCTGTTGGGTGCAGGGGGCCCACTCCGGGCCAAGCTCCA\nGCTGGAGGGGCCGGCGCCGAGGGGAAGGGGCTTTTCCCAGGGTCCACACTGCCCCTGGGC\nTTCCCTTATGCCGTCAGCCCCTACTTCCACACAGGCGCGGTAGGGGGACTCTCCATGGAT\nGGGGAGGAGGCCCCAGCCCCTGAGGACGTCACCAAGTGGACCGTGGATGACGTCTGCAGC\nTTCGTGGGGGGCCTGTCTGGCTGTGGAGAGTACACTCGGGTCTTCAGGGAGCAGGGGATC\nGACGGGGAGACCCTGCCACTGCTGACGGAGGAGCACCTGCTGACCAACATGGGGCTGAAG\nCTGGGGCCCGCCCTCAAGATCCGGGCCCAGGTGGCCAGGCGCCTGGGCCGAGTTTTCTAC\nGTGGCCAGCTTCCCCGTGGCTCTGCCACTGCAGCCACCAACCCTGCGGGCCCCGGAGCGA\nGAACTCGGCACAGGAGAGCAGCCCTTGTCCCCCACGACGGCCACGTCCCCCTATGGAGGG\nGGCCACGCCCTTGCCGGTCAAACTTCACCCAAGCAGGAGAATGGGACCTTGGCTCTACTT\nCCAGGGGCCCCCGACCCTTCCCAGCCTCTGTGTTGAGGTTGCCGGGGGTAGGGGTGGGGC\nCACACAAATCTCCAGGAGCCACCACTCAACACAATGGCCCTGCCTCCCACCGCTTTATTT\nCTTTCGGTTTCGGATGCAAAACAAAAAATTTTAAAAGAAAATGTGACTTCAAAGGAAAGG\nAACAAATTTTCAAAGACTTGGGGGAGTGAAGGCAGAGCCTGGTGCAGATGGACGAGGTCT\nGCAGACGGAGGGCAGAGGTGGTGGAAGGGGCCAGGGGCCTGCAGGCCTCCCCCTGGAACT\nGGGACTGGTCTCGGTCTGCTGACGTCAGGGTCAGCTCCCCCGCGGAGCTGACTTCAGCAG\nCCCACAGCTGTGGGGCTTCAGCAGCCACACCAGCCCAGCCCAGCCCAGCTCTCGATACGT\nTTGGTCTTTCATGCTGAAAAATAAATAATAAAGCCTG\n>ENST00000616125.5|SAMD11-210|\nATGTCCAAGGGGATCCTGCAGGTGCATCCTCCGATCTGCGACTGCCCGGGCTGCCGAATA\nTCCTCCCCGGTGAACCGGGGGCGGCTGGCAGACAAGAGGACAGTCGCCCTGCCTGCCGCC\nCGGAACCTGAAGAAGGAGCGAACTCCCAGCTTCTCTGCCAGCGATGGTGACAGCGACGGG\nAGTGGCCCCACCTGTGGGCGGCGGCCAGGCTTGAAGCAGGAGGATGGTCCGCACATCCGT\nATCATGAAGAGAAGAGTCCACACCCACTGGGACGTGAACATCTCTTTCCGAGAGGCGTCC\nTGCAGCCAGGACGGCAACCTTCCCACCCTCATATCCAGCGTCCACCGCAGCCGCCACCTC\nGTTATGCCCGAGCATCAGAGCCGCTGTGAATTCCAGAGAGGCAGCCTGGAGATTGGCCTG\nCGACCCGCCGGTGACCTGTTGGGCAAGAGGCTGGGCCGCTCCCCCCGTATCAGCAGCGAC\nTGCTTTTCAGAGAAGAGGGCACGAAGCGAATCGCCTCAAGCAGAGGCGCTGCTGCTGCCG\nCGGGAGCTGGGGCCCAGCATGGCCCCGGAGGACCATTACCGCCGGCTTGTGTCAGCACTG\nAGCGAGGCCAGCACCTTTGAGGACCCTCAGCGCCTCTACCACCTGGGCCTCCCCAGCCAC\nGGCTACGGCTTCCTGCCCCCCGCGCAGGCGGAGATGTTCGCCTGGCAGCAGGAGCTCCTG\nCGGAAGCAGAACCTGGCCCGGCTGGAGCTGCCCGCCGACCTCCTGCGGCAGAAGGAGCTG\nGAGAGCGCGCGCCCACAGCTGCTGGCGCCCGAGACCGCCCTGCGCCCCAACGACGGCGCC\nGAGGAGCTGCAGCGGCGCGGGGCCCTGCTGGTGCTGAACCACGGCGCGGCGCCACTGCTG\nGCCCTGCCCCCCCAGGGGCCCCCGGGCTCCGGACCCCCCACCCCGTCCCGGGACTCTGCC\nCGGCGAGCCCCCCGGAAGGGGGGTCCCGGCCCTGCCTCAGCGCGGCCCAGCGAGTCCAAG\nGAGATGACGGGGGCTAGGCTCTGGGCACAAGATGGCTCGGAAGACGAGCCCCCCAAAGAC\nTCGGACGGAGAGGACCCCGAGACGGCAGCTGTTGGGTGCAGGGGGCCCACTCCGGGCCAA\nGCTCCAGCTGGAGGGGCCGGCGCCGAGGGGAAGGGGCTTTTCCCAGGGTCCACACTGCCC\nCTGGGCTTCCCTTATGCCGTCAGCCCCTACTTCCACACAGGCGCGGTAGGGGGACTCTCC\nATGGATGGGGAGGAGGCCCCAGCCCCTGAGGACGTCACCAAGTGGACCGTGGATGACGTC\nTGCAGCTTCGTGGGGGGCCTGTCTGGCTGTGGAGAGTACACTCGGGTCTTCAGGGAGCAG\nGGGATCGACGGGGAGACCCTGCCACTGCTGACGGAGGAGCACCTGCTGACCAACATGGGG\nCTGAAGCTGGGGCCCGCCCTCAAGATCCGGGCCCAGGTGGCCAGGCGCCTGGGCCGAGTT\nTTCTACGTGGCCAGCTTCCCCGTGGCTCTGCCACTGCAGCCACCAACCCTGCGGGCCCCG\nGAGCGAGAACTCGGCACAGGAGAGCAGCCCTTGTCCCCCACGACGGCCACGTCCCCCTAT\nGGAGGGGGCCACGCCCTTGCCGGTCAAACTTCACCCAAGCAGGAGAATGGGACCTTGGCT\nCTACTTCCAGGGGCCCCCGACCCTTCCCAGCCTCTGTGTTGA\n>ENST00000618779.5|SAMD11-214|\nATGTCCAAGGGGATCCTGCAGGTGCATCCTCCGATCTGCGACTGCCCGGGCTGCCGAATA\nTCCTCCCCGGTGAACCGGGGGCGGCTGGCAGACAAGAGGACAGTCGCCCTGCCTGCCGCC\nCGGAACCTGAAGAAGGAGCGAACTCCCAGCTTCTCTGCCAGCGATGGTGACAGCGACGGG\nAGTGGCCCCACCTGTGGGCGGCGGCCAGGCTTGAAGCAGGAGGATGGTCCGCACATCCGT\nATCATGAAGAGAAGAGTCCACACCCACTGGGACGTGAACATCTCTTTCCGAGAGGCGTCC\nTGCAGCCAGGACGGCAACCTTCCCACCCTCATATCCAGCGTCCACCGCAGCCGCCACCTC\nGTTATGCCCGAGCATCAGAGCCGCTGTGAATTCCAGAGAGGCAGCCTGGAGATTGGCCTG\nCGACCCGCCGGTGACCTGTTGGGCAAGAGGCTGGGCCGCTCCCCCCGTATCAGCAGCGAC\nTGCTTTTCAGAGAAGAGGGCACGAAGCGAATCGCCTCAAGATCTCCTGAGGGTCCGGCAG\nGAGGTGGCGGCTGCAGCTCTGAGGGGCCCCAGTGGCCTGGAAGCCCACCTGCCCTCCTCC\nACGGCAGGTCAGCGTCGGAAGCAGGGCCTGGCTCAGCACCGGGAGGGCGCCGCCCCAGCT\nGCCGCCCCGTCCTTCTCGGAGAGGGAGCTGCCTCAGCCGCCCCCCTTGCTGTCGCCGCAG\nAATGCCCCTCACGTCGCCCTGGGCCCCCATCTCAGGCCCCCCTTCCTGGGGGTGCCCTCG\nGCTCTGTGCCAGACCCCAGGCTACGGCTTCCTGCCCCCCGCGCAGGCGGAGATGTTCGCC\nTGGCAGCAGGAGCTCCTGCGGAAGCAGAACCTGGCCCGGCTGGAGCTGCCCGCCGACCTC\nCTGCGGCAGAAGGAGCTGGAGAGCGCGCGCCCACAGCTGCTGGCGCCCGAGACCGCCCTG\nCGCCCCAACGACGGCGCCGAGGAGCTGCAGCGGCGCGGGGCCCTGCTGGTGCTGAACCAC\nGGCGCGGCGCCACTGCTGGCCCTGCCCCCCCAGGGGCCCCCGGGCTCCGGACCCCCCACC\nCCGTCCCGGGACTCTGCCCGGCGAGCCCCCCGGAAGGGGGGTCCCGGCCCTGCCTCAGCG\nCGGCCCAGCGAGTCCAAGGAGATGACGGGGGCTAGGCTCTGGGCACAAGATGGCTCGGAA\nGACGAGCCCCCCAAAGACTCGGACGGAGAGGACCCCGAGACGGCAGCTGTTGGGTGCAGG\nGGGCCCACTCCGGGCCAAGCTCCAGCTGGAGGGGCCGGCGCCGAGGGGAAGGGGCTTTTC\nCCAGGGTCCACACTGCCCCTGGGCTTCCCTTATGCCGTCAGCCCCTACTTCCACACAGGC\nGCGGTAGGGGGACTCTCCATGGATGGGGAGGAGGCCCCAGCCCCTGAGGACGTCACCAAG\nTGGACCGTGGATGACGTCTGCAGCTTCGTGGGGGGCCTGTCTGGCTGTGGAGAGTACACT\nCGGGTCTTCAGGGAGCAGGGGATCGACGGGGAGACCCTGCCACTGCTGACGGAGGAGCAC\nCTGCTGACCAACATGGGGCTGAAGCTGGGGCCCGCCCTCAAGATCCGGGCCCAGGTGGCC\nAGGCGCCTGGGCCGAGTTTTCTACGTGGCCAGCTTCCCCGTGGCTCTGCCACTGCAGCCA\nCCAACCCTGCGGGCCCCGGAGCGAGAACTCGGCACAGGAGAGCAGCCCTTGTCCCCCACG\nACGGCCACGTCCCCCTATGGAGGGGGCCACGCCCTTGCCGGTCAAACTTCACCCAAGCAG\nGAGAATGGGACCTTGGCTCTACTTCCAGGGGCCCCCGACCCTTCCCAGCCTCTGTGTTGA\n>ENST00000622503.5|SAMD11-215|\nATGTCCAAGGGGATCCTGCAGGTGCATCCTCCGATCTGCGACTGCCCGGGCTGCCGAATA\nTCCTCCCCGGTGAACCGGGGGCGGCTGGCAGACAAGAGGACAGTCGCCCTGCCTGCCGCC\nCGGAACCTGAAGAAGGAGCGAACTCCCAGCTTCTCTGCCAGCGATGGTGACAGCGACGGG\nAGTGGCCCCACCTGTGGGCGGCGGCCAGGCTTGAAGCAGGAGGATGGTCCGCACATCCGT\nATCATGAAGAGAAGAGTCCACACCCACTGGGACGTGAACATCTCTTTCCGAGAGGCGTCC\nTGCAGCCAGGACGGCAACCTTCCCACCCTCATATCCAGCGTCCACCGCAGCCGCCACCTC\nGTTATGCCCGAGCATCAGAGCCGCTGTGAATTCCAGAGAGGCAGCCTGGAGATTGGCCTG\nCGACCCGCCGGTGACCTGTTGGGCAAGAGGCTGGGCCGCTCCCCCCGTATCAGCAGCGAC\nTGCTTTTCAGAGAAGAGGGCACGAAGCGAATCGCCTCAAGCAGAGGCGCTGCTGCTGCCG\nCGGGAGCTGGGGCCCAGCATGGCCCCGGAGGACCATTACCGCCGGCTTGTGTCAGCACTG\nAGCGAGGCCAGCACCTTTGAGGACCCTCAGCGCCTCTACCACCTGGGCCTCCCCAGCCAC\nGGTGAGGACCCACCCTGGCATGATCCCCCTCATCACCTCCCCAGCCACGATCTCCTGAGG\nGTCCGGCAGGAGGTGGCGGCTGCAGCTCTGAGGGGCCCCAGTGGCCTGGAAGCCCACCTG\nCCCTCCTCCACGGCAGGTCAGCGTCGGAAGCAGGGCCTGGCTCAGCACCGGGAGGGCGCC\nGCCCCAGCTGCCGCCCCGTCCTTCTCGGAGAGGGAGCTGCCTCAGCCGCCCCCCTTGCTG\nTCGCCGCAGAATGCCCCTCACGTCGCCCTGGGCCCCCATCTCAGGCCCCCCTTCCTGGGG\nGTGCCCTCGGCTCTGTGCCAGACCCCAGGCTACGGCTTCCTGCCCCCCGCGCAGGCGGAG\nATGTTCGCCTGGCAGCAGGAGCTCCTGCGGAAGCAGAACCTGGCCCGGCTGGAGCTGCCC\nGCCGACCTCCTGCGGCAGAAGGAGCTGGAGAGCGCGCGCCCACAGCTGCTGGCGCCCGAG\nACCGCCCTGCGCCCCAACGACGGCGCCGAGGAGCTGCAGCGGCGCGGGGCCCTGCTGGTG\nCTGAACCACGGCGCGGCGCCACTGCTGGCCCTGCCCCCCCAGGGGCCCCCGGGCTCCGGA\nCCCCCCACCCCGTCCCGGGACTCTGCCCGGCGAGCCCCCCGGAAGGGGGGTCCCGGCCCT\nGCCTCAGCGCGGCCCAGCGAGTCCAAGGAGATGACGGGGGCTAGGCTCTGGGCACAAGAT\nGGCTCGGAAGACGAGCCCCCCAAAGACTCGGACGGAGAGGACCCCGAGACGGCAGCTGTT\nGGGTGCAGGGGGCCCACTCCGGGCCAAGCTCCAGCTGGAGGGGCCGGCGCCGAGGGGAAG\nGGGCTTTTCCCAGGGTCCACACTGCCCCTGGGCTTCCCTTATGCCGTCAGCCCCTACTTC\nCACACAGGCGCGGTAGGGGGACTCTCCATGGATGGGGAGGAGGCCCCAGCCCCTGAGGAC\nGTCACCAAGTGGACCGTGGATGACGTCTGCAGCTTCGTGGGGGGCCTGTCTGGCTGTGGA\nGAGTACACTCGGGTCTTCAGGGAGCAGGGGATCGACGGGGAGACCCTGCCACTGCTGACG\nGAGGAGCACCTGCTGACCAACATGGGGCTGAAGCTGGGGCCCGCCCTCAAGATCCGGGCC\nCAGGTGGCCAGGCGCCTGGGCCGAGTTTTCTACGTGGCCAGCTTCCCCGTGGCTCTGCCA\nCTGCAGCCACCAACCCTGCGGGCCCCGGAGCGAGAACTCGGCACAGGAGAGCAGCCCTTG\nTCCCCCACGACGGCCACGTCCCCCTATGGAGGGGGCCACGCCCTTGCCGGTCAAACTTCA\nCCCAAGCAGGAGAATGGGACCTTGGCTCTACTTCCAGGGGCCCCCGACCCTTCCCAGCCT\nCTGTGTTGA");
+                // trigger events
+                $("#query_input").trigger("input");
+                $("#target_input").trigger("input");
+            });
+            
+            // do checkings before submitting (jQuery version)
+            $('#main-form').on('submit', function(event) {
+                // Create a custom FormData object from scratch (it's strange we can't create it from the form, resulted FormData is empty)
+                let myFormData = new FormData(document.getElementById("main-form"));
+                // detele unused keys in FormData
+                myFormData.delete('query_switch');
+                myFormData.delete('query_input');
+                myFormData.delete('target_switch');
+                myFormData.delete('target_input');
+          
+                // Prevent default submitting
+                event.preventDefault();
+                
+                // Process small RNA sequences
+                if ($("input[name=query_switch]:checked").val() == "paste") {
+                    if (!$("#query_input").hasClass('is-valid')) {
+                        alert("Error: No valid tRF sequences pasted!");
+                        throw new Error("Error: No valid tRF sequences pasted!");
+                    } else {
+                        // process the pasted text for transfer
+                        const utf8Array = new TextEncoder("utf-8").encode($('#query_input').val()); // make sure it's UTF-8 encoding, so not use fflate.strToU8()
+                        myFormData.append('query_content', new Blob([fflate.gzipSync(utf8Array)], { type: "application/octet-stream" }));
+                        myFormData.append('query_sha256', digestMessageSJCL(utf8Array));
+                    }
+                } else if ($("input[name=query_switch]:checked").val() == "upload") {
+                    if (!$("#query_uploader").hasClass('is-valid')) {
+                        alert("Error: No valid tRF sequences uploaded!");
+                        throw new Error("Error: No valid tRF sequences uploaded!");
+                    } else {
+                        // copy the file content and sha256 for transfer
+                        const acceptedFiles = Dropzone.forElement('#query_uploader').getAcceptedFiles();
+                        if (acceptedFiles.length > 1) {
+                            alert("Error: More than 1 successfully uploaded tRF file!");
+                            throw new Error("Error: More than 1 successfully uploaded tRF file!");
+                        }
+                        myFormData.append('query_content', new Blob([acceptedFiles[0].forUpload], { type: "application/octet-stream" }));
+                        myFormData.append('query_sha256', acceptedFiles[0].sha256);
+                    }
+                }
+                
+                // Process target long RNA sequences
+                if ($("input[name=target_switch]:checked").val() == "paste") {
+                    if (!$("#target_input").hasClass('is-valid')) {
+                        alert("Error: No valid target RNA sequences pasted!");
+                        throw new Error("Error: No valid target RNA sequences pasted!");
+                    } else {
+                        // process the pasted text for transfer
+                        const utf8Array = new TextEncoder("utf-8").encode($('#target_input').val()); // make sure it's UTF-8 encoding, so not use fflate.strToU8()
+                        myFormData.append('target_content', new Blob([fflate.gzipSync(utf8Array)], { type: "application/octet-stream" }));
+                        myFormData.append('target_sha256', digestMessageSJCL(utf8Array));
+                    }
+                } else if ($("input[name=target_switch]:checked").val() == "upload") {
+                    if (!$("#target_uploader").hasClass('is-valid')) {
+                        alert("Error: No valid target RNA sequences uploaded!");
+                        throw new Error("Error: No valid target RNA sequences uploaded!");
+                    } else {
+                        // copy the file content and sha256 for transfer
+                        const acceptedFiles = Dropzone.forElement('#target_uploader').getAcceptedFiles();
+                        if (acceptedFiles.length > 1) {
+                            alert("Error: More than 1 successfully uploaded target RNA file!");
+                            throw new Error("Error: More than 1 successfully uploaded target RNA file!");
+                        }
+                        myFormData.append('target_content', new Blob([acceptedFiles[0].forUpload], { type: "application/octet-stream" }));
+                        myFormData.append('target_sha256', acceptedFiles[0].sha256);
+                    }
+                }
+                
+                // You can't directly view the contents of a FormData object like other regular JavaScript objects (https://stackoverflow.com/q/17066875/13752320)
+                //for (const [key, value] of myFormData.entries()) {
+                //    console.log(`${key}: ${value}`);
+                //}
+                
+                // Send the FormData object using jQuery AJAX through an XMLHttpRequest
+                // Note FormData contains a mix of key-value pairs with different data types, including strings and binary data like Blobs or Uint8Arrays.
+                $.ajax({
+                    url: "{{ url_for("online_Targets") }}",
+                    type: "POST",
+                    data: myFormData,
+                    processData: false, // Don't process the FormData object
+                    contentType: false, // Let the browser set the content type with the correct boundary
+                    timeout: 900000, // Set the timeout value in milliseconds (optional)
+                    xhr: function() { // This function is to get and show progress of data sending
+                        var xhr = new window.XMLHttpRequest();
+
+                        // Add an event listener for the "progress" event on the XMLHttpRequest object
+                        xhr.upload.addEventListener("progress", function(evt) {
+                            if (evt.lengthComputable) {
+                                var percentComplete = (evt.loaded / evt.total) * 100;
+                                $("#upload-progress")
+                                    .css("width", percentComplete + "%")
+                                    .attr("aria-valuenow", percentComplete)
+                                    .text(Math.round(percentComplete) + "%"); // Add the percentage text
+                            }
+                        }, false);
+
+                        return xhr;
+                    },
+                    beforeSend: function() {
+                        document.getElementById("overlay").style.display = "flex"; // Show the overlay before the request starts
+                    },
+                    success: function(response_data) {
+                        // Handle the response from the server if the request completes with a 2xx, response_data is a JSON object with different keys returned by flask
+                        // 200 OK; 201 Created; 204 No Content
+                        // This section is used to show that SHA-256 strings do not match, i.e. unsuccess data transfer
+                        // If this transfer is successful, then redirect to another page
+                        if (response_data.error_message) {
+                            // Handle the custom error
+                            alert(response_data.error_message);
+                            document.getElementById("overlay").style.display = "none"; // Hide the overlay after the request is complete (success)
+                        } else {
+                            // Redirect the browser to the new page
+                            // Do not hide the overlay, the overlay will show all the time during processing, then directly go to new page
+                            window.location.href = response_data.url;
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        // Handle errors during the AJAX request
+                        // or Handle the response from the server if the request fails with a non-2xx status code
+                        // 400 Bad Request; 401 Unauthorized; 403 Forbidden; 404 Not Found; 500 Internal Server Error
+                        // message returned by flask can be accessed with jqXHR.responseText
+                        alert('An error occurred: "' + textStatus + ': ' + errorThrown + '". Please try again.');
+                        document.getElementById("overlay").style.display = "none"; // Hide the overlay after the request is complete (error)
+                    },
+                    //complete: function() {
+                    //    document.getElementById("overlay").style.display = "none"; // Hide the overlay after the request is complete (success or error)
+                    //}
+                });
+            });
+        });
+    </script>
+{% endblock %}

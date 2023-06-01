@@ -1,0 +1,210 @@
+{# Jinja web template engine which will be rendered by Flask #}
+{# This is a custom template based on bootstrap/base.html #}
+
+{% block doc -%}
+<!DOCTYPE html>
+<html{% block html_attribs %} lang="en" {% endblock html_attribs %}>
+{%- block html %}
+  <head>
+    {%- block head %}
+    <title>{% block title %} tRFtarget 2.0 {% endblock title %}</title>
+
+    {%- block metas %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {%- endblock metas %}
+
+    {%- block styles %}
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-ui-1.13.2.min.css') }}">
+    <!-- footer -->
+    <style>
+    .footer {
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      background: #4169e1;
+      border-top: solid 10px #292b2c;
+    }
+
+    .footer p {
+      font-size: 16px;
+      color: black;
+      text-align: center;
+      margin-top: 12px;
+      padding-bottom: 0;
+      margin-bottom: 0;
+    }
+    </style>
+    {%- endblock styles %}
+    {%- endblock head %}
+  </head>
+  <body{% block body_attribs %}{% endblock body_attribs %}>
+    {% block body -%}
+    
+    {# Add a title area before navbar #}
+    {% block top -%}
+    <div class="container-fluid">
+      <div class="row text-white h-100" style="background-color: #4169e1">
+      <!-- Add an empty Stretched Link to make the text clickable -->
+        <div class="col-md-5 position-relative">
+          <h1>tRFtarget 2.0</h1>
+          <p>Explore <span style="color: black; font-weight: bold">t</span>ransfer <span style="color: black; font-weight: bold">R</span>NA-derived <span style="color: black; font-weight: bold">F</span>ragment <span style="color: black; font-weight: bold">target</span>s</p>
+          <a href="{{ url_for('index') }}" class="stretched-link"></a>
+        </div>
+        <div class="col-md-3 my-auto">
+          <img src="{{ url_for('static', filename='img/CenterLogo.png') }}" class="mx-auto d-block" style="max-width: 100%; height: auto; max-height: 100px" alt="Center Logo"/>
+        </div>
+        <div class="col-md-4 my-auto">
+          <img src="{{ url_for('static', filename='img/Yale_School_of_Public_Health.png') }}" class="mx-auto d-block" style="max-width: 100%; height: auto; max-height: 100px" alt="YSPH Logo"/>
+        </div>
+      </div>
+    </div>
+    {%- endblock top %}
+    
+    {% block navbar %}
+    {# a always expand navbar, add active class and indicate current page based on Jinja Variable #}
+    <nav class="navbar nav-fill w-100 justify-content-center navbar-dark bg-dark navbar-expand-sm">
+      <div class="container-fluid">
+          <ul class="navbar-nav nav-fill w-100">
+            <li class="nav-item">
+              {% if active_page == 'home' %}
+                <a class="nav-link active" aria-current="page" style="background-color: #4169e1" href="{{ url_for('index') }}">Home</a>
+              {% else %}
+                <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+              {% endif %}
+            </li>
+            <li class="nav-item dropdown">
+              {% if active_page == 'search' %}
+                <a class="nav-link dropdown-toggle active" aria-current="page" style="background-color: #4169e1" href="#" id="SearchDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Search</a>
+              {% else %}
+                <a class="nav-link dropdown-toggle" href="#" id="SearchDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Search</a>
+              {% endif %}
+              <!-- Add min-width attribute to make the dropdown list not taking extra width and has the same width with the menu -->
+              <ul class="dropdown-menu dropdown-menu-dark" style="min-width: 100%" aria-labelledby="SearchDropdown">
+                <li><a class="dropdown-item" href="{{ url_for('search_tRF') }}">by tRF</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('search_RNA') }}">by RNA</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('search_Gene') }}">by Gene</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('search_Advanced') }}">Advanced Search</a></li>
+              </ul>
+            </li>
+            <li class="nav-item dropdown">
+              {% if active_page == 'browse' %}
+                <a class="nav-link dropdown-toggle active" aria-current="page" style="background-color: #4169e1" href="#" id="BrowseDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Browse</a>
+              {% else %}
+                <a class="nav-link dropdown-toggle" href="#" id="BrowseDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Browse</a>
+              {% endif %}
+              <!-- Add min-width attribute to make the dropdown list not taking extra width and has the same width with the menu -->
+              <ul class="dropdown-menu dropdown-menu-dark" style="min-width: 100%" aria-labelledby="BrowseDropdown">
+                <li><a class="dropdown-item" href="{{ url_for('browse_tRF') }}">by tRF</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('browse_RNA') }}">by RNA</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('browse_Gene') }}">by Gene</a></li>
+              </ul>
+            </li>
+            <li class="nav-item">
+              {% if active_page == 'online' %}
+                <a class="nav-link active" aria-current="page" style="background-color: #4169e1" href="{{ url_for('online_Targets') }}">Online Targets</a>
+              {% else %}
+                <a class="nav-link" href="{{ url_for('online_Targets') }}">Online Targets</a>
+              {% endif %}
+            </li>
+            <li class="nav-item dropdown">
+              {% if active_page == 'evidence' %}
+                <a class="nav-link dropdown-toggle active" aria-current="page" style="background-color: #4169e1" href="#" id="EvidenceDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Evidence</a>
+              {% else %}
+                <a class="nav-link dropdown-toggle" href="#" id="EvidenceDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Evidence</a>
+              {% endif %}
+              <!-- Add min-width attribute to make the dropdown list not taking extra width and has the same width with the menu -->
+              <ul class="dropdown-menu dropdown-menu-dark" style="min-width: 100%" aria-labelledby="EvidenceDropdown">
+                <!--<li><a class="dropdown-item" href=#>Site-level</a></li>-->
+                <li><a class="dropdown-item" href="{{ url_for('show_gene_evidence') }}">Gene-level</a></li>
+              </ul>
+            </li>
+            <li class="nav-item">
+              {% if active_page == 'method' %}
+                <a class="nav-link active" aria-current="page" style="background-color: #4169e1" href="{{ url_for('method') }}">Method</a>
+              {% else %}
+                <a class="nav-link" href="{{ url_for('method') }}">Method</a>
+              {% endif %}
+            </li>
+            <li class="nav-item">
+              {% if active_page == 'statistics' %}
+                <a class="nav-link active" aria-current="page" style="background-color: #4169e1" href="{{ url_for('statistics') }}">Statistics</a>
+              {% else %}
+                <a class="nav-link" href="{{ url_for('statistics') }}">Statistics</a>
+              {% endif %}
+            </li>
+            <li class="nav-item">
+              {% if active_page == 'help' %}
+                <a class="nav-link active" aria-current="page" style="background-color: #4169e1" href="{{ url_for('helps') }}">Help</a>
+              {% else %}
+                <a class="nav-link" href="{{ url_for('helps') }}">Help</a>
+              {% endif %}
+            </li>
+            <li class="nav-item">
+              {% if active_page == 'team' %}
+                <a class="nav-link active" aria-current="page" style="background-color: #4169e1" href="{{ url_for('team') }}">Team</a>
+              {% else %}
+                <a class="nav-link" href="{{ url_for('team') }}">Team</a>
+              {% endif %}
+            </li>
+          </ul>
+      </div>
+    </nav>
+    {%- endblock navbar %}
+    {% block content -%}
+    {%- endblock content %}
+    
+    {# Footer #}
+    {% block footer -%}
+    <footer class="footer">
+      <div class="container-fluid text-center">
+        <p style="white-space: pre">&copy tRFtarget 2020 -   | All Rights Reserved</p>
+        
+        <div class="row mx-auto">
+          <div class="col" style="padding-right: 0px">
+            <p style="margin-top: 0px; margin-right: 0px; text-align: right; color: white; font-weight: bold">{{ n_search }}</p>
+          </div>
+          <div class="col" style="padding-left: 5px">
+            <p style="margin-top: 0px; margin-left: 0px; text-align: left">Database Retrieves</p>
+          </div>
+        </div>
+        
+        <div class="row mx-auto">
+          <div class="col" style="padding-right: 0px">
+            <p style="margin-top: 0px; margin-right: 0px; text-align: right; color: white; font-weight: bold">{{ n_online }}</p>
+          </div>
+          <div class="col" style="padding-left: 5px">
+            <p style="margin-top: 0px; margin-left: 0px; text-align: left">Online Service Usage</p>
+          </div>
+        </div>
+      
+        <div class="row mx-auto">
+          <div class="col" style="padding-right: 0px; margin-bottom: 12px">
+            <p style="margin-top: 0px; margin-right: 0px; text-align: right">
+            <!-- hitwebcounter Code START -->
+            <a href="https://www.hitwebcounter.com" target="_blank">
+            <img src="https://hitwebcounter.com/counter/counter.php?page=7737095&style=0006&nbdigits=7&type=ip&initCount=0" title="Free Counter" Alt="web counter"   border="0" /></a></p>
+          </div>
+          <div class="col" style="padding-left: 5px; margin-bottom: 12px">
+            <p style="margin-top: 0px; margin-left: 0px; text-align: left">Visitors</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+    {%- endblock footer %}
+
+    {% block scripts %}
+    <!-- JavaScript Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8" crossorigin="anonymous"></script>
+    <!-- JQuery Core -->
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js" integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0=" crossorigin="anonymous"></script>
+    {%- endblock scripts %}
+    {%- endblock body %}
+  </body>
+{%- endblock html %}
+</html>
+{% endblock doc -%}

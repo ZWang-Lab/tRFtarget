@@ -1,668 +1,500 @@
-{# Jinja web template engine which will be redered by Flask #}
+{# Jinja web template engine which will be rendered by Flask #}
 {# Template Inheritance #}
-{% extends "bootstrap/base.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
-
-{# Adding a lang="en" attribute to the <html>-tag #}
-{% block html_attribs %}
-  lang="en"
-{% endblock %}
-
-{# Replace the title block in the head section in base template #}
-{% block title %}
-  tRFtarget
-{% endblock %}
-
-{# Adding CSS file #}
-{# As bootstrap_find_resource in base html will only load Bootstrap 3, we will load Bootstrap 4 manually #}
-{% block styles %}
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-  <link rel="stylesheet" href="{{ url_for('static', filename='my.css') }}">
-{% endblock %}
-
-{# Custom Javascript #}
-{% block scripts %}
-  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-{% endblock %}
-
-
-{# Add a always expand navbar #}
-{% block navbar %}
-  <div class="container-fluid">
-    {# Add a title area before navbar #}
-    <div class="row text-white h-100" style="background-color: #4169e1">
-      <div class="col-md-5">
-        <h1>tRFtarget</h1>
-        <p>Explore <span id="strongtitle">t</span>ransfer <span id="strongtitle">R</span>NA-derived <span id="strongtitle">F</span>ragment <span id="strongtitle">target</span>s</p>
-      </div>
-      <div class="col-md-3 my-auto">
-        <img src="{{ url_for('static', filename='pic_logo/CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
-      </div>
-      <div class="col-md-4 my-auto">
-        <img src="{{ url_for('static', filename='pic_logo/Yale_School_of_Public_Health.png') }}" class="logo-pic mx-auto d-block" alt="YSPH Logo"/>
-      </div>
-    </div>
-    </div>
-    
-    {# Navbar #}
-    <div class="row">
-      <nav class="navbar nav-fill w-100 justify-content-center navbar-dark bg-dark navbar-expand-sm">
-        <ul class="navbar-nav nav-fill w-100">
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('index') }}">HOME</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='method') }}">METHOD</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCE</a>
-          </li>
-          <li class="nav-item active">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='statistics') }}">STATISTICS<span class="sr-only">(current)</span></a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='manual') }}">MANUAL</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='team') }}">TEAM</a>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  </div>
-{% endblock %}
-
-
-{# The .container class provides a responsive fixed width container
-The .container-fluid class provides a full width container, spanning the entire width of the viewport
-Bootstrap's grid system allows up to 12 columns across the page
-If you do not want to use all 12 columns individually, you can group the columns together to create wider columns
-md class (for small laptops - screens equal to or greater than 992px wide)
-#}
+{% extends "mybase.html" %}
 
 {% block content %}
+  <!-- require Bootstrap’s Scrollspy plugin to run Table of Contents sidebar
+  https://getbootstrap.com/docs/5.0/components/scrollspy/
+  only scroll a div rather than whole boy -> https://stackoverflow.com/a/69448283
+  but the effect is not so good as scroll whole body
+  -->
   <div class="container-fluid">
-      {# tRF #}
       <div class="row">
-        <div class="col-md-8 offset-md-2">
-          <br>
-          <h3>Number of tRFs covered by tRFtarget</h3>
-        </div>
+          <!-- sidebar position; hidden in small screen -->
+          <div class="col-md-2 d-none d-sm-none d-md-block">
+              <!-- don't forget to set as sticky-top -->
+              <nav
+                  id="toc"
+                  data-toggle="toc"
+                  class="sticky-top"
+                  style="margin: 10px"></nav>
+          </div>
+          
+          <!-- all contents need to be put in this one big column -->
+          <div class="col-md-8">
+              <div class="row shadow-sm">
+                  <h3 id="trf-number" style="margin-top: 10px; margin-bottom: 15px">Number of tRFs in tRFtarget</h3>
+                  <table id="table-multi-hover" class="table align-middle mx-auto w-auto">
+                      <!-- table-striped(-columns) not works well as there are cells span across multiple rows -->
+                      <thead class="align-middle text-center">
+                          <tr>
+                              <th scope="col" class="table-light">Organism</th>
+                              <th scope="col" class="table-secondary">Source</th>
+                              <th scope="col" class="table-light">Total</th>
+                          </tr>
+                      </thead>
+                      <tbody class="table-group-divider">
+                          <!-- 1st column is row header -->
+                          <tr i="0">
+                              <th scope="row" rowspan="8" class="table-light text-center" rep="organism"><em>Homo sapiens</em></th>
+                              <td class="table-secondary" rep="source">157 from <a href="http://genome.bioch.virginia.edu/trfdb/" target="_blank" rel="noopener noreferrer">tRFdb</a></td>
+                              <td class="table-light text-end" rowspan="8" rep="total">1,944</td>
+                          </tr>
+                          <tr i="1">
+                              <td class="table-secondary" rep="source">113 from <a href="https://doi.org/10.1073/pnas.1706908114" target="_blank" rel="noopener noreferrer">tsRNA study</a></td>
+                          </tr>
+                          <tr i="2">
+                              <td class="table-secondary" rep="source">78 from <a href="http://tsrbase.org/index.php" target="_blank" rel="noopener noreferrer">tsRBase</a></td>
+                          </tr>
+                          <tr i="3">
+                              <td class="table-secondary" rep="source">518 from <a href="https://rna.sysu.edu.cn/tsRFun/" target="_blank" rel="noopener noreferrer">tsRFun</a></td>
+                          </tr>
+                          <tr i="4">
+                              <td class="table-secondary" rep="source">583 from <a href="https://cm.jefferson.edu/MINTbase/" target="_blank" rel="noopener noreferrer">MINTbase v2.0 (04/04/2019)</a></td>
+                          </tr>
+                          <tr i="5">
+                              <td class="table-secondary" rep="source">17 from <a href="https://trfexplorer.cloud/" target="_blank" rel="noopener noreferrer">tRFexplorer (2019-05)</a></td>
+                          </tr>
+                          <tr i="6">
+                              <td class="table-secondary" rep="source">475 from <a href="https://grigoriev-lab.camden.rutgers.edu/tatdb/index.php" target="_blank" rel="noopener noreferrer">tatDB</a></td>
+                          </tr>
+                          <tr i="7">
+                              <td class="table-secondary" rep="source">3 from <a href="http://bioinformatics.zju.edu.cn/OncotRF/index.html" target="_blank" rel="noopener noreferrer">OncotRF</a></td>
+                          </tr>
+                          <tr i="8">
+                              <th scope="row" rowspan="2" class="table-light text-center" rep="organism"><em>Mus musculus</em></th>
+                              <td class="table-secondary" rep="source">164 from <a href="http://genome.bioch.virginia.edu/trfdb/" target="_blank" rel="noopener noreferrer">tRFdb</a></td>
+                              <td class="table-light text-end" rowspan="2" rep="total">170</td>
+                          </tr>
+                          <tr i="9">
+                              <td class="table-secondary" rep="source">6 from <a href="http://tsrbase.org/index.php" target="_blank" rel="noopener noreferrer">tsRBase</a></td>
+                          </tr>
+                          <tr i="10">
+                              <th scope="row" class="table-light text-center" rep="organism"><em>Caenorhabditis elegans</em></th>
+                              <td class="table-secondary" rep="source">47 from <a href="http://genome.bioch.virginia.edu/trfdb/" target="_blank" rel="noopener noreferrer">tRFdb</a></td>
+                              <td class="table-light text-end" rep="total">47</td>
+                          </tr>
+                          <tr i="11">
+                              <th scope="row" class="table-light text-center" rep="organism"><em>Danio rerio</em></th>
+                              <td class="table-secondary" rep="source">127 from <a href="http://genome.bioch.virginia.edu/trfdb/" target="_blank" rel="noopener noreferrer">tRFdb</a></td>
+                              <td class="table-light text-end" rep="total">127</td>
+                          </tr>
+                          <tr i="12">
+                              <th scope="row" rowspan="2" class="table-light text-center" rep="organism"><em>Drosophila melanogaster</em></th>
+                              <td class="table-secondary" rep="source">86 from <a href="http://genome.bioch.virginia.edu/trfdb/" target="_blank" rel="noopener noreferrer">tRFdb</a></td>
+                              <td class="table-light text-end" rowspan="2" rep="total">90</td>
+                          </tr>
+                          <tr i="13">
+                              <td class="table-secondary" rep="source">4 from <a href="http://tsrbase.org/index.php" target="_blank" rel="noopener noreferrer">tsRBase</a></td>
+                          </tr>
+                          <tr i="14">
+                              <th scope="row" class="table-light text-center" rep="organism"><em>Rattus norvegicus</em></th>
+                              <td class="table-secondary" rep="source">4 from <a href="http://tsrbase.org/index.php" target="_blank" rel="noopener noreferrer">tsRBase</a></td>
+                              <td class="table-light text-end" rep="total">4</td>
+                          </tr>
+                          <tr i="15">
+                              <th scope="row" class="table-light text-center" rep="organism"><em>Rhodobacter sphaeroides</em></th>
+                              <td class="table-secondary" rep="source">77 from <a href="http://genome.bioch.virginia.edu/trfdb/" target="_blank" rel="noopener noreferrer">tRFdb</a></td>
+                              <td class="table-light text-end" rep="total">77</td>
+                          </tr>
+                          <tr i="16">
+                              <th scope="row" class="table-light text-center" rep="organism"><em>Schizosaccharomyces pombe</em></th>
+                              <td class="table-secondary" rep="source">104 from <a href="http://genome.bioch.virginia.edu/trfdb/" target="_blank" rel="noopener noreferrer">tRFdb</a></td>
+                              <td class="table-light text-end" rep="total">104</td>
+                          </tr>
+                          <tr i="17">
+                              <th scope="row" class="table-light text-center" rep="organism"><em>Xenopus tropicalis</em></th>
+                              <td class="table-secondary" rep="source">51 from <a href="http://genome.bioch.virginia.edu/trfdb/" target="_blank" rel="noopener noreferrer">tRFdb</a></td>
+                              <td class="table-light text-end" rep="total">51</td>
+                          </tr>
+                          <tr i="18">
+                              <th scope="row" class="table-light text-center" rep="organism">Total</th>
+                              <td class="table-secondary" rep="source"></td>
+                              <td class="table-light text-end" rep="total">2,614</td>
+                          </tr>
+                      </tbody>
+                  </table>
+              </div>
+              
+              <div class="row shadow-sm">
+                  <h3 id="target-rna-number" style="margin-top: 10px; margin-bottom: 15px">Number of target RNAs in tRFtarget</h3>
+                  <table class="table table-hover align-middle mx-auto w-auto">
+                      <thead class="align-middle text-center">
+                          <tr>
+                              <th scope="col" class="table-light">Organism</th>
+                              <th scope="col" class="table-secondary">#Protein-coding mRNAs</th>
+                              <th scope="col" class="table-light">#lncRNAs</th>
+                              <th scope="col" class="table-secondary">#rRNAs</th>
+                              <th scope="col" class="table-light">Total</th>
+                          </tr>
+                      </thead>
+                      <tbody class="table-group-divider">
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Homo sapiens</em></th>
+                              <td class="table-secondary text-end">110,980</td>
+                              <td class="table-light text-end">412,754</td>
+                              <td class="table-secondary text-end">6,720</td>
+                              <td class="table-light text-end">530,454</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Mus musculus</em></th>
+                              <td class="table-secondary text-end">67,002</td>
+                              <td class="table-light text-end">85,246</td>
+                              <td class="table-secondary text-end">254</td>
+                              <td class="table-light text-end">152,502</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Caenorhabditis elegans</em></th>
+                              <td class="table-secondary text-end">31,989</td>
+                              <td class="table-light text-end">202</td>
+                              <td class="table-secondary text-end">173</td>
+                              <td class="table-light text-end">32,364</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Danio rerio</em></th>
+                              <td class="table-secondary text-end">67,002</td>
+                              <td class="table-light text-end">85,246</td>
+                              <td class="table-secondary text-end">254</td>
+                              <td class="table-light text-end">152,502</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Drosophila melanogaster</em></th>
+                              <td class="table-secondary text-end">51,259</td>
+                              <td class="table-light text-end">2,627</td>
+                              <td class="table-secondary text-end">5,134</td>
+                              <td class="table-light text-end">59,020</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Rattus norvegicus</em></th>
+                              <td class="table-secondary text-end">45,893</td>
+                              <td class="table-light text-end">32,901</td>
+                              <td class="table-secondary text-end">308</td>
+                              <td class="table-light text-end">79,102</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Rhodobacter sphaeroides</em></th>
+                              <td class="table-secondary text-end">4,333</td>
+                              <td class="table-light text-end">0</td>
+                              <td class="table-secondary text-end">5</td>
+                              <td class="table-light text-end">4,338</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Schizosaccharomyces pombe</em></th>
+                              <td class="table-secondary text-end">5,060</td>
+                              <td class="table-light text-end">1</td>
+                              <td class="table-secondary text-end">112</td>
+                              <td class="table-light text-end">5,173</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Xenopus tropicalis</em></th>
+                              <td class="table-secondary text-end">49,787</td>
+                              <td class="table-light text-end">2</td>
+                              <td class="table-secondary text-end">459</td>
+                              <td class="table-light text-end">50,248</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center">Total</th>
+                              <td class="table-secondary text-end">397,102</td>
+                              <td class="table-light text-end">536,633</td>
+                              <td class="table-secondary text-end">14,407</td>
+                              <td class="table-light text-end">948,142</td>
+                          </tr>
+                      </tbody>
+                  </table>
+              </div>
+              
+              <div class="row shadow-sm">
+                  <h3 id="target-gene-number" style="margin-top: 10px; margin-bottom: 15px">Number of target Genes in tRFtarget</h3>
+                  <table class="table table-hover align-middle mx-auto w-auto">
+                      <thead class="align-middle text-center">
+                          <tr>
+                              <th scope="col" class="table-light">Organism</th>
+                              <th scope="col" class="table-secondary">#Protein-coding Genes</th>
+                              <th scope="col" class="table-light">#lncRNA Genes</th>
+                              <th scope="col" class="table-secondary">#rRNA Genes</th>
+                              <th scope="col" class="table-light">Total</th>
+                          </tr>
+                      </thead>
+                      <tbody class="table-group-divider">
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Homo sapiens</em></th>
+                              <td class="table-secondary text-end">20,367</td>
+                              <td class="table-light text-end">17,673</td>
+                              <td class="table-secondary text-end">52</td>
+                              <td class="table-light text-end">38,092</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Mus musculus</em></th>
+                              <td class="table-secondary text-end">22,322</td>
+                              <td class="table-light text-end">11,102</td>
+                              <td class="table-secondary text-end">170</td>
+                              <td class="table-light text-end">33,594</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Caenorhabditis elegans</em></th>
+                              <td class="table-secondary text-end">19,981</td>
+                              <td class="table-light text-end">193</td>
+                              <td class="table-secondary text-end">19</td>
+                              <td class="table-light text-end">20,193</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Danio rerio</em></th>
+                              <td class="table-secondary text-end">30,149</td>
+                              <td class="table-light text-end">1,837</td>
+                              <td class="table-secondary text-end">1,192</td>
+                              <td class="table-light text-end">33,178</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Drosophila melanogaster</em></th>
+                              <td class="table-secondary text-end">13,986</td>
+                              <td class="table-light text-end">2,369</td>
+                              <td class="table-secondary text-end">106</td>
+                              <td class="table-light text-end">16,461</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Rattus norvegicus</em></th>
+                              <td class="table-secondary text-end">23,096</td>
+                              <td class="table-light text-end">2,456</td>
+                              <td class="table-secondary text-end">212</td>
+                              <td class="table-light text-end">25,764</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Rhodobacter sphaeroides</em></th>
+                              <td class="table-secondary text-end">4,333</td>
+                              <td class="table-light text-end">0</td>
+                              <td class="table-secondary text-end">5</td>
+                              <td class="table-light text-end">4,338</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Schizosaccharomyces pombe</em></th>
+                              <td class="table-secondary text-end">4,333</td>
+                              <td class="table-light text-end">0</td>
+                              <td class="table-secondary text-end">0</td>
+                              <td class="table-light text-end">4,333</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Xenopus tropicalis</em></th>
+                              <td class="table-secondary text-end">22,102</td>
+                              <td class="table-light text-end">1</td>
+                              <td class="table-secondary text-end">535</td>
+                              <td class="table-light text-end">22,638</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center">Total</th>
+                              <td class="table-secondary text-end">161,387</td>
+                              <td class="table-light text-end">35,631</td>
+                              <td class="table-secondary text-end">2,332</td>
+                              <td class="table-light text-end">199,350</td>
+                          </tr>
+                      </tbody>
+                  </table>
+              </div>
+              
+              <div class="row shadow-sm">
+                  <h3 id="binding-site-number" style="margin-top: 10px; margin-bottom: 15px">Number of Predicted Binding Sites in tRFtarget</h3>
+                  <table class="table table-hover align-middle mx-auto w-auto">
+                      <thead class="align-middle text-center">
+                          <tr>
+                              <th scope="col" class="table-light">Organism</th>
+                              <th scope="col" class="table-secondary">#RNAhybrid</th>
+                              <th scope="col" class="table-light">#IntaRNA</th>
+                              <th scope="col" class="table-secondary">#Consensus (pairs)</th>
+                          </tr>
+                      </thead>
+                      <tbody class="table-group-divider">
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Homo sapiens</em></th>
+                              <td class="table-secondary text-end">3,377,427,836</td>
+                              <td class="table-light text-end">2,416,199,928</td>
+                              <td class="table-secondary text-end">542,988,333</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Mus musculus</em></th>
+                              <td class="table-secondary text-end">83,530,931</td>
+                              <td class="table-light text-end">60,329,700</td>
+                              <td class="table-secondary text-end">13,270,931</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Caenorhabditis elegans</em></th>
+                              <td class="table-secondary text-end">4,325,292</td>
+                              <td class="table-light text-end">3,433,891</td>
+                              <td class="table-secondary text-end">935,985</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Danio rerio</em></th>
+                              <td class="table-secondary text-end">25,605,277</td>
+                              <td class="table-light text-end">18,787,232</td>
+                              <td class="table-secondary text-end">4,452,811</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Drosophila melanogaster</em></th>
+                              <td class="table-secondary text-end">10,652,355</td>
+                              <td class="table-light text-end">8,042,938</td>
+                              <td class="table-secondary text-end">1,654,959</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Rattus norvegicus</em></th>
+                              <td class="table-secondary text-end">1,266,339</td>
+                              <td class="table-light text-end">901,919</td>
+                              <td class="table-secondary text-end">157,927</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Rhodobacter sphaeroides</em></th>
+                              <td class="table-secondary text-end">1,068,277</td>
+                              <td class="table-light text-end">793,883</td>
+                              <td class="table-secondary text-end">183,870</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Schizosaccharomyces pombe</em></th>
+                              <td class="table-secondary text-end">1,926,438</td>
+                              <td class="table-light text-end">1,189,886</td>
+                              <td class="table-secondary text-end">270,548</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center"><em>Xenopus tropicalis</em></th>
+                              <td class="table-secondary text-end">9,404,617</td>
+                              <td class="table-light text-end">7,590,218</td>
+                              <td class="table-secondary text-end">2,081,926</td>
+                          </tr>
+                          <tr>
+                              <th scope="row" class="table-light text-center">Total</th>
+                              <td class="table-secondary text-end">3,515,207,362</td>
+                              <td class="table-light text-end">2,517,269,595</td>
+                              <td class="table-secondary text-end">565,997,290</td>
+                          </tr>
+                      </tbody>
+                  </table>
+              </div>
+              
+              <div class="row shadow-sm">
+                  <h3 id="gene-evidence-number" style="margin-top: 10px; margin-bottom: 15px">Number of Curated Gene-level Evidences</h3>
+                  <p>400 tRF target gene related publications have been manually curated, and total 232 gene-level evidence entries from 57 publications are extracted.</p>
+              </div>
+          </div>
       </div>
-      
-      {# first row #}
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>Human tRFs: 270 (13~48 nts)</h4>
-          <ul>
-            <li><strong>tRF-1</strong>: 32</li>
-            <li><strong>tRF-3</strong>: 62
-              <ul>
-                <li><strong>tRF-3a</strong>: 32</li>
-                <li><strong>tRF-3b</strong>: 30</li>
-              </ul>
-            </li>
-            <li><strong>tRF-5</strong>: 63
-              <ul>
-                <li><strong>tRF-5a</strong>: 22</li>
-                <li><strong>tRF-5b</strong>: 23</li>
-                <li><strong>tRF-5c</strong>: 18</li>
-              </ul>
-            </li>
-            <li><strong>tsRNA</strong>: 113</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/tRFLengthBoxplot.png') }}" class="img-fluid mx-auto d-block" alt="tRF Length Boxplot"/>
-        </div>
-        
-        <div class="col-md-4 border-left border-success">
-          <h4>Mouse tRFs: 164 (14~34 nts)</h4>
-          <ul>
-            <li><strong>tRF-1</strong>: 30</li>
-            <li><strong>tRF-3</strong>: 92
-              <ul>
-                <li><strong>tRF-3a</strong>: 45</li>
-                <li><strong>tRF-3b</strong>: 47</li>
-              </ul>
-            </li>
-            <li><strong>tRF-5</strong>: 42
-              <ul>
-                <li><strong>tRF-5a</strong>: 22</li>
-                <li><strong>tRF-5b</strong>: 19</li>
-                <li><strong>tRF-5c</strong>: 1</li>
-              </ul>
-            </li>
-            <br>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/tRFLengthBoxplotMouse.png') }}" class="img-fluid mx-auto d-block" alt="Mouse tRF Length Boxplot"/>
-        </div>
-      </div>
-      
-      {# second row #}
-      </br>
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>Drosophila tRFs: 86 (16~29 nts)</h4>
-          <ul>
-            <li><strong>tRF-1</strong>: 21</li>
-            <li><strong>tRF-3</strong>: 43</li>
-            <li><strong>tRF-5</strong>: 22</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/tRFLengthBoxplotDrosophila.png') }}" class="img-fluid mx-auto d-block" alt="Drosophila tRF Length Boxplot"/>
-        </div>
-        
-        <div class="col-md-4 border-left border-success">
-          <h4>C. elegans tRFs: 47 (17~26 nts)</h4>
-          <ul>
-            <li><strong>tRF-3</strong>: 30</li>
-            <li><strong>tRF-5</strong>: 17</li>
-            <br>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/tRFLengthBoxplotElegans.png') }}" class="img-fluid mx-auto d-block" alt="Elegans tRF Length Boxplot"/>
-        </div>
-      </div>
-      
-      {# third row #}
-      </br>
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>S. pombe tRFs: 104 (14~31 nts)</h4>
-          <ul>
-            <li><strong>tRF-1</strong>: 11</li>
-            <li><strong>tRF-3</strong>: 44</li>
-            <li><strong>tRF-5</strong>: 49</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/tRFLengthBoxplotPombe.png') }}" class="img-fluid mx-auto d-block" alt="Pombe tRF Length Boxplot"/>
-        </div>
-        
-        <div class="col-md-4 border-left border-success">
-          <h4>R. sphaeroides tRFs: 87 (13~32 nts)</h4>
-          <ul>
-            <li><strong>tRF-3</strong>: 40</li>
-            <li><strong>tRF-5</strong>: 47</li>
-            <br>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/tRFLengthBoxplotSphaeroides.png') }}" class="img-fluid mx-auto d-block" alt="Sphaeroides tRF Length Boxplot"/>
-        </div>
-      </div>
-      
-      {# fourth row #}
-      </br>
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>Xenopus tropicalis tRFs: 51 (13~36 nts)</h4>
-          <ul>
-            <li><strong>tRF-1</strong>: 18</li>
-            <li><strong>tRF-3</strong>: 13</li>
-            <li><strong>tRF-5</strong>: 20</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/tRFLengthBoxplotXenopus.png') }}" class="img-fluid mx-auto d-block" alt="Xenopus tRF Length Boxplot"/>
-        </div>
-        
-        <div class="col-md-4 border-left border-success">
-          <h4>Zebrafish tRFs: 127 (17~28 nts)</h4>
-          <ul>
-            <li><strong>tRF-1</strong>: 36</li>
-            <li><strong>tRF-3</strong>: 35</li>
-            <li><strong>tRF-5</strong>: 56</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/tRFLengthBoxplotZebrafish.png') }}" class="img-fluid mx-auto d-block" alt="Zebrafish tRF Length Boxplot"/>
-        </div>
-      </div>
-      
-      
-      {# Gene & Transcript #}
-      <div class="row">
-        <div class="col-md-8 offset-md-2">
-          <br>
-          <h3>Number of genes and transcripts covered by tRFtarget</h3>
-        </div>
-      </div>
-      
-      {# first row #}
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>Human</h4>
-          <ul>
-            <li><strong>protein-coding transcripts</strong>: 100,291 (8~109,224 nts)</li>
-            <li><strong>genes</strong>: 20,355</li>
-            <li>each gene has about <strong>5</strong> transcript isoforms on average</li>
-          </ul>
-        </div>
-        
-        <div class="col-md-4 border-left border-success">
-          <h4>Mouse</h4>
-          <ul>
-            <li><strong>protein-coding transcripts</strong>: 67,125 (9~123,179 nts)</li>
-            <li><strong>genes</strong>: 22,385</li>
-            <li>each gene has about <strong>3</strong> transcript isoforms on average</li>
-          </ul>
-        </div>
-      </div>
-      
-      {# second row #}
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>Drosophila</h4>
-          <ul>
-            <li><strong>protein-coding transcripts</strong>: 30,588 (152~71,382 nts)</li>
-            <li><strong>genes</strong>: 13,947</li>
-            <li>each gene has about <strong>2</strong> transcript isoforms on average</li>
-          </ul>
-        </div>
-        
-        <div class="col-md-4 border-left border-success">
-          <h4>C. elegans</h4>
-          <ul>
-            <li><strong>protein-coding transcripts</strong>: 33,552 (30~45,950 nts)</li>
-            <li><strong>genes</strong>: 20,191</li>
-            <li>each gene has about <strong>2</strong> transcript isoforms on average</li>
-          </ul>
-        </div>
-      </div>
-      
-      {# third row #}
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>S. pombe</h4>
-          <ul>
-            <li><strong>protein-coding transcripts</strong>: 5,146 (75~15,022 nts)</li>
-            <li><strong>genes</strong>: 5,145</li>
-            <li>each gene has about <strong>1</strong> transcript</li>
-          </ul>
-        </div>
-        
-        <div class="col-md-4 border-left border-success">
-          <h4>R. sphaeroides</h4>
-          <ul>
-            <li><strong>protein-coding transcripts</strong>: 3,111 (81~8,286 nts)</li>
-            <li><strong>genes</strong>: 3,111</li>
-            <li>each gene has about <strong>1</strong> transcript</li>
-          </ul>
-        </div>
-      </div>
-      
-      {# fourth row #}
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>Xenopus tropicalis</h4>
-          <ul>
-            <li><strong>protein-coding transcripts</strong>: 54,848 (18~26,729 nts)</li>
-            <li><strong>genes</strong>: 19,983</li>
-            <li>each gene has about <strong>3</strong> transcript isoforms on average</li>
-          </ul>
-        </div>
-        
-        <div class="col-md-4 border-left border-success">
-          <h4>Zebrafish</h4>
-          <ul>
-            <li><strong>protein-coding transcripts</strong>: 51,259 (10~88,553 nts)</li>
-            <li><strong>genes</strong>: 30,149</li>
-            <li>each gene has about <strong>2</strong> transcript isoforms on average</li>
-          </ul>
-        </div>
-      </div>
-      
-      
-      {# Binding #}
-      <div class="row">
-        <div class="col-md-8 offset-md-2">
-          <br>
-          <h3>Number of binding interactions included in tRFtarget</h3>
-        </div>
-      </div>
-      
-      {# first row #}
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>Human</h4>
-          <ul>
-            <li><strong><i>RNAhybrid</i></strong> predictions: 96,579,825 (<strong>3.57</strong> interactions for 1 tRF and 1 transcript on average)</li>
-            <li><strong><i>IntaRNA</i></strong> predictions: 56,704,483 (<strong>2.09</strong> interactions for 1 tRF and 1 transcript on average)</li>
-            <li><strong>Consensus</strong> predictions (<strong>0.58</strong> interactions for 1 tRF and 1 transcript on average):
-              <ul>
-                <li>15,772,606 predictions from <i>RNAhybrid</i> (<strong>16.33%</strong>)</li>
-                <li>15,772,606 predictions from <i>IntaRNA</i> (<strong>27.82%</strong>)</li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-        
-        <div class="col-md-4 border-left border-success">
-          <h4>Mouse</h4>
-          <ul>
-            <li><strong><i>RNAhybrid</i></strong> predictions: 37,414,246 (<strong>3.40</strong> interactions for 1 tRF and 1 transcript on average)</li>
-            <li><strong><i>IntaRNA</i></strong> predictions: 22,660,525 (<strong>2.06</strong> interactions for 1 tRF and 1 transcript on average)</li>
-            <li><strong>Consensus</strong> predictions (<strong>0.57</strong> interactions for 1 tRF and 1 transcript on average):
-              <ul>
-                <li>6,247,913 predictions from <i>RNAhybrid</i> (<strong>16.70%</strong>)</li>
-                <li>6,247,913 predictions from <i>IntaRNA</i> (<strong>27.57%</strong>)</li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-      </div>
-      
-      {# second row #}
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>Drosophila</h4>
-          <ul>
-            <li><strong><i>RNAhybrid</i></strong> predictions: 8,986,901 (<strong>3.42</strong> interactions for 1 tRF and 1 transcript on average)</li>
-            <li><strong><i>IntaRNA</i></strong> predictions: 5,835,485 (<strong>2.22</strong> interactions for 1 tRF and 1 transcript on average)</li>
-            <li><strong>Consensus</strong> predictions (<strong>0.58</strong> interactions for 1 tRF and 1 transcript on average):
-              <ul>
-                <li>1,535,375 predictions from <i>RNAhybrid</i> (<strong>17.08%</strong>)</li>
-                <li>1,535,375 predictions from <i>IntaRNA</i> (<strong>26.31%</strong>)</li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-        
-        <div class="col-md-4 border-left border-success">
-          <h4>C. elegans</h4>
-          <ul>
-            <li><strong><i>RNAhybrid</i></strong> predictions: 4,495,315 (<strong>2.85</strong> interactions for 1 tRF and 1 transcript on average)</li>
-            <li><strong><i>IntaRNA</i></strong> predictions: 3,190,362 (<strong>2.02</strong> interactions for 1 tRF and 1 transcript on average)</li>
-            <li><strong>Consensus</strong> predictions (<strong>0.67</strong> interactions for 1 tRF and 1 transcript on average):
-              <ul>
-                <li>1,062,987 predictions from <i>RNAhybrid</i> (<strong>23.65%</strong>)</li>
-                <li>1,062,987 predictions from <i>IntaRNA</i> (<strong>33.32%</strong>)</li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-      </div>
-      
-      {# third row #}
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>S. pombe</h4>
-          <ul>
-            <li><strong><i>RNAhybrid</i></strong> predictions: 1,916,852 (<strong>3.58</strong> interactions for 1 tRF and 1 transcript on average)</li>
-            <li><strong><i>IntaRNA</i></strong> predictions: 1,188,223 (<strong>2.22</strong> interactions for 1 tRF and 1 transcript on average)</li>
-            <li><strong>Consensus</strong> predictions (<strong>0.56</strong> interactions for 1 tRF and 1 transcript on average):
-              <ul>
-                <li>301,556 predictions from <i>RNAhybrid</i> (<strong>15.73%</strong>)</li>
-                <li>301,556 predictions from <i>IntaRNA</i> (<strong>25.38%</strong>)</li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-        
-        <div class="col-md-4 border-left border-success">
-          <h4>R. sphaeroides</h4>
-          <ul>
-            <li><strong><i>RNAhybrid</i></strong> predictions: 869,821 (<strong>3.21</strong> interactions for 1 tRF and 1 transcript on average)</li>
-            <li><strong><i>IntaRNA</i></strong> predictions: 563,500 (<strong>2.08</strong> interactions for 1 tRF and 1 transcript on average)</li>
-            <li><strong>Consensus</strong> predictions (<strong>0.58</strong> interactions for 1 tRF and 1 transcript on average):
-              <ul>
-                <li>157,715 predictions from <i>RNAhybrid</i> (<strong>18.13%</strong>)</li>
-                <li>157,715 predictions from <i>IntaRNA</i> (<strong>27.99%</strong>)</li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-      </div>
-      
-      {# fourth row #}
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>Xenopus tropicalis</h4>
-          <ul>
-            <li><strong><i>RNAhybrid</i></strong> predictions: 10,151,269 (<strong>3.63</strong> interactions for 1 tRF and 1 transcript on average)</li>
-            <li><strong><i>IntaRNA</i></strong> predictions: 6,298,323 (<strong>2.25</strong> interactions for 1 tRF and 1 transcript on average)</li>
-            <li><strong>Consensus</strong> predictions (<strong>0.87</strong> interactions for 1 tRF and 1 transcript on average):
-              <ul>
-                <li>2,445,761 predictions from <i>RNAhybrid</i> (<strong>24.09%</strong>)</li>
-                <li>2,445,761 predictions from <i>IntaRNA</i> (<strong>38.83%</strong>)</li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-        
-        <div class="col-md-4 border-left border-success">
-          <h4>Zebrafish</h4>
-          <ul>
-            <li><strong><i>RNAhybrid</i></strong> predictions: 23,688,750 (<strong>3.64</strong> interactions for 1 tRF and 1 transcript on average)</li>
-            <li><strong><i>IntaRNA</i></strong> predictions: 13,701,030 (<strong>2.10</strong> interactions for 1 tRF and 1 transcript on average)</li>
-            <li><strong>Consensus</strong> predictions (<strong>0.67</strong> interactions for 1 tRF and 1 transcript on average):
-              <ul>
-                <li>4,372,146 predictions from <i>RNAhybrid</i> (<strong>18.46%</strong>)</li>
-                <li>4,372,146 predictions from <i>IntaRNA</i> (<strong>31.91%</strong>)</li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-      </div>
-      
-      
-      {# MFE #}
-      <div class="row">
-        <div class="col-md-8 offset-md-2">
-          <br>
-          <h3>Distribution of free energy of binding interactions</h3>
-        </div>
-      </div>
-      
-      {# first row #}
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>Human</h4>
-          <ul>
-            <li><i>RNAhybrid</i>: -71.6~-15.0; median -24.1 kcal/mol</li>
-            <li><i>IntaRNA</i>: -47.9~0.0; median -9.2 kcal/mol</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/MFEBoxplot.png') }}" class="img-fluid mx-auto d-block" alt="Free Energy Boxplot"/>
-        </div>
-
-        <div class="col-md-4 border-left border-success">
-          <h4>Mouse</h4>
-          <ul>
-            <li><i>RNAhybrid</i>: -56.0~-15.0; median -25.0 kcal/mol</li>
-            <li><i>IntaRNA</i>: -37.8~0.0; median -9.8 kcal/mol</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/MFEBoxplotMouse.png') }}" class="img-fluid mx-auto d-block" alt="Mouse Free Energy Boxplot"/>
-        </div>
-      </div>
-      
-      </br>
-      {# second row #}
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>Drosophila</h4>
-          <ul>
-            <li><i>RNAhybrid</i>: -58.2~-15.0; median -24.6 kcal/mol</li>
-            <li><i>IntaRNA</i>: -40.9~0.0; median -9.2 kcal/mol</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/MFEBoxplotDrosophila.png') }}" class="img-fluid mx-auto d-block" alt="Drosophila Free Energy Boxplot"/>
-        </div>
-
-        <div class="col-md-4 border-left border-success">
-          <h4>C. elegans</h4>
-          <ul>
-            <li><i>RNAhybrid</i>: -43.5~-15.0; median -22.2 kcal/mol</li>
-            <li><i>IntaRNA</i>: -31.7~0.0; median -9.1 kcal/mol</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/MFEBoxplotElegans.png') }}" class="img-fluid mx-auto d-block" alt="Elegans Free Energy Boxplot"/>
-        </div>
-      </div>
-      
-      </br>
-      {# third row #}
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>S. pombe</h4>
-          <ul>
-            <li><i>RNAhybrid</i>: -55.6~-15.0; median -24.2 kcal/mol</li>
-            <li><i>IntaRNA</i>: -45.5~0.0; median -8.0 kcal/mol</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/MFEBoxplotPombe.png') }}" class="img-fluid mx-auto d-block" alt="Pombe Free Energy Boxplot"/>
-        </div>
-
-        <div class="col-md-4 border-left border-success">
-          <h4>R. sphaeroides</h4>
-          <ul>
-            <li><i>RNAhybrid</i>: -55.8~-15.0; median -25.5 kcal/mol</li>
-            <li><i>IntaRNA</i>: -40.2~0.0; median -9.9 kcal/mol</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/MFEBoxplotSphaeroides.png') }}" class="img-fluid mx-auto d-block" alt="Sphaeroides Free Energy Boxplot"/>
-        </div>
-      </div>
-      
-      </br>
-      {# fourth row #}
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>Xenopus tropicalis</h4>
-          <ul>
-            <li><i>RNAhybrid</i>: -58.8~-15.0; median -21.6 kcal/mol</li>
-            <li><i>IntaRNA</i>: -31.6~0.0; median -9.6 kcal/mol</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/MFEBoxplotXenopus.png') }}" class="img-fluid mx-auto d-block" alt="Xenopus Free Energy Boxplot"/>
-        </div>
-
-        <div class="col-md-4 border-left border-success">
-          <h4>Zebrafish</h4>
-          <ul>
-            <li><i>RNAhybrid</i>: -54.0~-15.0; median -23.6 kcal/mol</li>
-            <li><i>IntaRNA</i>: -37.1~0.0; median -9.8 kcal/mol</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/MFEBoxplotZebrafish.png') }}" class="img-fluid mx-auto d-block" alt="Zebrafish Free Energy Boxplot"/>
-        </div>
-      </div>
-      
-      
-      {# MCL #}
-      <div class="row">
-        <div class="col-md-8 offset-md-2">
-          <br>
-          <h3>Distribution of maximum complementary length of binding interactions</h3>
-        </div>
-      </div>
-      
-      {# first row #}
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>Human</h4>
-          <ul>
-            <li><i>RNAhybrid</i>: 6~31; median 7 nts</li>
-            <li><i>IntaRNA</i>: 6~30; median 7 nts</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/LengthBoxplot.png') }}" class="img-fluid mx-auto d-block" alt="Length Boxplot"/>
-        </div>
-
-        <div class="col-md-4 border-left border-success">
-          <h4>Mouse</h4>
-          <ul>
-            <li><i>RNAhybrid</i>: 6~25; median 7 nts</li>
-            <li><i>IntaRNA</i>: 6~24; median 7 nts</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/LengthBoxplotMouse.png') }}" class="img-fluid mx-auto d-block" alt="Mouse Length Boxplot"/>
-        </div>
-      </div>
-      
-      </br>
-      {# second row #}
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>Drosophila</h4>
-          <ul>
-            <li><i>RNAhybrid</i>: 6~27; median 7 nts</li>
-            <li><i>IntaRNA</i>: 6~27; median 7 nts</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/LengthBoxplotDrosophila.png') }}" class="img-fluid mx-auto d-block" alt="Drosophila Length Boxplot"/>
-        </div>
-
-        <div class="col-md-4 border-left border-success">
-          <h4>C. elegans</h4>
-          <ul>
-            <li><i>RNAhybrid</i>: 6~20; median 7 nts</li>
-            <li><i>IntaRNA</i>: 6~22; median 7 nts</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/LengthBoxplotElegans.png') }}" class="img-fluid mx-auto d-block" alt="Elegans Length Boxplot"/>
-        </div>
-      </div>
-      
-      </br>
-      {# third row #}
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>S. pombe</h4>
-          <ul>
-            <li><i>RNAhybrid</i>: 6~30; median 7 nts</li>
-            <li><i>IntaRNA</i>: 6~30; median 7 nts</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/LengthBoxplotPombe.png') }}" class="img-fluid mx-auto d-block" alt="Pombe Length Boxplot"/>
-        </div>
-
-        <div class="col-md-4 border-left border-success">
-          <h4>R. sphaeroides</h4>
-          <ul>
-            <li><i>RNAhybrid</i>: 6~22; median 7 nts</li>
-            <li><i>IntaRNA</i>: 6~22; median 7 nts</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/LengthBoxplotSphaeroides.png') }}" class="img-fluid mx-auto d-block" alt="Sphaeroides Length Boxplot"/>
-        </div>
-      </div>
-      
-      </br>
-      {# fourth row #}
-      <div class="row">
-        <div class="col-md-4 offset-md-2 border-right border-success">
-          <h4>Xenopus tropicalis</h4>
-          <ul>
-            <li><i>RNAhybrid</i>: 6~22; median 7 nts</li>
-            <li><i>IntaRNA</i>: 6~22; median 7 nts</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/LengthBoxplotXenopus.png') }}" class="img-fluid mx-auto d-block" alt="Xenopus Length Boxplot"/>
-        </div>
-
-        <div class="col-md-4 border-left border-success">
-          <h4>Zebrafish</h4>
-          <ul>
-            <li><i>RNAhybrid</i>: 6~22; median 7 nts</li>
-            <li><i>IntaRNA</i>: 6~23; median 7 nts</li>
-          </ul>
-          <img src="{{ url_for('static', filename='pic_statistics/LengthBoxplotZebrafish.png') }}" class="img-fluid mx-auto d-block" alt="Zebrafish Length Boxplot"/>
-        </div>
-      </div>
-      
-      
-      <br>
   </div>
-  
-  {# Footer #}
-  <footer class="footer">
-    <div class="container-fluid text-center">
-      <p>&copy tRFtarget 2020 | All Rights Reserved</p>
-      
-      <div class="row mx-auto">
-        <div class="col" style="padding-right: 0px">
-          <p style="margin-top: 0px; margin-right: 0px; text-align: right; color: white; font-weight: bold">{{ count }}</p>
-        </div>
-        
-        <div class="col" style="padding-left: 5px">
-          <p style="margin-top: 0px; margin-left: 0px; text-align: left">Total Database Retrieves</p>
-        </div>
-      </div>
-      
-      <div class="row mx-auto">
-        <div class="col" style="padding-right: 0px">
-          <p style="margin-top: 0px; margin-right: 0px; text-align: right">
-          <!-- hitwebcounter Code START -->
-          <a href="https://www.hitwebcounter.com" target="_blank">
-          <img src="https://hitwebcounter.com/counter/counter.php?page=7737095&style=0006&nbdigits=9&type=ip&initCount=0" title="Free Counter" Alt="web counter"   border="0" /></a></p>
-        </div>
-        
-        <div class="col" style="padding-left: 5px">
-          <p style="margin-top: 0px; margin-left: 0px; text-align: left">Visitors</p>
-        </div>
-      </div>
-    </div>
-  </footer>
+{% endblock %}
+
+<!-- add scroll to body -->
+{% block body_attribs %}
+   data-bs-spy="scroll" data-bs-target="#toc" data-bs-offset="0"
+{% endblock %}
+
+{% block styles %}
+  {{ super() }}
+  <!-- for Table of Contents sidebar -->
+  <link rel="stylesheet" href="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.css" />
+  <style>
+      body {
+          position: relative;
+      }
+      nav[data-toggle="toc"] .nav > li > a:hover,
+      nav[data-toggle="toc"] .nav > li > a:focus {
+          color: #0d6efd;
+          border-left-color: #0d6efd;
+      }
+      nav[data-toggle="toc"] .nav-link.active,
+      nav[data-toggle="toc"] .nav-link.active:hover,
+      nav[data-toggle="toc"] .nav-link.active:focus {
+          color: #0d6efd;
+          border-left-color: #0d6efd;
+      }
+      /* Bootstrap 5 table hover background color table-secondary: #d1d2d4; table-light: #e5e6e7 */
+      .hover-secondary {
+          background-color: #d1d2d4 !important;
+      }
+      .hover-light {
+          background-color: #e5e6e7 !important;
+      }
+  </style>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <!-- for Table of Contents sidebar -->
+  <script src="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js"></script>
+  <!-- Custom script to fix table hover with row spans (https://stackoverflow.com/a/63395199) -->
+  <script>
+      jQuery(() => {
+          if ($("#table-multi-hover").length) {
+              const headerValues = Array.from(
+                  $("thead")[0].children[0].children
+              ).map((item) => item.innerText.toLowerCase());
+              let table = [];
+              const tableCells = Array.from($("tbody")[0].children)
+                  .map((item) => item.children)
+                  .map((item) => Array.from(item));
+              for (let i = 0; i < tableCells.length; i++) {
+                  let tempObj = {};
+                  for (let j = 0; j < tableCells[i].length; j++) {
+                      tempObj[tableCells[i][j].attributes.rep.value] =
+                          tableCells[i][j];
+                  }
+                  for (let j = 0; j < headerValues.length; j++) {
+                      if (i != 0 && tempObj[headerValues[j]] == undefined) {
+                          tempObj[headerValues[j]] =
+                              table[i - 1][headerValues[j]];
+                      }
+                  }
+                  table.push(Object.assign({}, tempObj));
+              }
+              $("#table-multi-hover tbody td, #table-multi-hover tbody th").on(
+                  "mouseover",
+                  (event) => {
+                      const rowIndex = parseInt(
+                          event.currentTarget.parentElement.attributes.i.value
+                      );
+                      const rep = event.currentTarget.attributes.rep.value;
+                      const rowspan =
+                          event.currentTarget.attributes.rowspan != undefined
+                              ? parseInt(
+                                    event.currentTarget.attributes.rowspan.value
+                                )
+                              : 1;
+                      for (let i = 0; i < rowspan; i++) {
+                          for (let j in table[rowIndex + i]) {
+                              if (j === "organism" || j === "total") {
+                                  $(table[rowIndex + i][j]).addClass(
+                                      "hover-light"
+                                  );
+                              } else {
+                                  $(table[rowIndex + i][j]).addClass(
+                                      "hover-secondary"
+                                  );
+                              }
+                          }
+                      }
+                  }
+              );
+              $("#table-multi-hover tbody td, #table-multi-hover tbody th").on(
+                  "mouseleave",
+                  (event) => {
+                      const rowIndex = parseInt(
+                          event.currentTarget.parentElement.attributes.i.value
+                      );
+                      const rep = event.currentTarget.attributes.rep.value;
+                      const rowspan =
+                          event.currentTarget.attributes.rowspan != undefined
+                              ? parseInt(
+                                    event.currentTarget.attributes.rowspan.value
+                                )
+                              : 1;
+                      for (let i = 0; i < rowspan; i++) {
+                          for (let j in table[rowIndex + i]) {
+                              if (j === "organism" || j === "total") {
+                                  $(table[rowIndex + i][j]).removeClass(
+                                      "hover-light"
+                                  );
+                              } else {
+                                  $(table[rowIndex + i][j]).removeClass(
+                                      "hover-secondary"
+                                  );
+                              }
+                          }
+                      }
+                  }
+              );
+          }
+      });
+  </script>
 {% endblock %}

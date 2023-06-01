@@ -1,160 +1,47 @@
-{# Jinja web template engine which will be redered by Flask #}
+{# Jinja web template engine which will be rendered by Flask #}
 {# Template Inheritance #}
-{% extends "bootstrap/base.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
-
-{# Adding a lang="en" attribute to the <html>-tag #}
-{% block html_attribs %}
-  lang="en"
-{% endblock %}
-
-{# Replace the title block in the head section in base template #}
-{% block title %}
-  tRFtarget
-{% endblock %}
-
-{# Adding CSS file #}
-{# As bootstrap_find_resource in base html will only load Bootstrap 3, we will load Bootstrap 4 manually #}
-{% block styles %}
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-  <link rel="stylesheet" href="{{ url_for('static', filename='my.css') }}">
-{% endblock %}
-
-{# Custom Javascript #}
-{% block scripts %}
-  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-{% endblock %}
-
-
-{# Add a always expand navbar #}
-{% block navbar %}
-  <div class="container-fluid">
-    {# Add a title area before navbar #}
-    <div class="row text-white h-100" style="background-color: #4169e1">
-      <div class="col-md-5">
-        <h1>tRFtarget</h1>
-        <p>Explore <span id="strongtitle">t</span>ransfer <span id="strongtitle">R</span>NA-derived <span id="strongtitle">F</span>ragment <span id="strongtitle">target</span>s</p>
-      </div>
-      <div class="col-md-3 my-auto">
-        <img src="{{ url_for('static', filename='pic_logo/CenterLogo.png') }}" class="logo-pic mx-auto d-block" alt="Center Logo"/>
-      </div>
-      <div class="col-md-4 my-auto">
-        <img src="{{ url_for('static', filename='pic_logo/Yale_School_of_Public_Health.png') }}" class="logo-pic mx-auto d-block" alt="YSPH Logo"/>
-      </div>
-    </div>
-    
-    {# Navbar #}
-    <div class="row">
-      <nav class="navbar nav-fill w-100 justify-content-center navbar-dark bg-dark navbar-expand-sm">
-        <ul class="navbar-nav nav-fill w-100">
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('index') }}">HOME</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='method') }}">METHOD</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('search') }}">SEARCH DATABASE</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('evidence') }}">EXPERIMENTAL EVIDENCE</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='statistics') }}">STATISTICS</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='manual') }}">MANUAL</a>
-          </li>
-          <li class="nav-item active">
-            <a class="nav-link border-left border-right border-white" href="{{ url_for('show', page='team') }}">TEAM<span class="sr-only">(current)</span></a>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  </div>
-{% endblock %}
-
-{# The .container class provides a responsive fixed width container
-The .container-fluid class provides a full width container, spanning the entire width of the viewport
-Bootstrap's grid system allows up to 12 columns across the page
-If you do not want to use all 12 columns individually, you can group the columns together to create wider columns
-md class (for small laptops - screens equal to or greater than 992px wide)
-#}
-
+{% extends "mybase.html" %}
 
 {% block content %}
-  <div class="container-fluid">
-      <div class="row">
-        <div class="col-md-8 offset-md-2">
-          <br>
-          <h3>tRFtarget team</h3>
-        </div>
-      </div>
-      
-      <div class="row">
-        <div class="col-md-1 offset-md-2">
-          <br>
-          <img src="{{ url_for('static', filename='pic_team/Wang.jpg') }}" alt="Wang Photo" height="100"/>
-        </div>
-        <div class="col-md-3">
-          <br>
-          <h5>Zuoheng Anita Wang, PhD</h5>
-          <p>Associate Professor of Biostatistics<br>Yale School of Public Health<br>Yale University</p>
-         </div>
-       
-        <div class="col-md-1">
-          <br>
-          <img src="{{ url_for('static', filename='pic_team/Lu.jpg') }}" alt="Lu Photo" height="100"/>
-        </div>
-        <div class="col-md-5">
-          <br>
-          <h5>Lingeng Lu, MD, PhD</h5>
-          <p>Research Scientist in Epidemiology (Chronic Diseases)<br>Yale School of Public Health<br>Yale University</p>
-        </div>
-      </div>
-        
-      <div class="row">
-        <div class="col-md-1 offset-md-2">
-          <br>
-          <img src="{{ url_for('static', filename='pic_team/Li.jpg') }}" alt="Li Photo" height="100"/>
-        </div>
-        <div class="col-md-5">
-          <br>
-          <h5>Ningshan Li, ME</h5>
-          <p>PhD candidate of Biostatistics and Bioinformatics<br>School of Life Science and Biotechnology<br>Shanghai Jiao Tong University</p>
-        </div>
-      </div>
+<div class="container-fluid">
+  <div class="row" style="margin-top: 1rem">
+    <div class="col-md-8 offset-md-2">
+      <h3>tRFtarget team</h3>
+    </div>
   </div>
   
-  {# Footer #}
-  <footer class="footer">
-    <div class="container-fluid text-center">
-      <p>&copy tRFtarget 2020 | All Rights Reserved</p>
-      
-      <div class="row mx-auto">
-        <div class="col" style="padding-right: 0px">
-          <p style="margin-top: 0px; margin-right: 0px; text-align: right; color: white; font-weight: bold">{{ count }}</p>
-        </div>
-        
-        <div class="col" style="padding-left: 5px">
-          <p style="margin-top: 0px; margin-left: 0px; text-align: left">Total Database Retrieves</p>
-        </div>
-      </div>
-      
-      <div class="row mx-auto">
-        <div class="col" style="padding-right: 0px">
-          <p style="margin-top: 0px; margin-right: 0px; text-align: right">
-          <!-- hitwebcounter Code START -->
-          <a href="https://www.hitwebcounter.com" target="_blank">
-          <img src="https://hitwebcounter.com/counter/counter.php?page=7737095&style=0006&nbdigits=9&type=ip&initCount=0" title="Free Counter" Alt="web counter"   border="0" /></a></p>
-        </div>
-        
-        <div class="col" style="padding-left: 5px">
-          <p style="margin-top: 0px; margin-left: 0px; text-align: left">Visitors</p>
-        </div>
-      </div>
+  <div class="row">
+    <div class="col-md-1 offset-md-2">
+      <br>
+      <img src="{{ url_for('static', filename='img/Wang.jpg') }}" alt="Wang Photo" height="100"/>
     </div>
-  </footer>
+    <div class="col-md-3">
+      <br>
+      <h5>Zuoheng Anita Wang, PhD</h5>
+      <p>Associate Professor of Biostatistics<br>Yale School of Public Health<br>Yale University</p>
+    </div>
+       
+    <div class="col-md-1">
+      <br>
+      <img src="{{ url_for('static', filename='img/Lu.jpg') }}" alt="Lu Photo" height="100"/>
+    </div>
+    <div class="col-md-5">
+      <br>
+      <h5>Lingeng Lu, MD, PhD</h5>
+      <p>Research Scientist in Epidemiology (Chronic Diseases)<br>Yale School of Public Health<br>Yale University</p>
+    </div>
+  </div>
+    
+  <div class="row">
+    <div class="col-md-1 offset-md-2">
+      <br>
+      <img src="{{ url_for('static', filename='img/Li.jpg') }}" alt="Li Photo" height="100"/>
+    </div>
+    <div class="col-md-5">
+      <br>
+      <h5>Ningshan Li, PhD</h5>
+      <p>PhD of Biostatistics and Bioinformatics<br>School of Life Science and Biotechnology<br>Shanghai Jiao Tong University</p>
+    </div>
+  </div>
+</div>
 {% endblock %}

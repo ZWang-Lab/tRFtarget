@@ -1,0 +1,42 @@
+{# Jinja web template engine which will be rendered by Flask #}
+{# Template Inheritance #}
+{% extends "mybase.html" %}
+{% from "bootstrap5/form.html" import render_field %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <br>
+      <h3>Browse by Gene</h3>
+    </div>
+  </div>
+  
+  {# query form #}
+  {# Submit action need to assigned to corresponding route #}
+  <!-- add target="_blank" will open new tab and render page when press button -->
+  <form class="form" method="POST" action={{ url_for('browse_Gene') }} role="form" target="_blank">
+    {{ form.csrf_token }}
+    {# select form for organism #}
+    <div class="row">
+      <!--  make the label center so that it looks like in a line with the radio field -->
+      <div class="col-md-1 offset-md-3 d-inline-flex align-items-center">
+        {{ form.search_organism.label(class_="form-label h5", style_="margin-bottom: 0") }}
+      </div>
+      <div class="col-md-5 d-inline-flex align-items-center">
+         {{ form.search_organism(class_="form-select", style_="width: 100%; max-width: 16rem") }}
+      </div>
+    </div>
+    
+    {# filter part #}
+    {# no filters #}
+
+    {# submit button #}
+    <div class="row" style="margin-bottom: 1rem">
+      <div class="col-md-2 offset-md-7">
+        {{ render_field(form.submit, button_stype="primary", button_size="md") }}
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

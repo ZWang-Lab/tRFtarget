@@ -1,0 +1,539 @@
+{# Jinja web template engine which will be rendered by Flask #}
+{# Template Inheritance #}
+{% extends "mybase.html" %}
+<!-- Speed up on large dataset
+1. DataTables give instructions for table data source in https://datatables.net/faqs/index#speed. After exploration, specify the data source by data option (https://datatables.net/reference/option/data) will be much more fast than DOM sourced, and is easy to implement (equivalent to Ajax sourced)
+2. Move the work of adding hyperlinks to contents in table and changing integers back to meaningful strings from back-end to front-end, to reduce the pressure of back-end, and also reduce the data size for network transmission
+3. avoid using select filter or autocomplete with huge options, text input filter without autocomplete is the only choice -->
+
+{% block content %}
+<div class="container-fluid">
+  {# first print some text #}
+  {# add "|safe" to turn off autoescaping and show html-format string directly #}
+  <div class="row" style="margin-top: 1rem">
+    <div class="col-md-6 offset-md-3">
+      {% if success %}
+        <pre><h4 class="text-success" id="message">{{ for_print|safe }}</h4></pre>
+      {% else %}
+        <pre><h4 class="text-danger" id="message">{{ for_print|safe }}</h4></pre>
+      {% endif %}
+    </div>
+  </div>
+
+  {# data #}
+  {# add "|safe" to turn off autoescaping and show html-format string directly #}
+  {% if display_table %}
+    <!-- a spinner shown first, then be hidden after table initialized -->
+    <div class="d-flex justify-content-center" id="spinner">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+    
+    {# show Gene Enrichment Analysis buttons #}
+    {% if display_pathway %}
+      <div class="row display invisible" id="pathway_label">
+        <div class="col-md-6 offset-md-3 intext-form">
+            <h4 class="d-inline-block align-middle text-success">Use top <input class="form-control" id="mrna_num" name="mrna_num" type="text" value="2000"> target transcripts for Downstream Analysis</h4>
+        </div>
+      </div>
+      <div class="row display invisible" id="pathway_button">
+        <div class="col-md-6 offset-md-3 intext-form">  
+            {# it is not a good idea to use onclick in HTML #}
+            <input class="btn btn-success ml-4" id="DAVID" name="DAVID" type="submit" value="DAVID">
+            <input class="btn btn-success ml-4" id="ShinyGO" name="ShinyGO" type="submit" value="ShinyGO">
+            <input class="btn btn-success ml-4" id="GENEONTOLOGY" name="GENEONTOLOGY" type="submit" value="GENEONTOLOGY">
+        </div>
+      </div>
+    {% endif %}
+    
+    <div class="row" style="margin-bottom: 1rem">
+      <!-- first just hidden the table, then use JS to show it -->
+      <table id="result_table" class="display invisible" style="width:100%">
+        <thead>
+          <tr>
+            <th scope="col">tRF ID</th>
+            <th scope="col">Standardized tRF ID</th>
+            <th scope="col">RNA ID</th>
+            <th scope="col">RNA Name</th>
+            <th scope="col">Gene ID</th>
+            <th scope="col">Gene Name</th>
+            <th scope="col">Interaction Illustration</th>
+            <th scope="col">Free Energy</th>
+            <th scope="col">Maximum Complementary Length</th>
+            <th scope="col">Prediction Tool</th>
+            <th scope="col">tRF Type</th>
+            <th scope="col">tRF Source</th>
+            <th scope="col">RNA Type</th>
+            <th scope="col">Binding Region</th>
+            <!-- 110px allows the checkbox label in one line -->
+            <th scope="col" style="min-width: 110px">Gene-level Evidence
+                <!-- add a checkbox filter -->
+                <div class="form-check" style="display: inline-flex">
+                    <!-- default checkbox size is 1em in height and width -->
+                    <input class="form-check-input" type="checkbox" value="" id="gene_evi_check" style="height: 0.8em; width: 0.8em;"> 
+                    <label class="form-check-label" for="gene_evi_check" style="display: flex">
+                        <small>evidence only</small>
+                    </label>
+                </div>
+            </th>
+            <!-- 110px allows the checkbox label in one line -->
+            <th scope="col" style="min-width: 110px">Site-level Evidence
+                <!-- add a checkbox filter -->
+                <div class="form-check" style="display: inline-flex">
+                    <!-- default checkbox size is 1em in height and width -->
+                    <input class="form-check-input" type="checkbox" value="" id="site_evi_check" style="height: 0.8em; width: 0.8em;"> 
+                    <label class="form-check-label" for="site_evi_check" style="display: flex">
+                        <small>evidence only</small>
+                    </label>
+                </div>
+            </th>
+          </tr>
+        </thead>
+      </table>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block styles %}
+  {{ super() }}
+  <!-- text field formats for number of RNAs in Downstream Analysis -->
+  <style>
+  .intext-form .form-control {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    width: 50px;
+    text-align: center;
+  }
+  </style>
+  <!-- DataTable plugin with Buttons, HTML5 export extensions -->
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.12.1/b-2.2.3/b-html5-2.2.3/datatables.min.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.dataTables.yadcf.css') }}"/>
+  <style>
+    /* The .yadcf-filter-wrapper will set the white-space to nowrap, which makes the selected options only goes in one row forever. Change it to normal to allow options takes multiple rows (https://stackoverflow.com/questions/22464534/make-select2-multi-select-not-wrap-to-multiple-lines) */
+    ul.select2-selection__rendered {
+      white-space: normal
+    }
+    /* yadcf text input filter will increase the table width, so control their max width in CSS (https://stackoverflow.com/questions/27862386/how-to-stop-yadcf-filters-in-datatables-to-mess-with-the-headers-cell-width) */
+    #yadcf-filter--result_table-0, #yadcf-filter--result_table-1, #yadcf-filter--result_table-3, #yadcf-filter--result_table-5, #yadcf-filter--result_table-14, #yadcf-filter--result_table-15 {
+      max-width: 6rem
+    }
+    #yadcf-filter--result_table-2, #yadcf-filter--result_table-4 {
+      max-width: 8rem
+    }
+    #yadcf-filter-wrapper-inner--result_table-7, #yadcf-filter-wrapper-inner--result_table-8 {
+      max-width: 5rem
+    }
+    #yadcf-filter-wrapper--result_table-9 .select2, #yadcf-filter-wrapper--result_table-10 .select2, #yadcf-filter-wrapper--result_table-11 .select2, #yadcf-filter-wrapper--result_table-12 .select2, #yadcf-filter-wrapper--result_table-13 .select2 {
+      max-width: 6rem
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/busy-load/dist/app.min.css"/>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <!-- DataTable plugin with some Buttons, HTML5 export extensions -->
+  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.12.1/b-2.2.3/b-html5-2.2.3/datatables.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script src="{{ url_for('static', filename='js/jquery.dataTables.yadcf.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/busy-load/dist/app.min.js"></script>
+  <script src="{{ url_for('static', filename='js/pako.min.js') }}"></script>
+  <script>
+  // declare the DataTable variable in GLOBAL, then we can access it in HTML
+  var myTable;
+      
+  // custom filtering on checkbox
+  $('#gene_evi_check').change(function() {
+      if ($(this).is(':checked')) {
+        // Checkbox is checked
+        myTable.columns(14).search("check").draw();
+      } else {
+        // Checkbox is unchecked, do something
+        myTable.columns(14).search("").draw();
+      }
+    });
+  $('#site_evi_check').change(function() {
+      if ($(this).is(':checked')) {
+        // Checkbox is checked
+        myTable.columns(15).search("check").draw();
+      } else {
+        // Checkbox is unchecked, do something
+        myTable.columns(15).search("").draw();
+      }
+    });
+      
+  // Do not forget to add support for clear them by yadcf's reset all filters button
+  // An HTML element can have multiple event handlers for the same event, and they can be executed in the order they were added
+  // wrap them into a custom function. Note it need to be defined before the document ready, otherwise the reset button can't refer to it
+  function clearAllFilters() {
+      $("#gene_evi_check").prop("checked", false).trigger("change");
+      $("#site_evi_check").prop("checked", false).trigger("change");
+      yadcf.exResetAllFilters(myTable);
+    };
+      
+      
+  $(document).ready( function () {
+    var this_organism = "{{ organism|safe }}"; // don't forget to quote the string, otherwise error occurs
+      
+    // link prefix for RNA
+    var rna_link;
+    switch (this_organism) {
+      case "Rhodobacter sphaeroides":
+        rna_link = "https://bacteria.ensembl.org/id/";
+        break;
+      case "Schizosaccharomyces pombe":
+        // PomBase do NOT provide separated transcript page
+        rna_link = "https://www.pombase.org/gene/";
+        break;
+      case "Drosophila melanogaster":
+        rna_link = "https://flybase.org/reports/";
+        break;
+      case "Caenorhabditis elegans":
+        rna_link = "https://wormbase.org/species/c_elegans/transcript/";
+        break;
+      default:
+        rna_link = "https://www.ensembl.org/id/";
+    }
+    
+    // link prefix for Gene
+    var gene_link;
+    switch (this_organism) {
+      case "Rhodobacter sphaeroides":
+        gene_link = "https://bacteria.ensembl.org/id/";
+        break;
+      case "Schizosaccharomyces pombe":
+        gene_link = "https://www.pombase.org/gene/";
+        break;
+      case "Drosophila melanogaster":
+        gene_link = "https://flybase.org/reports/";
+        break;
+      case "Caenorhabditis elegans":
+        gene_link = "https://wormbase.org/species/c_elegans/gene/";
+        break;
+      default:
+        gene_link = "https://www.ensembl.org/id/";
+    }
+    
+    // determine the tRFdb organism string based on Organism (not the same in tRFtarget)
+    var trfdb_organism;
+    switch (this_organism) {
+      case "Homo sapiens":
+        trfdb_organism = "human";
+        break;
+      case "Mus musculus":
+        trfdb_organism = "mouse";
+        break;
+      case "Drosophila melanogaster":
+        trfdb_organism = "drosophila";
+        break;
+      case "Danio rerio":
+        trfdb_organism = "Zebra_fish_Zv9";
+        break;
+      case "Caenorhabditis elegans":
+        trfdb_organism = "c.elegans";
+        break;
+      case "Xenopus tropicalis":
+        trfdb_organism = "Xenopus-tropicalis";
+        break;
+      case "Rhodobacter sphaeroides":
+        trfdb_organism = "r.sphaeroides";
+        break;
+      case "Schizosaccharomyces pombe":
+        trfdb_organism = "s.pombe";
+        break;
+      default:
+        trfdb_organism = this_organism;
+    }
+    
+    myTable = $('#result_table').DataTable(
+      {
+        // define columns in table using array index (since data source is array of row data)
+        // if definition of column property conflicts, columns always take priority over columnsDefs
+        // the columns of each row from Flask is 'trf_id', 'std_trf_id', 'rna_id', 'rna_name', 'gene_id', 'gene_name', 'demo', 'mfe', 'mcl', 'tool', 'trf_type', 'trf_source', 'rna_type', 'area', 'has_gene_evi', 'has_site_evi'
+        // give up the columns definition since we need a range_number_slider, and it not works on rendered_html column_data_type. So do not shift columns to add the 1st column Organism
+        columnDefs: [
+          // 1st column, tRF ID, need to add hyperlinks based on tRF Source
+          {target: 0,
+           render: function ( data, type, row, meta ) {
+             switch (row[11]) {
+               case 1:
+                 return '<a href="http://genome.bioch.virginia.edu/trfdb/experiments_display.php?trf_id=' + data.split("-")[1].substr(0, 5) + '&organism=' + trfdb_organism + '" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+               case 2:
+                 return '<a href="https://pubmed.ncbi.nlm.nih.gov/28696308" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+               case 5:
+                 return '<a href="http://www.tsrbase.org/entry.php?acc=' + data + '" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+               case 3:
+                 return '<a href="https://rna.sysu.edu.cn/tsRFun/searchDetail-tsRNA.php?tsRNAid=' + data +'" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+               case 4:
+                 return '<a href="https://cm.jefferson.edu/MINTbase/InputController?v=g&g=GRCh37&e=1&search=submit&t=All&am=All&an=All&da=&tn=&fs=&fn=' + data +'&c=All&st=All&gs=&ge=" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+               case 7:
+                 return '<a href="https://trfexplorer.cloud/fragments/' + data +'" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+               case 6:
+                 var tmp_array = data.split("-")
+                 return '<a href="https://grigoriev-lab.camden.rutgers.edu/tatdb/trf_type.php?trna_id=' + tmp_array.slice(0, 3).join('-') + '&trna_region=' + tmp_array[3] + '" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+               case 8:
+                 return '<a href="http://bioinformatics.zju.edu.cn/OncotRF/Pages/validation.php?tRF_ID=' + data +'" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+             }
+           }
+          },
+          // 3rd column, RNA ID, need to add hyperlinks based on RNA Type
+          {target: 2,
+           render: function ( data, type, row, meta ) {
+             switch (row[12]) {
+               case 1:
+                 return '<a href=' + rna_link + data + ' target="_blank" rel="noopener noreferrer">' + data + '</a>';
+               case 2:
+               case 3: // share the code block
+                 return '<a href="https://rnacentral.org/rna/' + data + '" target="_blank" rel="noopener noreferrer">' + data + '</a>';
+             }
+           }
+          },
+          // 5th column, Gene ID, need to add hyperlinks, note that gene_id from Flask may be empty string, otherwise all are Ensembl IDs
+          {target: 4,
+           render: function ( data, type, row, meta ) {
+             if (data.length > 0) {
+               return '<a href=' + gene_link + data + ' target="_blank" rel="noopener noreferrer">' + data + '</a>';
+             } else {
+               return data
+             }
+           }
+          },
+          // 7th column, Interaction Illustration, need to add <pre> tag to preserve blanks and newlines
+          // update: now we need to decompress it since is Base64 encoded compressed binary strings
+          {target: 6,
+           render: function ( data, type, row, meta ) {
+             // Decode base64 (convert ascii to binary)
+             strData = atob(data);
+             // Convert binary string to character-number array
+             charData = strData.split('').map(function(x){return x.charCodeAt(0);});
+             // Turn number array into byte-array (Constructor Uint8Array requires 'new')
+             binData = new Uint8Array(charData);
+             // Pako magic
+             showData = pako.ungzip(binData);
+             // Convert gunzipped byteArray back to UTF-8 string
+             return '<pre>' + new TextDecoder().decode(showData) + '</pre>';
+           }
+          },
+          // 10th column, Prediction Tool, need to change integers back to RNAhybrid or IntaRNA
+          {target: 9,
+           render: function ( data, type, row, meta ) {
+             switch (data) {
+               case 0:
+                 return "RNAhybrid";
+               case 1:
+                 return "IntaRNA";
+             }
+           }
+          },
+          // 11th column, tRF Type, need to change integers back to tRF Type string
+          {target: 10,
+           render: function ( data, type, row, meta ) {
+             switch (data) {
+               case 1:
+                 return "tRF-1 / tsRNA";
+               case 3:
+                 return "tRF-3";
+               case 5:
+                 return "tRF-5";
+               case 6:
+                 return "5'U tRF";
+               case 7:
+                 return "i-tRF";
+               case 8:
+                 return "5' tRH / tiR";
+               case 9:
+                 return "3' tRH / tiR";
+             }
+           }
+          },
+          // 12th column, tRF Source, need to change integers back to tRF Source string
+          {target: 11,
+           render: function ( data, type, row, meta ) {
+             switch (data) {
+               case 1:
+                 return "tRFdb";
+               case 2:
+                 return "tsRNA study";
+               case 3:
+                 return "tsRFun";
+               case 5:
+                 return "tsRBase";
+               case 6:
+                 return "tatDB";
+               case 4:
+                 return "MINTbase v2.0";
+               case 7:
+                 return "tRFexplorer";
+               case 8:
+                 return "OncotRF";
+             }
+           }
+          },
+          // 13th column, RNA Type, need to change integers back to RNA Type string
+          {target: 12,
+           render: function ( data, type, row, meta ) {
+             switch (data) {
+               case 1:
+                 return "protein_coding";
+               case 2:
+                 return "rRNA";
+               case 3:
+                 return "lncRNA";
+             }
+           }
+          },
+          // 14th column, Binding Region, need to change integers back to Binding Region string
+          {target: 13,
+           render: function ( data, type, row, meta ) {
+             switch (data) {
+               case 1:
+                 return "3' UTR";
+               case 2:
+                 return "CDS";
+               case 3:
+                 return "5' UTR";
+               case 4:
+                 return "/"
+             }
+           }
+          },
+          // 15th column, gene-level evidence, add check button
+          {target: 14,
+           render: function ( data, type, row, meta ) {
+             // since Jinja html template rendered first, there is no way to evaluate JavaScript in Jinja
+             // a simple workaround, or directly use the tRFtarget website link
+             if (type === 'export') {
+                 // for download, only use the hyperlink
+                 if (data == 1) {
+                     return 'http://trftarget.net/gene_evidence?trf_id=' + row[1] + '&gene_id=' + row[4] + '&organism=' + this_organism;
+                 } else if (data == 0) {
+                     return '';
+                 }
+             } else {
+                 if (data == 1) {
+                     return '<a class="btn btn-primary btn-sm" href="{{ url_for('show_gene_evidence', trf_id='replace1', gene_id='replace2', organism='replace3') }}" role="button" target="_blank">Check</a>'.replace("replace1", row[1]).replace("replace2", row[4]).replace("replace3", this_organism);
+                 } else if (data == 0) {
+                     return '';
+                 }
+             }
+           }
+          },
+          // 16th column, site-level evidence, add check button
+          {target: 15,
+           render: function ( data, type, row, meta ) {
+             // since Jinja html template rendered first, there is no way to evaluate JavaScript in Jinja
+             // a simple workaround, or directly use the tRFtarget website link
+             if (type === 'export') {
+                 // for download, only use the hyperlink
+                 if (data == 1) {
+                     return 'http://trftarget.net/gene_evidence?trf_id=' + row[0] + '&gene_id=' + row[3] + '&organism=' + this_organism;
+                 } else if (data == 0) {
+                     return '';
+                 }
+             } else {
+                 if (data == 1) {
+                     return '<a class="btn btn-primary btn-sm" href="{{ url_for('show_gene_evidence', trf_id='replace1', gene_id='replace2', organism='replace3') }}" role="button" target="_blank">Check</a>'.replace("replace1", row[0]).replace("replace2", row[3]).replace("replace3", this_organism);
+                 } else if (data == 0) {
+                     return '';
+                 }
+             }
+           }
+          },
+          {
+            targets: [0,1,2,3,4,5,7,8,9,10,11,12,13,14,15], // except interaction illustration column
+            className: "dt-body-center"
+          },
+          {
+            targets: '_all',
+            className: "dt-head-center"
+          },
+          // do not sort interaction illustration column and the last two columns for evidences
+          {
+            targets: [6, 14, 15],
+            orderable: false
+          },
+        ],
+        // since DataTables by default sort by 1st column, even we disable the sorting for 1st column, it still be sorted. So change the default row order by sorted on tRF ID
+        order: [[0, 'asc']],
+        // control the DOM position by Bootstrap grid
+        dom:  "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-2 offset-md-4'B>>" +
+              "<'row'<'col-sm-12'tr>>" +
+              "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        buttons: [
+          {
+            text: 'Reset all filters',
+            attr: {
+              id: 'reset-all-table-filter',
+              class: 'dt-button',
+              onclick: 'clearAllFilters()'
+            }
+          },
+          { // ref https://datatables.net/reference/button/csv
+            extend: 'csv',
+            text: 'Export',
+            header: false,
+            filename: 'tRFtarget_' + this_organism.replace(" ", "_") + '_binding_sites',
+            exportOptions: { // keep newlines in interaction illustration column
+              stripNewlines: false,
+              trim: false,
+              orthogonal: 'export' // use Orthogonal data (https://datatables.net/manual/data/orthogonal-data) for downloading, used for evidence columns
+            },
+            // replace the header since adding filters changes the header text
+            customize: function(csv) {
+              return '"tRF ID","Standardized tRF ID","RNA ID","RNA Name","Gene ID","Gene Name","Interaction Illustration","Free Energy","Maximum Complementary Length","Prediction Tool","tRF Type","tRF Source","RNA Type","Binding Region","Gene-level Evidence","Site-level Evidence"\n' + csv
+            },
+            // besides the action to create and save a CSV file, show a spinner during downloading
+            action: function (e, dt, node, config) {
+              var that = this;
+              $("#result_table").busyLoad("show", { text: "DOWNLOADING ..." });
+              
+              setTimeout(function () { // it will download and hide the loading spin when csv is ready after waiting 1 second
+                $.fn.DataTable.ext.buttons.csvHtml5.action.call(that, e, dt, node, config);
+                $("#result_table").busyLoad("hide");
+              }, 1000);
+            }
+          }
+        ],
+        // directly pass the list of lists (array of row data) as Jinja variable to DataTable data option as data source
+        // and this data source do not support setting processing option to display a processing indicator, so we need a wordaround to display a spinner while data loading
+        data: {{ data|safe }},
+        deferRender: true, // speed up filtering a little
+        processing: true, // show effect on sorting; effect on yadcf filtering not observed
+        scrollX: false, // conflict with yadcf, if true, headers will be invisible
+        // when table is ready, show table while hide the spinner
+        initComplete: function (settings, json) {
+          $("#spinner").addClass("d-none"); // directly remove the space for spinner, not just make it invisible
+          $("#result_table").removeClass("invisible");
+          $("#pathway_label").removeClass("invisible");
+          $("#pathway_button").removeClass("invisible");
+        }
+      }
+    );
+    // No cumulative filtering, and set column_data_type to rendered_html since render function of columnDefs has been used
+    // based on extensive exploration, single column filtering can achieve acceptable speed on large data only by text input filter without autocomplete and with deferRender turned on
+    yadcf.init ( myTable,
+      [
+        {column_number : 0, filter_type: "text", column_data_type: "rendered_html", filter_default_label: "Type to search"},
+        {column_number : 1, filter_type: "text", column_data_type: "text", filter_default_label: "Type to search"},
+        {column_number : 2, filter_type: "text", column_data_type: "rendered_html", filter_default_label: "Type to search"},
+        {column_number : 3, filter_type: "text", column_data_type: "text", filter_default_label: "Type to search"},
+        {column_number : 4, filter_type: "text", column_data_type: "rendered_html", filter_default_label: "Type to search"},
+        {column_number : 5, filter_type: "text", column_data_type: "text", filter_default_label: "Type to search"},
+        {column_number : 7, filter_type: "range_number_slider", column_data_type: "text"}, // range_number_slider not works on rendered_html column_data_type
+        {column_number : 8, filter_type: "range_number_slider", column_data_type: "text"},
+        {column_number : 9, filter_type: "multi_select", select_type: 'select2', column_data_type: "rendered_html", filter_default_label: "Select Tools"},
+        {column_number : 10, filter_type: "multi_select", select_type: 'select2', column_data_type: "rendered_html", filter_default_label: "Select Types"},
+        {column_number : 11, filter_type: "multi_select", select_type: 'select2', column_data_type: "rendered_html", filter_default_label: "Select Sources"},
+        {column_number : 12, filter_type: "multi_select", select_type: 'select2', column_data_type: "rendered_html", filter_default_label: "Select Types"},
+        {column_number : 13, filter_type: "multi_select", select_type: 'select2', column_data_type: "rendered_html", filter_default_label: "Select Regions"},
+      ]
+    );
+  } ); 
+  </script>
+  <!-- Javascript for pathway analysis buttons -->
+  <script src="{{ url_for('static', filename='js/pathway.js') }}"></script>
+{% endblock %}
