@@ -21,6 +21,7 @@ There are two Redis Keys ("n_search", "n_online") and one Hashes ("online_target
 
 
 import redis
+import os
 
 
 
@@ -43,7 +44,7 @@ Update: decode_responses=True not supported by RQ (https://python-rq.org/docs/co
 '''
 
 
-POOL = redis.ConnectionPool(host='localhost', port=6379, db=0)
+POOL = redis.ConnectionPool(host=os.environ.get("REDIS_HOST"), port=int(os.environ.get("REDIS_PORT")), db=int(os.environ.get("REDIS_DB")))
 
 
 

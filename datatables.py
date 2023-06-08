@@ -13,6 +13,7 @@ this script defines data tables in MySQL database
 import peewee as pw
 from operator import attrgetter, and_
 from functools import reduce
+import os
 
 
 
@@ -20,8 +21,7 @@ from functools import reduce
 n_result = 5e4
 
 
-MYSQLDB = pw.MySQLDatabase('trftarget', user='root', password='12345678',
-                           host='127.0.0.1', port=3306, autoconnect=False)
+MYSQLDB = pw.MySQLDatabase(os.environ.get("MYSQL_DATABASE"), user=os.environ.get("MYSQL_USER"), password=os.environ.get("MYSQL_PASSWORD"), host=os.environ.get("MYSQL_HOST"), port=int(os.environ.get("MYSQL_PORT")), autoconnect=False)
 
 
 # 定义MySQL data types (ref http://docs.peewee-orm.com/en/latest/peewee/models.html?highlight=table%20generation#field-types-table)

@@ -43,7 +43,7 @@ executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
 
 
 # folder for saving and serving files for online service
-cache_folder = r'/media/volume/sdb/service_cache'
+cache_folder = os.environ.get("CACHE_FOLDER")
 
 
 

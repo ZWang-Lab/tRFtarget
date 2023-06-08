@@ -970,5 +970,5 @@ def team():
 
 
 if __name__ == '__main__':
-    # use intenal IP
-    app.run(host= '10.0.107.211', port=80)
+    # use internal IP
+    app.run(host=os.environ.get("INTERNAL_IP"), port=80)
