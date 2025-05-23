@@ -962,10 +962,31 @@ def helps():
 
 
 
+# Citation page
+@app.route('/citation')
+def citation():
+    return render_template('citation.html', n_search=getVariable('n_search'), n_online=getVariable('n_online'), active_page='help')
+
+
+
+# Publications page
+@app.route('/publications')
+def publications():
+    return render_template('publications.html', n_search=getVariable('n_search'), n_online=getVariable('n_online'), active_page='help')
+
+
+
 # Team page
 @app.route('/team')
 def team():
-    return render_template('team.html', n_search=getVariable('n_search'), n_online=getVariable('n_online'), active_page='team')
+    return render_template('team.html', n_search=getVariable('n_search'), n_online=getVariable('n_online'), active_page='help')
+
+
+
+# Contact page
+@app.route('/contact')
+def contact():
+    return render_template('contact.html', n_search=getVariable('n_search'), n_online=getVariable('n_online'), active_page='help')
 
 
 
