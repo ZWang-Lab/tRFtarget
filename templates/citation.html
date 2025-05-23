@@ -1,0 +1,29 @@
+{# Jinja web template engine which will be rendered by Flask #}
+{# Template Inheritance #}
+{% extends "mybase.html" %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row" style="margin-top: 1rem">
+    <div class="col-md-8 offset-md-2">
+      <h3>Citation</h3>
+    </div>
+  </div>
+    
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <p>If you use tRFtarget or <a href="https://github.com/ZWang-Lab/tRFtarget-pipeline" target="_blank" rel="noopener noreferrer">tRFtarget-pipeline</a>, please cite both the latest tRFtarget publication as well as the initial paper that introduced tRFtarget:</p>
+      <!-- set display to flex to make the span and text in the same line -->
+      <div style="display: flex">
+          <span class="__dimensions_badge_embed__" data-doi="10.1093/nar/gkad815" data-style="small_circle"></span><script async src="https://badge.dimensions.ai/badge.js" charset="utf-8"></script>
+          <p class="align-top" style="padding-left: 10px">Ningshan Li, Siqiong Yao, Guangjun Yu, Lingeng Lu, Zuoheng Wang. tRFtarget 2.0: expanding the targetome landscape of transfer RNA-derived fragments. <i>Nucleic Acids Research</i>, Volume 52, Issue D1, 5 January 2024, Pages D345–D350. <a href="https://doi.org/10.1093/nar/gkad815" target="_blank" rel="noopener noreferrer">https://doi.org/10.1093/nar/gkad815</a>.</p>
+      </div>
+      <br>
+      <div style="display: flex">
+          <span class="__dimensions_badge_embed__" data-doi="10.1093/nar/gkaa831" data-style="small_circle"></span><script async src="https://badge.dimensions.ai/badge.js" charset="utf-8"></script>
+          <p class="align-top" style="padding-left: 10px">Ningshan Li, Nayang Shan, Lingeng Lu, Zuoheng Wang. tRFtarget: a database for transfer RNA-derived fragment targets. <i>Nucleic Acids Research</i>, Volume 49, Issue D1, 8 January 2021, Pages D254–D260. <a href="https://doi.org/10.1093/nar/gkaa831" target="_blank" rel="noopener noreferrer">https://doi.org/10.1093/nar/gkaa831</a>.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
