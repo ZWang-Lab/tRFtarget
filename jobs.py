@@ -87,6 +87,9 @@ def checkEmail(email_address):
 
 
 import smtplib
+import ssl
+import traceback
+from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -96,7 +99,7 @@ my_email = os.environ.get("MY_EMAIL")
 my_password = os.environ.get("MY_PASSWORD")
 
 
-def send_email(job_id, job_status, recipient_email):
+def send_email(job_id, job_status, recipient_email, log_file=None):
     '''send email to user
     '''
     # Create the MIME object
@@ -155,12 +158,30 @@ def send_email(job_id, job_status, recipient_email):
     msg.attach(MIMEText(text, "plain"))
     msg.attach(MIMEText(html, "html"))
     
-    # use GoDaddy's secure SMTP server
-    with smtplib.SMTP_SSL("smtpout.secureserver.net", 465) as server:
-        server.ehlo()
-        server.login(my_email, my_password)
-        # when including HTML in your email, you'll need to use send_message() instead of sendmail()
-        server.send_message(msg)
+    # use GoDaddy's secure SMTP server; UPDATE move to Microsoft 365 email with SMTP
+    try:
+        with smtplib.SMTP("smtp.office365.com", 587, timeout=30) as server:
+            server.ehlo()
+            server.starttls(context=ssl.create_default_context())
+            server.ehlo()
+            server.login(my_email, my_password)
+            server.send_message(msg)  # when including HTML in your email, you'll need to use send_message() instead of sendmail()
+
+    except smtplib.SMTPAuthenticationError as e:
+        if log_file:
+            with open(log_file, "a") as f:
+                f.write(f"\n[{datetime.now().isoformat()}] SMTP authentication failed\n")
+                f.write(f"SMTP user: {my_email}\n")
+                f.write(f"Error: {repr(e)}\n")
+                f.write(traceback.format_exc())
+
+    except Exception as e:
+        if log_file:
+            with open(log_file, "a") as f:
+                f.write(f"\n[{datetime.now().isoformat()}] Email sending failed\n")
+                f.write(f"SMTP user: {my_email}\n")
+                f.write(f"Error: {repr(e)}\n")
+                f.write(traceback.format_exc())
 
 
 
@@ -243,14 +264,15 @@ def oneJob(job_id, cmd, email_address=None):
         subprocess.run(f'cd {os.path.join(cache_folder, job_id)} && tar -czf {job_id}.tar.gz *.csv', shell=True)
         # send email
         if email_address is not None:
-            send_email(job_id, getJob(job_id), email_address)
+            send_email(job_id, getJob(job_id), email_address, log_file=os.path.join(cache_folder, job_id, "job.log"))
+
     else:
         setJob(job_id, 'FAILED')
         # add an error.log file, which is just the last 5 lines of log
         subprocess.run(f'tail -n 5 {os.path.join(cache_folder, job_id, "job.log")} > {os.path.join(cache_folder, job_id, "error.log")}', shell=True)
         # also send email
         if email_address is not None:
-            send_email(job_id, getJob(job_id), email_address)
+            send_email(job_id, getJob(job_id), email_address, log_file=os.path.join(cache_folder, job_id, "job.log"))
 
 
 def getJobQueueStatus():
@@ -281,7 +303,14 @@ def getJobStatus(job_id):
                 message = 'Your job has been completed and deleted as the results were kept for only 14 days.\nPlease submit a new job in <a href="http://trftarget.net/online_targets">Online Service</a>.\nWe sincerely apologize for any inconvenience.'
                 
         elif job_status == 'FAILED':
-            if os.path.exists(os.path.join(cache_folder, job_id, "error.log")):
+            # UPDATE: we may get a FAILED job status when the pipeline finished successfully, but got error in sending email; so best to double check the result file
+            if os.path.exists(os.path.join(cache_folder, job_id, job_id+".tar.gz")):
+                # correct the job status
+                job_status = 'COMPLETED'
+                setJob(job_id, 'COMPLETED')
+                message = 'Please click below button to download your results.\nNote the results will be kept for only 14 days.'
+                
+            elif os.path.exists(os.path.join(cache_folder, job_id, "error.log")):
                 with open(os.path.join(cache_folder, job_id, "error.log")) as f:
                     # including newlines \n
                     message = f.read()
